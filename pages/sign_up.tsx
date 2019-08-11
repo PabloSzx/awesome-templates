@@ -11,7 +11,7 @@ export default () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [admin, setAdmin] = useState(false);
+
   const { user, setUser } = useContext(AuthContext);
 
   useEffect(() => {
@@ -38,7 +38,6 @@ export default () => {
           email,
           password,
           name,
-          admin,
         },
       },
     }
@@ -60,7 +59,6 @@ export default () => {
                   email,
                   password,
                   name,
-                  admin,
                 },
               },
             });
@@ -88,14 +86,6 @@ export default () => {
           placeholder="name"
           onChange={({ target: { value } }) => setName(value)}
         />
-        <label>
-          <input
-            type="checkbox"
-            checked={admin}
-            onChange={() => setAdmin(!admin)}
-          />
-          Admin
-        </label>
 
         <br />
 

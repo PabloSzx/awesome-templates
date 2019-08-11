@@ -1,6 +1,7 @@
 import { Router } from "express";
 import ExpressSession from "express-session";
 import passport from "passport";
+import requireEnv from "require-env-variable";
 import { Repository } from "typeorm";
 import { TypeormStore } from "typeorm-store";
 
@@ -10,9 +11,11 @@ import { Session, User } from "../entities";
 
 export const auth = Router();
 
+const { COOKIE_KEY } = requireEnv(["COOKIE_KEY"]);
+
 function SessionMiddleware(repository: Repository<Session>) {
   return ExpressSession({
-    secret: "tF47Oz#R$v2oCT&gooX%QclBNFa$E8OosV^vBebkYVro8$5DB1a",
+    secret: COOKIE_KEY,
     resave: false,
     saveUninitialized: false,
     rolling: true,

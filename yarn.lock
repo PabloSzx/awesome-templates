@@ -1002,6 +1002,11 @@
   dependencies:
     "@types/express" "*"
 
+"@types/crypto-js@^3.1.43":
+  version "3.1.43"
+  resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-3.1.43.tgz#b859347d6289ba13e347c335a4c9efa63337a748"
+  integrity sha512-EHe/YKctU3IYNBsDmSOPX/7jLHPRlx8WaiDKSY9JCTnJ8XJeM4c0ZJvx+9Gxmr2s2ihI92R+3U/gNL1sq5oRuQ==
+
 "@types/events@*":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@types/events/-/events-3.0.0.tgz#2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7"
@@ -2589,6 +2594,11 @@ crypto-browserify@^3.11.0:
     public-encrypt "^4.0.0"
     randombytes "^2.0.0"
     randomfill "^1.0.3"
+
+crypto-js@^3.1.9-1:
+  version "3.1.9-1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-3.1.9-1.tgz#fda19e761fc077e01ffbfdc6e9fdfc59e8806cd8"
+  integrity sha1-/aGedh/Ad+Af+/3G6f38WeiAbNg=
 
 css@2.2.4:
   version "2.2.4"
@@ -5190,6 +5200,11 @@ require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
   integrity sha1-jGStX9MNqxyXbiNE/+f3kqam30I=
+
+require-env-variable@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/require-env-variable/-/require-env-variable-2.0.1.tgz#a7bb3d432f4edce78330200bb44fc503bcf8129c"
+  integrity sha512-DsytpxF42HCZQDjC9pV+DhuAHOLuwRjEG4jlz6omSb49Y67/9Z07Xxmv76CuoDkrgGXXeFm9fm2PJOZCU5GaWw==
 
 require-main-filename@^2.0.0:
   version "2.0.0"

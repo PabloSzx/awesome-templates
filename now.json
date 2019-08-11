@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "env": {
+    "DB_URL": "@elephant_postgres_url",
+    "COOKIE_KEY": "@awesome_templates_cookie_key"
+  }
+}
