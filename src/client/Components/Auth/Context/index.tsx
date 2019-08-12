@@ -25,7 +25,6 @@ export const Auth: FunctionComponent = ({ children }) => {
         current_user {
           id
           email
-          emails
           username
           displayName
           profileUrl

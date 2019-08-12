@@ -12,10 +12,6 @@ export class User {
   @Column()
   email: string;
 
-  @Field(_type => [String], { defaultValue: [] })
-  @Column("varchar", { array: true })
-  emails: string[];
-
   @Field()
   @Column()
   username: string;

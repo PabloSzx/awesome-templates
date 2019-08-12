@@ -1,23 +1,21 @@
+import axios from "axios";
 import { Router } from "express";
 import ExpressSession from "express-session";
-import _ from "lodash";
 import passport from "passport";
-import { Strategy as GitHubStrategy } from "passport-github";
 import requireEnv from "require-env-variable";
 import { Repository } from "typeorm";
 import { TypeormStore } from "typeorm-store";
 
-import { LOCAL_PATH, WRONG_INFO } from "../consts";
+import { WRONG_INFO } from "../consts";
 import { connection } from "../db";
 import { Session, User } from "../entities";
 
-const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET } = requireEnv([
+const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, COOKIE_KEY } = requireEnv([
   "GITHUB_CLIENT_ID",
   "GITHUB_CLIENT_SECRET",
+  "COOKIE_KEY",
 ]);
 export const auth = Router();
-
-const { COOKIE_KEY } = requireEnv(["COOKIE_KEY"]);
 
 function SessionMiddleware(repository: Repository<Session>) {
   return ExpressSession({
@@ -54,72 +52,103 @@ passport.deserializeUser<User, number>(async (id, done) => {
   }
 });
 
-passport.use(
-  new GitHubStrategy(
-    {
-      clientID: GITHUB_CLIENT_ID,
-      clientSecret: GITHUB_CLIENT_SECRET,
-      callbackURL: LOCAL_PATH + "api/login/github/callback",
-    },
-    async (accessToken, refreshToken, profile, cb) => {
-      console.log("profile", profile);
-      try {
-        const { _json, displayName, emails, username, profileUrl } = profile;
-        const { email = "<hidden>", id, avatar_url } = _json as {
-          email: string;
-          id: number;
-          avatar_url: string;
-        };
-
-        const UserRepository = (await connection).getRepository(User);
-
-        let user = await UserRepository.findOne(id);
-
-        if (user) {
-          UserRepository.update(id, {
-            email,
-            emails: _.map(emails, v => v.value),
-            username,
-            displayName,
-            profileUrl,
-            avatar_url,
-            accessToken,
-            refreshToken,
-          });
-          return cb(null, user);
-        } else {
-          user = await UserRepository.create({
-            id,
-            email,
-            emails: _.map(emails, v => v.value),
-            username,
-            displayName,
-            profileUrl,
-            avatar_url,
-            accessToken,
-            refreshToken,
-          });
-
-          await UserRepository.save(user);
-          return cb(null, user);
-        }
-      } catch (err) {
-        cb(err.message || _.toString(err));
-      }
+auth.use("/api/login/github", async (req, res) => {
+  try {
+    const { code } = req.query as {
+      code: string | undefined;
+    };
+    if (!code) {
+      return res.redirect(
+        `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}`
+      );
     }
-  )
-);
-auth.use(
-  "/api/login/github/callback",
-  passport.authenticate("github", {
-    failureRedirect: "/login",
-    successRedirect: "/",
-  })
-);
 
+    const {
+      data: { access_token: accessToken },
+    } = await axios.post<{
+      access_token: string;
+      token_type: string;
+      scope: string;
+    }>(`https://github.com/login/oauth/access_token`, undefined, {
+      params: {
+        code,
+        client_id: GITHUB_CLIENT_ID,
+        client_secret: GITHUB_CLIENT_SECRET,
+      },
+      headers: {
+        Accept: "application/json",
+      },
+    });
 
-auth.use("/api/login/github", passport.authenticate("github"));
+    const {
+      data: {
+        email,
+        id,
+        avatar_url,
+        url: profileUrl,
+        login: username,
+        name: displayName,
+      },
+    } = await axios.get<{
+      email: string;
+      id: number;
+      avatar_url: string;
+      login: string;
+      name: string;
+      url: string;
+    }>(`https://api.github.com/user`, {
+      headers: {
+        Authorization: `token ${accessToken}`,
+      },
+    });
 
+    const UserRepository = (await connection).getRepository(User);
+
+    let user = await UserRepository.findOne(id);
+
+    if (user) {
+      UserRepository.update(id, {
+        email,
+        username,
+        displayName,
+        profileUrl,
+        avatar_url,
+        accessToken,
+      });
+      user = {
+        ...user,
+        id,
+        email,
+        username,
+        displayName,
+        profileUrl,
+        avatar_url,
+        accessToken,
+      };
+    } else {
+      user = await UserRepository.create({
+        id,
+        email,
+        username,
+        displayName,
+        profileUrl,
+        avatar_url,
+        accessToken,
+      });
+
+      await UserRepository.save(user);
+    }
+    req.login(user, err => {
+      if (err) {
+        console.error(err);
+      }
+      res.redirect("/");
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+  }
+});
 
 export const requireAuth = Router();
 requireAuth.use(auth, (req, res, next) => {
