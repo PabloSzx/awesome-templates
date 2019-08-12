@@ -28,7 +28,7 @@ export class User {
   @Column()
   avatar_url: string;
 
-  @Field({ nullable: true })
+  @Field()
   @Column({ default: false })
   admin: boolean;
 

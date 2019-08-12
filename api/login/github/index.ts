@@ -8,5 +8,4 @@ app.use(common);
 
 app.use(auth);
 
-
 export default app;
