@@ -20,6 +20,8 @@ const Home = () => {
         <title>Awesome Templates</title>
       </Head>
 
+      <h1>Awesome Templates</h1>
+
       {user && <h1>Welcome {user.username}</h1>}
       <nav>
         {!user ? (
