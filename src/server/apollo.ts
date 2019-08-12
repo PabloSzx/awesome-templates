@@ -13,6 +13,7 @@ const apolloServer = new ApolloServer({
     container,
     authChecker,
   }),
+  introspection: true,
   playground: {
     settings: {
       "request.credentials": "include",
