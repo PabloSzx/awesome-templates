@@ -27,6 +27,9 @@ const Home = () => {
             <Link href="/login">
               <button>Login</button>
             </Link>
+            <Link href="/api/login/github">
+              <button>Login With GitHub</button>
+            </Link>
             <Link href="/sign_up">
               <button>Sign Up</button>
             </Link>

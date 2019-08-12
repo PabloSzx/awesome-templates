@@ -8,12 +8,7 @@ const nextApp = next({ dev: process.env.NODE_ENV !== "production" });
 const nextHandle = nextApp.getRequestHandler();
 
 nextApp.prepare().then(() => {
-  server.use((req, res, next) => {
-    if (req.url === "/api/graphql") {
-      return next();
-    }
-    nextHandle(req, res);
-  });
+  server.use((req, res) => nextHandle(req, res));
 
   const port = process.env.PORT || 3000;
 

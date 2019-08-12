@@ -8,19 +8,23 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field()
-  @Column()
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   email: string;
 
   @Field()
   @Column({ default: "Default" })
   name: string;
 
-  @Field()
-  @Column()
+  @Field({ nullable: true })
+  @Column({ nullable: true })
   password: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ default: false })
   admin: boolean;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  githubId: string;
 }
