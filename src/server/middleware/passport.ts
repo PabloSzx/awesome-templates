@@ -109,16 +109,17 @@ passport.use(
     }
   )
 );
-
-auth.get("/api/login/github", passport.authenticate("github"));
-
-auth.get(
+auth.use(
   "/api/login/github/callback",
   passport.authenticate("github", {
     failureRedirect: "/login",
     successRedirect: "/",
   })
 );
+
+
+auth.use("/api/login/github", passport.authenticate("github"));
+
 
 export const requireAuth = Router();
 requireAuth.use(auth, (req, res, next) => {
