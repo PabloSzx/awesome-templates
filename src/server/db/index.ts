@@ -18,7 +18,7 @@ const dbConfig: ConnectionOptions = {
         port: parseInt(process.env.DB_PORT || "") || 5432,
       }),
   synchronize: true,
-  logging: true,
+  logging: process.env.NODE_ENV !== "production",
 };
 
 useContainer(Container);
