@@ -1,10 +1,8 @@
 import { IsEmail, Length } from "class-validator";
-import { SHA512 } from "crypto-js";
-import { Arg, Ctx, Field, InputType, Mutation, Query, Resolver } from "type-graphql";
+import { Ctx, Field, InputType, Mutation, Query, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
-import { USER_ALREADY_EXISTS, WRONG_INFO } from "../consts";
 import { User } from "../entities";
 import { IContext } from "../interfaces";
 
@@ -38,32 +36,6 @@ export class AuthResolver {
     }
   }
 
-  @Mutation(_returns => User, { nullable: true })
-  async login(
-    @Arg("input") { email, password }: LoginInput,
-    @Ctx() { login }: IContext
-  ) {
-    try {
-      const user = await this.UserRepository.findOne({
-        where: {
-          email,
-        },
-      });
-
-      if (user) {
-        if (user.password !== SHA512(password).toString()) {
-          throw new Error(WRONG_INFO);
-        } else {
-          await login(user);
-        }
-      }
-
-      return user;
-    } catch (err) {
-      throw err;
-    }
-  }
-
   @Mutation(_returns => Boolean)
   logout(@Ctx() { logout, isAuthenticated }: IContext) {
     if (isAuthenticated()) {
@@ -71,31 +43,5 @@ export class AuthResolver {
       return true;
     }
     return false;
-  }
-
-  @Mutation(_returns => User, { nullable: true })
-  async sign_up(
-    @Arg("input") { email, password, name }: SignUpInput,
-    @Ctx() { login }: IContext
-  ) {
-    try {
-      if (
-        !(await this.UserRepository.findOne({
-          where: { email },
-        }))
-      ) {
-        const user = await this.UserRepository.create({
-          email,
-          password: SHA512(password).toString(),
-          name,
-        });
-        await this.UserRepository.save(user);
-        await login(user);
-
-        return user;
-      } else throw new Error(USER_ALREADY_EXISTS);
-    } catch (err) {
-      throw err;
-    }
   }
 }

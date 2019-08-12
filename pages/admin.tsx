@@ -9,8 +9,7 @@ export default () => {
     query {
       users {
         email
-        password
-        name
+        username
         admin
       }
     }
@@ -27,17 +26,15 @@ export default () => {
           <thead>
             <tr>
               <th>Email</th>
-              <th>Password</th>
               <th>Name</th>
               <th>Admin</th>
             </tr>
           </thead>
           <tbody>
-            {data.users.map(({ email, password, name, admin }, key) => (
+            {data.users.map(({ email, username, admin }, key) => (
               <tr key={key}>
                 <td>{email}</td>
-                <td>{password}</td>
-                <td>{name}</td>
+                <td>{username}</td>
                 <td>{admin ? "Yes" : "No"}</td>
               </tr>
             ))}

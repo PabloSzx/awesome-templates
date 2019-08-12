@@ -48,11 +48,7 @@ passport.deserializeUser<User, number>(async (id, done) => {
 
     const user = await UserRepository.findOne(id);
 
-    if (user) {
-      done(null, user);
-    } else {
-      done(WRONG_INFO);
-    }
+    done(null, user);
   } catch (err) {
     console.error(err);
   }
@@ -66,27 +62,49 @@ passport.use(
       callbackURL: LOCAL_PATH + "api/login/github/callback",
     },
     async (accessToken, refreshToken, profile, cb) => {
-      const UserRepository = (await connection).getRepository(User);
-      const a = profile.emails;
-      const githubId = profile.id;
-      let user = await UserRepository.findOne({
-        where: {
-          githubId,
-        },
-      });
+      console.log("profile", profile);
+      try {
+        const { _json, displayName, emails, username, profileUrl } = profile;
+        const { email = "<hidden>", id, avatar_url } = _json as {
+          email: string;
+          id: number;
+          avatar_url: string;
+        };
 
-      if (user) {
-        return cb(null, user);
-      } else {
-        user = await UserRepository.create({
-          // TODO: IMPROVE EMAIL ELECTION
-          email: _.get(_.head(profile.emails), "value"),
-          githubId,
-          name: profile.username,
-        });
+        const UserRepository = (await connection).getRepository(User);
 
-        await UserRepository.save(user);
-        return cb(null, user);
+        let user = await UserRepository.findOne(id);
+
+        if (user) {
+          UserRepository.update(id, {
+            email,
+            emails: _.map(emails, v => v.value),
+            username,
+            displayName,
+            profileUrl,
+            avatar_url,
+            accessToken,
+            refreshToken,
+          });
+          return cb(null, user);
+        } else {
+          user = await UserRepository.create({
+            id,
+            email,
+            emails: _.map(emails, v => v.value),
+            username,
+            displayName,
+            profileUrl,
+            avatar_url,
+            accessToken,
+            refreshToken,
+          });
+
+          await UserRepository.save(user);
+          return cb(null, user);
+        }
+      } catch (err) {
+        cb(err.message || _.toString(err));
       }
     }
   )

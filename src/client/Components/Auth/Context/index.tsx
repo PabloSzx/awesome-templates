@@ -23,8 +23,13 @@ export const Auth: FunctionComponent = ({ children }) => {
     gql`
       query {
         current_user {
+          id
           email
-          name
+          emails
+          username
+          displayName
+          profileUrl
+          avatar_url
           admin
         }
       }

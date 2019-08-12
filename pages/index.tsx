@@ -17,21 +17,15 @@ const Home = () => {
   return (
     <div>
       <Head>
-        <title>Homea</title>
+        <title>Awesome Templates</title>
       </Head>
 
-      {user && <h1>Welcome {user.name}</h1>}
+      {user && <h1>Welcome {user.username}</h1>}
       <nav>
         {!user ? (
           <>
-            <Link href="/login">
-              <button>Login</button>
-            </Link>
             <Link href="/api/login/github">
               <button>Login With GitHub</button>
-            </Link>
-            <Link href="/sign_up">
-              <button>Sign Up</button>
             </Link>
           </>
         ) : (

@@ -1,30 +1,44 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 
 @ObjectType()
 @Entity()
 export class User {
   @Field(_type => ID)
-  @PrimaryGeneratedColumn()
+  @PrimaryColumn()
   id: number;
 
-  @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Field()
+  @Column()
   email: string;
 
-  @Field()
-  @Column({ default: "Default" })
-  name: string;
+  @Field(_type => [String], { defaultValue: [] })
+  @Column("varchar", { array: true })
+  emails: string[];
 
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  password: string;
+  @Field()
+  @Column()
+  username: string;
+
+  @Field()
+  @Column()
+  displayName: string;
+
+  @Field()
+  @Column()
+  profileUrl: string;
+
+  @Field()
+  @Column()
+  avatar_url: string;
 
   @Field({ nullable: true })
   @Column({ default: false })
   admin: boolean;
 
-  @Field({ nullable: true })
+  @Column()
+  accessToken: string;
+
   @Column({ nullable: true })
-  githubId: string;
+  refreshToken: string;
 }
