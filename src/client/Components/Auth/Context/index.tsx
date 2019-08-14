@@ -24,12 +24,14 @@ export const Auth: FunctionComponent = ({ children }) => {
       query {
         current_user {
           id
+          avatarUrl
+          login
+          url
           email
-          username
-          displayName
-          profileUrl
-          avatar_url
+          name
+          bio
           admin
+          repositories
         }
       }
     `,

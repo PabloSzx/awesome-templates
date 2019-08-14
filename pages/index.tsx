@@ -22,7 +22,7 @@ const Home = () => {
 
       <h1>Awesome Templates</h1>
 
-      {user && <h1>Welcome {user.username}</h1>}
+      {user && <h1>Welcome {user.login}</h1>}
       <nav>
         {!user ? (
           <>

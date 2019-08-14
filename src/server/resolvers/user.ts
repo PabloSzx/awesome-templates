@@ -14,6 +14,8 @@ export class UserResolver {
   @Authorized([ADMIN])
   @Query(_returns => [User])
   async users() {
-    return await this.UserRepository.find();
+    const usersList = await this.UserRepository.find();
+
+    return usersList;
   }
 }

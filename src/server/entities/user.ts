@@ -1,12 +1,28 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
+
+import { Organization } from "./organization";
+import { GitRepository } from "./repository";
+import { RepositoryOwner } from "./repositoryOwner";
 
 @ObjectType()
 @Entity()
-export class User {
+export class User implements RepositoryOwner {
   @Field(_type => ID)
   @PrimaryColumn()
-  id: number;
+  id: string;
+
+  @Field()
+  @Column()
+  avatarUrl: string;
+
+  @Field()
+  @Column()
+  login: string;
+
+  @Field()
+  @Column()
+  url: string;
 
   @Field()
   @Column()
@@ -14,27 +30,45 @@ export class User {
 
   @Field()
   @Column()
-  username: string;
+  name: string;
 
   @Field()
-  @Column()
-  displayName: string;
-
-  @Field()
-  @Column()
-  profileUrl: string;
-
-  @Field()
-  @Column()
-  avatar_url: string;
+  @Column({ nullable: true })
+  bio: string;
 
   @Field()
   @Column({ default: false })
   admin: boolean;
 
-  @Column()
-  accessToken: string;
+  @Column({ nullable: true })
+  accessToken?: string;
 
   @Column({ nullable: true })
-  refreshToken: string;
+  refreshToken?: string;
+
+  @Field(_type => [GitRepository], { defaultValue: [] })
+  @OneToMany(_type => GitRepository, repository => repository.id, {
+    cascade: true,
+  })
+  repositories: GitRepository[];
+
+  @Field(_type => [GitRepository], { defaultValue: [] })
+  @ManyToMany(_type => GitRepository, repository => repository.stargazers, {
+    cascade: true,
+  })
+  @JoinTable()
+  starredRepositories: GitRepository[];
+
+  @Field(_type => [GitRepository], { defaultValue: [] })
+  @ManyToMany(_type => GitRepository, repository => repository.collaborators, {
+    cascade: true,
+  })
+  @JoinTable()
+  repositoriesContributedTo: GitRepository[];
+
+  @Field(_type => [Organization], { defaultValue: [] })
+  @ManyToMany(_type => Organization, organization => organization.id, {
+    cascade: true,
+  })
+  organizations: Organization[];
 }

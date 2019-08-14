@@ -35,12 +35,12 @@ auth.use(async (req, res, next) => {
 auth.use(passport.initialize());
 auth.use(passport.session());
 
-passport.serializeUser<User, number>((user, cb) => {
+passport.serializeUser<User, string>((user, cb) => {
   if (user) cb(null, user.id);
   else cb(WRONG_INFO);
 });
 
-passport.deserializeUser<User, number>(async (id, done) => {
+passport.deserializeUser<User, string>(async (id, done) => {
   try {
     const UserRepository = (await connection).getRepository(User);
 
@@ -81,17 +81,10 @@ auth.use("/api/login/github", async (req, res) => {
     });
 
     const {
-      data: {
-        email,
-        id,
-        avatar_url,
-        url: profileUrl,
-        login: username,
-        name: displayName,
-      },
+      data: { email, id, avatar_url: avatarUrl, url, login, name, ...restData },
     } = await axios.get<{
       email: string;
-      id: number;
+      id: string;
       avatar_url: string;
       login: string;
       name: string;
@@ -102,37 +95,40 @@ auth.use("/api/login/github", async (req, res) => {
       },
     });
 
+    console.log("restData", restData);
+
     const UserRepository = (await connection).getRepository(User);
 
     let user = await UserRepository.findOne(id);
 
     if (user) {
       UserRepository.update(id, {
+        id,
+        avatarUrl,
+        login,
+        url,
+        name,
         email,
-        username,
-        displayName,
-        profileUrl,
-        avatar_url,
         accessToken,
       });
       user = {
         ...user,
         id,
+        avatarUrl,
+        login,
+        url,
+        name,
         email,
-        username,
-        displayName,
-        profileUrl,
-        avatar_url,
         accessToken,
       };
     } else {
-      user = await UserRepository.create({
+      user = UserRepository.create({
         id,
+        avatarUrl,
+        login,
+        url,
+        name,
         email,
-        username,
-        displayName,
-        profileUrl,
-        avatar_url,
         accessToken,
       });
 
