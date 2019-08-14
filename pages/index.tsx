@@ -26,9 +26,9 @@ const Home = () => {
       <nav>
         {!user ? (
           <>
-            <Link href="/api/login/github">
+            <a href="/api/login/github">
               <button>Login With GitHub</button>
-            </Link>
+            </a>
           </>
         ) : (
           <>

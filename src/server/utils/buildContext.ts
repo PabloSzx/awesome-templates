@@ -30,7 +30,7 @@ export const buildContext = <OptionsType = any>({ req }: { req: Request }) => {
       return req.user;
     },
     get authGitHub() {
-      const { accessToken } = req.user as User;
+      const { accessToken } = (req.user as User) || { accessToken: "" };
       return {
         headers: {
           Authorization: `bearer ${accessToken}`,
