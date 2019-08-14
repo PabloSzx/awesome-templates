@@ -105,4 +105,8 @@ export class GitRepository {
   @Field()
   @Column()
   description: string;
+
+  @Field()
+  @Column()
+  resourcePath: string;
 }

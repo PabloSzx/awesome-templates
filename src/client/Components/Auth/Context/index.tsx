@@ -31,7 +31,10 @@ export const Auth: FunctionComponent = ({ children }) => {
           name
           bio
           admin
-          repositories
+          repositories {
+            name
+          }
+          accessToken
         }
       }
     `,

@@ -2,6 +2,6 @@ import "cross-fetch/polyfill";
 
 import ApolloClient from "apollo-boost";
 
-export default new ApolloClient({
+export const GitHubAPI = new ApolloClient({
   uri: "https://api.github.com/graphql",
 });

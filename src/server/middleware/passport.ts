@@ -81,7 +81,16 @@ auth.use("/api/login/github", async (req, res) => {
     });
 
     const {
-      data: { email, id, avatar_url: avatarUrl, url, login, name, ...restData },
+      data: {
+        email,
+        id,
+        avatar_url: avatarUrl,
+        url,
+        login,
+        name,
+        bio,
+        ...restData
+      },
     } = await axios.get<{
       email: string;
       id: string;
@@ -89,6 +98,7 @@ auth.use("/api/login/github", async (req, res) => {
       login: string;
       name: string;
       url: string;
+      bio: string;
     }>(`https://api.github.com/user`, {
       headers: {
         Authorization: `token ${accessToken}`,
@@ -110,6 +120,7 @@ auth.use("/api/login/github", async (req, res) => {
         name,
         email,
         accessToken,
+        bio,
       });
       user = {
         ...user,
@@ -120,6 +131,7 @@ auth.use("/api/login/github", async (req, res) => {
         name,
         email,
         accessToken,
+        bio,
       };
     } else {
       user = UserRepository.create({
@@ -130,6 +142,7 @@ auth.use("/api/login/github", async (req, res) => {
         name,
         email,
         accessToken,
+        bio,
       });
 
       await UserRepository.save(user);

@@ -3,9 +3,9 @@ import { Authorized, Ctx, Mutation, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { GitHubAPI } from "../../utils";
 import { GitRepository, Language, Organization, User } from "../entities";
 import { IContext } from "../interfaces";
-import githubAPI from "../utils/githubAPI";
 
 @Resolver()
 export class RepositoryResolver {
@@ -22,7 +22,7 @@ export class RepositoryResolver {
   @Authorized()
   @Mutation(_returns => String)
   async userData(@Ctx() { authGitHub: context }: IContext) {
-    const { data } = await githubAPI.query({
+    const { data } = await GitHubAPI.query({
       // TODO: PAGINATE ALL
       query: gql`
         query {
@@ -50,29 +50,16 @@ export class RepositoryResolver {
                 isFork
                 isTemplate
                 forkCount
-                issues(first: 20) {
-                  totalCount
-                }
                 name
                 nameWithOwner
+                resourcePath
                 primaryLanguage {
                   color
                   id
                   name
                 }
                 description
-                languages(first: 20) {
-                  totalCount
-                  nodes {
-                    color
-                    id
-                    name
-                  }
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
-                }
+                url
               }
             }
             starredRepositories(last: 100) {
@@ -91,29 +78,15 @@ export class RepositoryResolver {
                 isFork
                 isTemplate
                 forkCount
-                issues(first: 20) {
-                  totalCount
-                }
                 name
                 nameWithOwner
+                resourcePath
                 primaryLanguage {
                   color
                   id
                   name
                 }
                 description
-                languages(first: 20) {
-                  totalCount
-                  nodes {
-                    color
-                    id
-                    name
-                  }
-                  pageInfo {
-                    hasNextPage
-                    endCursor
-                  }
-                }
               }
             }
             organizations(first: 20) {
@@ -131,6 +104,7 @@ export class RepositoryResolver {
                 name
                 description
                 websiteUrl
+
                 repositories(last: 100, privacy: PUBLIC) {
                   totalCount
                   pageInfo {
@@ -147,11 +121,9 @@ export class RepositoryResolver {
                     isFork
                     isTemplate
                     forkCount
-                    issues(first: 20) {
-                      totalCount
-                    }
                     name
                     nameWithOwner
+                    resourcePath
                     primaryLanguage {
                       color
                       id

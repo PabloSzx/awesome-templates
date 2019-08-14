@@ -32,7 +32,7 @@ export class User implements RepositoryOwner {
   @Column()
   name: string;
 
-  @Field()
+  @Field({ nullable: true })
   @Column({ nullable: true })
   bio: string;
 
@@ -40,9 +40,11 @@ export class User implements RepositoryOwner {
   @Column({ default: false })
   admin: boolean;
 
+  @Field({ nullable: true })
   @Column({ nullable: true })
   accessToken?: string;
 
+  @Field({ nullable: true })
   @Column({ nullable: true })
   refreshToken?: string;
 

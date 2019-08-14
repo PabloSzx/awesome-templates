@@ -4,9 +4,9 @@ import { Authorized, Ctx, Field, InputType, Mutation, Query, Resolver } from "ty
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { GitHubAPI } from "../../utils";
 import { User } from "../entities";
 import { IContext } from "../interfaces";
-import githubAPI from "../utils/githubAPI";
 
 @InputType()
 export class LoginInput {
@@ -42,7 +42,7 @@ export class AuthResolver {
   @Query(_returns => String)
   async templates(@Ctx() { authGitHub: context }: IContext) {
     try {
-      const { data } = await githubAPI.query({
+      const { data } = await GitHubAPI.query({
         query: gql`
           query {
             viewer {
