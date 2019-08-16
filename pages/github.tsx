@@ -5,7 +5,6 @@ import { useContext, useEffect } from "react";
 import { useLazyQuery } from "@apollo/react-hooks";
 
 import { AuthContext } from "../src/client/Components/Auth/Context";
-import { GitHubAPI } from "../src/utils";
 
 const GitHub: NextPage = () => {
   const { user, loading: userLoading } = useContext(AuthContext);
@@ -13,153 +12,16 @@ const GitHub: NextPage = () => {
   const [fetchAPI, { loading, data, called }] = useLazyQuery(
     gql`
       query {
-        viewer {
+        userData {
           id
-          avatarUrl
-          login
-          url
-          email
           name
-          bio
-          repositories(last: 100, privacy: PUBLIC) {
-            totalCount
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              id
-              createdAt
-              updatedAt
-              isLocked
-              isArchived
-              isDisabled
-              isFork
-              isTemplate
-              forkCount
-              name
-              nameWithOwner
-              primaryLanguage {
-                color
-                id
-                name
-              }
-              description
-              url
-            }
-          }
-          starredRepositories(last: 100) {
-            totalCount
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              id
-              createdAt
-              updatedAt
-              isLocked
-              isArchived
-              isDisabled
-              isFork
-              isTemplate
-              forkCount
-              name
-              nameWithOwner
-              primaryLanguage {
-                color
-                id
-                name
-              }
-              description
-            }
-          }
-          organizations(first: 20) {
-            totalCount
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-            nodes {
-              id
-              avatarUrl
-              login
-              url
-              email
-              name
-              description
-              websiteUrl
-              repositories(last: 100, privacy: PUBLIC) {
-                totalCount
-                pageInfo {
-                  hasNextPage
-                  endCursor
-                }
-                nodes {
-                  id
-                  createdAt
-                  updatedAt
-                  isLocked
-                  isArchived
-                  isDisabled
-                  isFork
-                  isTemplate
-                  forkCount
-                  name
-                  nameWithOwner
-                  primaryLanguage {
-                    color
-                    id
-                    name
-                  }
-                  description
-                  languages(first: 20) {
-                    totalCount
-                    nodes {
-                      color
-                      id
-                      name
-                    }
-                    pageInfo {
-                      hasNextPage
-                      endCursor
-                    }
-                  }
-                }
-              }
-              membersWithRole(first: 30) {
-                totalCount
-                pageInfo {
-                  hasNextPage
-                  endCursor
-                }
-                nodes {
-                  id
-                  avatarUrl
-                  login
-                  url
-                  email
-                  name
-                  bio
-                }
-              }
-            }
-          }
+        }
+        userRepos {
+          nameWithOwner
         }
       }
     `,
-    {
-      client: GitHubAPI,
-      context: {
-        headers:
-          user && user.accessToken
-            ? {
-                Authorization: `bearer ${user.accessToken}`,
-              }
-            : {},
-      },
-      ssr: false,
-    }
+    {}
   );
 
   useEffect(() => {

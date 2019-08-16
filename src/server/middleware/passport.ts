@@ -109,44 +109,17 @@ auth.use("/api/login/github", async (req, res) => {
 
     const UserRepository = (await connection).getRepository(User);
 
-    let user = await UserRepository.findOne(id);
+    const user = await UserRepository.save({
+      id,
+      avatarUrl,
+      login,
+      url,
+      name,
+      email,
+      accessToken,
+      bio,
+    });
 
-    if (user) {
-      UserRepository.update(id, {
-        id,
-        avatarUrl,
-        login,
-        url,
-        name,
-        email,
-        accessToken,
-        bio,
-      });
-      user = {
-        ...user,
-        id,
-        avatarUrl,
-        login,
-        url,
-        name,
-        email,
-        accessToken,
-        bio,
-      };
-    } else {
-      user = UserRepository.create({
-        id,
-        avatarUrl,
-        login,
-        url,
-        name,
-        email,
-        accessToken,
-        bio,
-      });
-
-      await UserRepository.save(user);
-    }
     req.login(user, err => {
       if (err) {
         console.error(err);

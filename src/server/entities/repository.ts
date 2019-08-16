@@ -1,5 +1,7 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm";
+import {
+    Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn
+} from "typeorm";
 
 import { RepositoryOwner } from "./repositoryOwner";
 import { User } from "./user";
@@ -19,11 +21,9 @@ export class Language {
   @Column()
   name: string;
 
-  @Field(_type => [GitRepository])
-  @ManyToMany(_type => GitRepository, repository => repository.id, {
-    cascade: true,
-  })
-  repositories: GitRepository[];
+  @Field(_type => [GitRepository], { defaultValue: [] })
+  @OneToMany(_type => GitRepository, repository => repository.id, {})
+  repositories?: GitRepository[];
 }
 
 @ObjectType()
@@ -99,8 +99,10 @@ export class GitRepository {
   stargazers: User[];
 
   @Field()
-  @Column()
-  primaryLanguage: string;
+  @ManyToOne(_type => Language, language => language.repositories, {
+    cascade: true,
+  })
+  primaryLanguage: Language;
 
   @Field()
   @Column()
