@@ -6,8 +6,7 @@ import { GitRepository } from "./repository";
 import { RepositoryOwner } from "./repositoryOwner";
 
 @ObjectType()
-@Entity()
-export class User implements RepositoryOwner {
+export class UserGitHubData {
   @Field(_type => ID)
   @PrimaryColumn()
   id: string;
@@ -28,25 +27,25 @@ export class User implements RepositoryOwner {
   @Column()
   email: string;
 
-  @Field()
-  @Column()
-  name: string;
-
   @Field({ nullable: true })
   @Column({ nullable: true })
-  bio: string;
+  name?: string;
 
+  @Field(_type => String, { nullable: true })
+  @Column({ nullable: true })
+  bio?: string;
+}
+
+@ObjectType()
+@Entity()
+export class User extends UserGitHubData implements RepositoryOwner {
   @Field()
   @Column({ default: false })
   admin: boolean;
 
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  accessToken?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  refreshToken?: string;
+  @Field()
+  @Column()
+  accessToken: string;
 
   @Field(_type => [GitRepository], { defaultValue: [] })
   @OneToMany(_type => GitRepository, repository => repository.id, {
@@ -60,13 +59,6 @@ export class User implements RepositoryOwner {
   })
   @JoinTable()
   starredRepositories: GitRepository[];
-
-  @Field(_type => [GitRepository], { defaultValue: [] })
-  @ManyToMany(_type => GitRepository, repository => repository.collaborators, {
-    cascade: true,
-  })
-  @JoinTable()
-  repositoriesContributedTo: GitRepository[];
 
   @Field(_type => [Organization], { defaultValue: [] })
   @ManyToMany(_type => Organization, organization => organization.id, {

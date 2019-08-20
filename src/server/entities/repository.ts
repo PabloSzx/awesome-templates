@@ -1,3 +1,4 @@
+import { Type } from "class-transformer";
 import { Field, ID, ObjectType } from "type-graphql";
 import {
     Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn
@@ -9,26 +10,18 @@ import { User } from "./user";
 @ObjectType()
 @Entity()
 export class Language {
-  @Field(_type => ID)
+  @Field()
   @PrimaryColumn()
-  id: string;
-
-  @Field()
-  @Column()
-  color: string;
-
-  @Field()
-  @Column()
   name: string;
 
+  @Type(() => GitRepository)
   @Field(_type => [GitRepository], { defaultValue: [] })
   @OneToMany(_type => GitRepository, repository => repository.id, {})
   repositories?: GitRepository[];
 }
 
 @ObjectType()
-@Entity()
-export class GitRepository {
+export class RepositoryGithubData {
   @Field(_type => ID)
   @PrimaryColumn()
   id: string;
@@ -67,48 +60,49 @@ export class GitRepository {
 
   @Field()
   @Column()
-  starCount: number;
-
-  @Field()
-  @Column()
-  issues: number;
-
-  @Field()
-  @Column()
   name: string;
 
   @Field()
   @Column()
   nameWithOwner: string;
 
-  @Field(_type => RepositoryOwner)
-  @ManyToOne(_type => RepositoryOwner, owner => owner.id, { cascade: true })
-  owner: RepositoryOwner;
+  @Type(() => Language)
+  @Field(_type => Language, { nullable: true })
+  @ManyToOne(_type => Language, language => language.repositories, {
+    cascade: true,
+    nullable: true,
+  })
+  primaryLanguage?: Language;
 
-  @Field(_type => [Language])
-  @ManyToMany(_type => Language, language => language.id, { cascade: true })
-  @JoinTable()
-  languages: Language[];
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  description?: string;
 
-  @Field(_type => [User])
-  @ManyToMany(_type => User, user => user.id)
-  collaborators: User[];
+  @Field()
+  @Column()
+  url: string;
+}
+
+@ObjectType()
+@Entity()
+export class GitRepository extends RepositoryGithubData {
+  @Field()
+  @Column()
+  starCount: number;
 
   @Field(_type => [User])
   @ManyToMany(_type => User, user => user.id)
   stargazers: User[];
 
-  @Field()
-  @ManyToOne(_type => Language, language => language.repositories, {
+  @Field(_type => RepositoryOwner)
+  @ManyToOne(_type => RepositoryOwner, owner => owner.id, { cascade: true })
+  owner: RepositoryOwner;
+
+  @Field(_type => [Language], { nullable: true })
+  @ManyToMany(_type => Language, language => language.name, {
     cascade: true,
+    nullable: true,
   })
-  primaryLanguage: Language;
-
-  @Field()
-  @Column()
-  description: string;
-
-  @Field()
-  @Column()
-  resourcePath: string;
+  @JoinTable()
+  languages?: Language[];
 }
