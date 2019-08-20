@@ -23,7 +23,6 @@ export const Auth: FunctionComponent = ({ children }) => {
     gql`
       query {
         current_user {
-          id
           avatarUrl
           login
           url

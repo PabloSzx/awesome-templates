@@ -20,6 +20,15 @@ const apolloServer = new ApolloServer({
     },
   },
   context: ({ req }) => buildContext({ req }),
+  formatError: err => {
+    switch (err.message) {
+      case "GraphQL error: Resource not accessible by integration": {
+        return new Error("Make sure the app is installed on your account!");
+      }
+      default:
+        return err;
+    }
+  },
 });
 
 export const apollo = (app: Express) => {

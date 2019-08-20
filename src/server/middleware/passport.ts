@@ -40,13 +40,17 @@ passport.serializeUser<User, string>((user, cb) => {
   else cb(WRONG_INFO);
 });
 
-passport.deserializeUser<User, string>(async (id, done) => {
+passport.deserializeUser<User | null, string>(async (id, done) => {
   try {
     const UserRepository = (await connection).getRepository(User);
 
     const user = await UserRepository.findOne(id);
 
-    done(null, user);
+    if (user) {
+      done(null, user);
+    } else {
+      done(null, null);
+    }
   } catch (err) {
     console.error(err);
   }
@@ -64,7 +68,7 @@ auth.use("/api/login/github", async (req, res) => {
     }
 
     const {
-      data: { access_token: accessToken },
+      data: { access_token: accessToken, ...restxd },
     } = await axios.post<{
       access_token: string;
       token_type: string;
@@ -83,27 +87,30 @@ auth.use("/api/login/github", async (req, res) => {
     const {
       data: {
         email,
-        id,
         avatar_url: avatarUrl,
         url,
         login,
         name,
         bio,
+        node_id: id,
         ...restData
       },
     } = await axios.get<{
       email: string;
-      id: string;
       avatar_url: string;
       login: string;
       name: string;
       url: string;
       bio: string;
+      node_id: string;
     }>(`https://api.github.com/user`, {
       headers: {
         Authorization: `token ${accessToken}`,
       },
     });
+
+    console.log("restxd :", restxd);
+    // console.log("scope :", scope);
 
     console.log("restData", restData);
 
@@ -123,12 +130,11 @@ auth.use("/api/login/github", async (req, res) => {
         bio,
       })
       .onConflict(
-        `("id") DO UPDATE SET "avatarUrl" = :avatarUrl, "login" = :login, "url" = :url, "name" = :name, "email" = :email,"accessToken" = :accessToken, "bio" = :bio`
+        `("id") DO UPDATE SET "avatarUrl" = :avatarUrl, "url" = :url, "login" = :login, "name" = :name, "email" = :email,"accessToken" = :accessToken, "bio" = :bio`
       )
       .setParameters({
-        id,
-        avatarUrl,
         login,
+        avatarUrl,
         url,
         name,
         email,

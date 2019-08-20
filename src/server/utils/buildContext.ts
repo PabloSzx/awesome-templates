@@ -33,7 +33,7 @@ export const buildContext = <OptionsType = any>({ req }: { req: Request }) => {
       const { accessToken } = (req.user as User) || { accessToken: "" };
       return {
         headers: {
-          Authorization: `bearer ${accessToken}`,
+          Authorization: `token ${accessToken}`,
         },
       };
     },

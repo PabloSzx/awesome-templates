@@ -5,14 +5,22 @@ import {
 } from "typeorm";
 
 import { RepositoryOwner } from "./repositoryOwner";
-import { User } from "./user";
+import { UserGitHubData } from "./user";
 
 @ObjectType()
 @Entity()
 export class Language {
+  @Field(_type => ID)
+  @PrimaryColumn()
+  id: string;
+
   @Field()
   @PrimaryColumn()
   name: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  color?: string;
 
   @Type(() => GitRepository)
   @Field(_type => [GitRepository], { defaultValue: [] })
@@ -90,16 +98,17 @@ export class GitRepository extends RepositoryGithubData {
   @Column()
   starCount: number;
 
-  @Field(_type => [User])
-  @ManyToMany(_type => User, user => user.id)
-  stargazers: User[];
+  @Field(_type => [UserGitHubData])
+  @ManyToMany(_type => UserGitHubData, user => user.id)
+  @JoinTable()
+  stargazers: UserGitHubData[];
 
   @Field(_type => RepositoryOwner)
   @ManyToOne(_type => RepositoryOwner, owner => owner.id, { cascade: true })
   owner: RepositoryOwner;
 
   @Field(_type => [Language], { nullable: true })
-  @ManyToMany(_type => Language, language => language.name, {
+  @ManyToMany(_type => Language, language => language.id, {
     cascade: true,
     nullable: true,
   })

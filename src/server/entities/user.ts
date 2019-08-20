@@ -6,6 +6,7 @@ import { GitRepository } from "./repository";
 import { RepositoryOwner } from "./repositoryOwner";
 
 @ObjectType()
+@Entity()
 export class UserGitHubData {
   @Field(_type => ID)
   @PrimaryColumn()

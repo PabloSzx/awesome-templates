@@ -1,13 +1,15 @@
-import _ from "lodash";
 import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
-import { getGitHubAPIv3, GitHubAPI } from "../../utils";
-import { GitRepository, Language, Organization, RepositoryGithubData, User } from "../entities";
+import { GitHubAPI } from "../../utils";
+import { APP_INSTALLED } from "../consts";
+import { GitRepository, Language, Organization, User, UserGitHubData } from "../entities";
 import {
-    IRepositoryDataQuery, IRepositoryDataQueryVariables, IViewerDataQuery, IViewerReposQuery,
-    IViewerReposQueryVariables, RepositoryDataQuery, ViewerDataQuery, ViewerReposQuery
+    IRepositoryDataQuery, IRepositoryDataQueryVariables, IRepositoryLanguagesQuery,
+    IRepositoryLanguagesQueryVariables, IRepositoryStarCountQuery,
+    IRepositoryStarCountQueryVariables, IRepositoryStarsQuery, IRepositoryStarsQueryVariables,
+    RepositoryDataQuery, RepositoryLanguagesQuery, RepositoryStarCountQuery, RepositoryStarsQuery
 } from "../graphql/repository";
 import { IContext } from "../interfaces";
 
@@ -22,65 +24,6 @@ export class RepositoryResolver {
     @InjectRepository(Language)
     private readonly LanguageRepository: Repository<Language>
   ) {}
-
-  @Authorized()
-  @Query(_returns => User)
-  async userData(@Ctx() { authGitHub: context }: IContext) {
-    const { data } = await GitHubAPI.query<IViewerDataQuery>({
-      query: ViewerDataQuery,
-      context,
-    });
-
-    return data.viewer;
-  }
-
-  @Authorized()
-  @Query(_returns => [RepositoryGithubData])
-  async userRepos(
-    @Ctx() { authGitHub: context }: IContext,
-    @Arg("isTemplate", { nullable: true }) isTemplate?: boolean
-  ) {
-    let GitRepos: RepositoryGithubData[] = [];
-
-    let cursor: string | undefined;
-
-    let hasNextPage: boolean;
-    do {
-      const {
-        data: {
-          viewer: {
-            repositories: { nodes, pageInfo },
-          },
-        },
-      } = await GitHubAPI.query<IViewerReposQuery, IViewerReposQueryVariables>({
-        query: ViewerReposQuery,
-        context,
-        variables: {
-          after: cursor,
-        },
-      });
-
-      GitRepos.push(
-        ..._.compact(
-          _.map(nodes, repo => {
-            if (repo && repo.isTemplate !== isTemplate) {
-              return {
-                ...repo,
-                createdAt: new Date(repo.createdAt),
-                updatedAt: new Date(repo.updatedAt),
-              };
-            }
-            return undefined;
-          })
-        )
-      );
-
-      hasNextPage = pageInfo.hasNextPage;
-      cursor = pageInfo.endCursor;
-    } while (hasNextPage);
-
-    return GitRepos;
-  }
 
   @Authorized()
   @Query(_returns => GitRepository)
@@ -106,43 +49,109 @@ export class RepositoryResolver {
     return repository;
   }
 
+  @Authorized(APP_INSTALLED)
   @FieldResolver()
-  async stargazers(@Root() repo: GitRepository) {
-    const { data } = await getGitHubAPIv3<
-      { login: string; id: string; url: string; avatar_url: string }[]
-    >(`/repos/${repo.nameWithOwner}/stargazers`);
+  async stargazers(
+    @Root() repo: GitRepository,
+    @Ctx() { authGitHub: context }: IContext
+  ) {
+    const stargazers: UserGitHubData[] = [];
 
-    return _.map(data, ({ login, id, url, avatar_url }) => ({
-      login,
-      id,
-      url,
-      avatarUrl: avatar_url,
-    }));
+    let cursor: string | undefined;
+    let hasNextPage: boolean;
+    do {
+      const {
+        data: {
+          repository: {
+            stargazers: { pageInfo, nodes },
+          },
+        },
+      } = await GitHubAPI.query<
+        IRepositoryStarsQuery,
+        IRepositoryStarsQueryVariables
+      >({
+        query: RepositoryStarsQuery,
+        variables: {
+          name: repo.name,
+          owner: repo.owner.login,
+          after: cursor,
+        },
+        context,
+      });
+
+      stargazers.push(...nodes);
+
+      cursor = pageInfo.endCursor;
+      hasNextPage = pageInfo.hasNextPage;
+    } while (hasNextPage);
+
+    return stargazers;
   }
 
+  @Authorized(APP_INSTALLED)
   @FieldResolver()
-  async starCount(@Root() repo: GitRepository) {
+  async starCount(
+    @Root() repo: GitRepository,
+    @Ctx() { authGitHub: context }: IContext
+  ) {
     const {
-      data: { length },
-    } = await getGitHubAPIv3<
-      { login: string; id: string; url: string; avatar_url: string }[]
-    >(`/repos/${repo.nameWithOwner}/stargazers`);
+      data: {
+        repository: {
+          stargazers: { totalCount },
+        },
+      },
+    } = await GitHubAPI.query<
+      IRepositoryStarCountQuery,
+      IRepositoryStarCountQueryVariables
+    >({
+      query: RepositoryStarCountQuery,
+      variables: {
+        name: repo.name,
+        owner: repo.owner.login,
+      },
+      context,
+    });
 
-    return length;
+    return totalCount;
   }
 
+  @Authorized(APP_INSTALLED)
   @FieldResolver()
-  async languages(@Root() repo: GitRepository) {
-    const { data } = await getGitHubAPIv3<Record<string, number>>(
-      `/repos/${repo.nameWithOwner}/languages`
-    );
+  async languages(
+    @Root() repo: GitRepository,
+    @Ctx() { authGitHub: context }: IContext
+  ) {
+    const sortedLanguages: Language[] = [];
 
-    const sortedLanguages = _.map(
-      _.sortBy(_.toPairs(data), v => v[1]).reverse(),
-      v => ({
-        name: v[0],
-      })
-    );
+    let cursor: string | undefined;
+    let hasNextPage: boolean;
+    do {
+      const {
+        data: {
+          repository: { languages },
+        },
+      } = await GitHubAPI.query<
+        IRepositoryLanguagesQuery,
+        IRepositoryLanguagesQueryVariables
+      >({
+        query: RepositoryLanguagesQuery,
+        variables: {
+          name: repo.name,
+          owner: repo.owner.login,
+          after: cursor,
+        },
+        context,
+      });
+
+      if (languages) {
+        sortedLanguages.push(...languages.nodes);
+
+        cursor = languages.pageInfo.endCursor;
+        hasNextPage = languages.pageInfo.hasNextPage;
+      } else {
+        hasNextPage = false;
+      }
+    } while (hasNextPage);
 
     return sortedLanguages;
   }

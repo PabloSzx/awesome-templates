@@ -124,7 +124,7 @@ export type IRepositoryLanguagesQuery = {
         hasNextPage: boolean;
       };
       nodes: Array<Language>;
-    };
+    } | null;
   };
 };
 
@@ -138,7 +138,11 @@ export const RepositoryLanguagesQuery = gql`
   query repository($name: String!, $owner: String!, $after: String) {
     repository(name: $name, owner: $owner) {
       id
-      languages(first: 100, after: $after) {
+      languages(
+        first: 10
+        orderBy: { field: SIZE, direction: DESC }
+        after: $after
+      ) {
         totalCount
         pageInfo {
           endCursor
@@ -192,6 +196,30 @@ export const RepositoryDataQuery = gql`
         avatarUrl
         login
         url
+      }
+    }
+  }
+`;
+
+export type IRepositoryStarCountQuery = {
+  repository: {
+    stargazers: {
+      totalCount: number;
+    };
+  };
+};
+
+export type IRepositoryStarCountQueryVariables = {
+  name: string;
+  owner: string;
+};
+
+export const RepositoryStarCountQuery = gql`
+  query repository($name: String!, $owner: String!) {
+    repository(name: $name, owner: $owner) {
+      id
+      stargazers {
+        totalCount
       }
     }
   }
