@@ -1,9 +1,16 @@
-import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
+import { Field, ID, ObjectType, registerEnumType } from "type-graphql";
+import {
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn
+} from "typeorm";
 
+import { APILevel } from "../consts";
 import { Organization } from "./organization";
 import { GitRepository } from "./repository";
 import { RepositoryOwner } from "./repositoryOwner";
+
+registerEnumType(APILevel, {
+  name: "APILevel",
+});
 
 @ObjectType()
 @Entity()
@@ -49,13 +56,13 @@ export class User extends UserGitHubData implements RepositoryOwner {
   accessToken: string;
 
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @OneToMany(_type => GitRepository, repository => repository.id, {
+  @OneToMany(_type => GitRepository, repository => repository.owner, {
     cascade: true,
   })
   repositories: GitRepository[];
 
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @ManyToMany(_type => GitRepository, repository => repository.stargazers, {
+  @ManyToMany(_type => GitRepository, repository => repository.id, {
     cascade: true,
   })
   @JoinTable()
@@ -66,4 +73,17 @@ export class User extends UserGitHubData implements RepositoryOwner {
     cascade: true,
   })
   organizations: Organization[];
+
+  @Field(__type => APILevel)
+  @Column({ type: "enum", enum: APILevel, default: APILevel.BASIC })
+  APILevel: APILevel;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  personalAccessToken?: string;
+
+  @Field(_type => UserGitHubData)
+  @OneToOne(_type => UserGitHubData, { cascade: true })
+  @JoinColumn()
+  userGitHubData: UserGitHubData;
 }

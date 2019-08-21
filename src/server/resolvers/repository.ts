@@ -3,7 +3,7 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { GitHubAPI } from "../../utils";
-import { APP_INSTALLED } from "../consts";
+import { APILevel } from "../consts";
 import { GitRepository, Language, Organization, User, UserGitHubData } from "../entities";
 import {
     IRepositoryDataQuery, IRepositoryDataQueryVariables, IRepositoryLanguagesQuery,
@@ -25,9 +25,9 @@ export class RepositoryResolver {
     private readonly LanguageRepository: Repository<Language>
   ) {}
 
-  @Authorized()
+  @Authorized(APILevel.ADVANCED)
   @Query(_returns => GitRepository)
-  async repositoryData(
+  async repository(
     @Ctx() { authGitHub: context }: IContext,
     @Arg("name") name: string,
     @Arg("owner") owner: string
@@ -46,10 +46,12 @@ export class RepositoryResolver {
       },
     });
 
+    this.GitRepoRepository.save(repository);
+
     return repository;
   }
 
-  @Authorized(APP_INSTALLED)
+  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async stargazers(
     @Root() repo: GitRepository,
@@ -85,10 +87,15 @@ export class RepositoryResolver {
       hasNextPage = pageInfo.hasNextPage;
     } while (hasNextPage);
 
+    this.GitRepoRepository.save({
+      id: repo.id,
+      stargazers,
+    });
+
     return stargazers;
   }
 
-  @Authorized(APP_INSTALLED)
+  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async starCount(
     @Root() repo: GitRepository,
@@ -97,7 +104,7 @@ export class RepositoryResolver {
     const {
       data: {
         repository: {
-          stargazers: { totalCount },
+          stargazers: { totalCount: starCount },
         },
       },
     } = await GitHubAPI.query<
@@ -112,10 +119,15 @@ export class RepositoryResolver {
       context,
     });
 
-    return totalCount;
+    this.GitRepoRepository.save({
+      id: repo.id,
+      starCount,
+    });
+
+    return starCount;
   }
 
-  @Authorized(APP_INSTALLED)
+  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async languages(
     @Root() repo: GitRepository,
@@ -152,6 +164,11 @@ export class RepositoryResolver {
         hasNextPage = false;
       }
     } while (hasNextPage);
+
+    this.GitRepoRepository.save({
+      id: repo.id,
+      languages: sortedLanguages,
+    });
 
     return sortedLanguages;
   }

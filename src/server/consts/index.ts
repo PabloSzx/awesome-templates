@@ -6,3 +6,8 @@ export const LOCAL_PATH =
   process.env.NODE_ENV !== "production"
     ? "http://localhost:3000/"
     : "https://awesome-templates.pszx.tech/";
+export enum APILevel {
+  BASIC = "BASIC",
+  MEDIUM = "MEDIUM",
+  ADVANCED = "ADVANCED",
+}

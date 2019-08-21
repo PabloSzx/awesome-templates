@@ -1,12 +1,35 @@
-import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany } from "typeorm";
+import { Field, ID, ObjectType } from "type-graphql";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
 
+import { GitRepository } from "./repository";
 import { RepositoryOwner } from "./repositoryOwner";
-import { User } from "./user";
+import { UserGitHubData } from "./user";
 
 @ObjectType()
 @Entity()
-export class Organization extends RepositoryOwner {
+export class Organization implements RepositoryOwner {
+  @Field(_type => ID)
+  @PrimaryColumn()
+  id: string;
+
+  @Field()
+  @Column()
+  avatarUrl: string;
+
+  @Field()
+  @Column()
+  login: string;
+
+  @Field()
+  @Column()
+  url: string;
+
+  @Field(_type => GitRepository)
+  @OneToMany(_type => GitRepository, repository => repository.owner, {
+    cascade: true,
+  })
+  repositories?: GitRepository[];
+
   @Field()
   @Column()
   email: string;
@@ -23,8 +46,8 @@ export class Organization extends RepositoryOwner {
   @Column()
   websiteUrl: string;
 
-  @Field(_type => [User])
-  @ManyToMany(_type => User, member => member.id, { cascade: true })
+  @Field(_type => [UserGitHubData])
+  @ManyToMany(_type => UserGitHubData, member => member.id, { cascade: true })
   @JoinTable()
-  members: User[];
+  members: UserGitHubData[];
 }

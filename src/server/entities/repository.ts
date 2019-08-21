@@ -1,32 +1,10 @@
 import { Type } from "class-transformer";
 import { Field, ID, ObjectType } from "type-graphql";
-import {
-    Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn
-} from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm";
 
+import { Language } from "./language";
 import { RepositoryOwner } from "./repositoryOwner";
 import { UserGitHubData } from "./user";
-
-@ObjectType()
-@Entity()
-export class Language {
-  @Field(_type => ID)
-  @PrimaryColumn()
-  id: string;
-
-  @Field()
-  @PrimaryColumn()
-  name: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  color?: string;
-
-  @Type(() => GitRepository)
-  @Field(_type => [GitRepository], { defaultValue: [] })
-  @OneToMany(_type => GitRepository, repository => repository.id, {})
-  repositories?: GitRepository[];
-}
 
 @ObjectType()
 export class RepositoryGithubData {
@@ -89,23 +67,23 @@ export class RepositoryGithubData {
   @Field()
   @Column()
   url: string;
+
+  @Field(_type => RepositoryOwner)
+  @ManyToOne(_type => RepositoryOwner, user => user.repositories)
+  owner: RepositoryOwner;
 }
 
 @ObjectType()
 @Entity()
 export class GitRepository extends RepositoryGithubData {
   @Field()
-  @Column()
+  @Column({ default: -1 })
   starCount: number;
 
   @Field(_type => [UserGitHubData])
-  @ManyToMany(_type => UserGitHubData, user => user.id)
+  @ManyToMany(_type => UserGitHubData, user => user.id, { cascade: true })
   @JoinTable()
   stargazers: UserGitHubData[];
-
-  @Field(_type => RepositoryOwner)
-  @ManyToOne(_type => RepositoryOwner, owner => owner.id, { cascade: true })
-  owner: RepositoryOwner;
 
   @Field(_type => [Language], { nullable: true })
   @ManyToMany(_type => Language, language => language.id, {

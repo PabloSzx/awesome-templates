@@ -1,5 +1,6 @@
 import { Request } from "express";
 
+import { APILevel as APILevelEnum } from "../consts";
 import { User } from "../entities";
 
 const promisifiedLogin = <T = any, S = any>(
@@ -30,10 +31,23 @@ export const buildContext = <OptionsType = any>({ req }: { req: Request }) => {
       return req.user;
     },
     get authGitHub() {
-      const { accessToken } = (req.user as User) || { accessToken: "" };
+      const {
+        accessToken,
+        personalAccessToken,
+        APILevel,
+      } = (req.user as User) || {
+        accessToken: "",
+        personalAccessToken: "",
+        APILevel: APILevelEnum.BASIC,
+      };
+
       return {
         headers: {
-          Authorization: `token ${accessToken}`,
+          Authorization: `token ${
+            APILevel === APILevelEnum.ADVANCED
+              ? personalAccessToken
+              : accessToken
+          }`,
         },
       };
     },
