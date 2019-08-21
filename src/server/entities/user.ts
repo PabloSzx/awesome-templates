@@ -14,7 +14,7 @@ registerEnumType(APILevel, {
 
 @ObjectType()
 @Entity()
-export class UserGitHubData {
+export class UserGitHubData implements RepositoryOwner {
   @Field(_type => ID)
   @PrimaryColumn()
   id: string;
@@ -46,7 +46,7 @@ export class UserGitHubData {
 
 @ObjectType()
 @Entity()
-export class User extends UserGitHubData implements RepositoryOwner {
+export class User extends UserGitHubData {
   @Field()
   @Column({ default: false })
   admin: boolean;
@@ -59,20 +59,20 @@ export class User extends UserGitHubData implements RepositoryOwner {
   @OneToMany(_type => GitRepository, repository => repository.owner, {
     cascade: true,
   })
-  repositories: GitRepository[];
+  repositories?: GitRepository[];
 
   @Field(_type => [GitRepository], { defaultValue: [] })
   @ManyToMany(_type => GitRepository, repository => repository.id, {
     cascade: true,
   })
   @JoinTable()
-  starredRepositories: GitRepository[];
+  starredRepositories?: GitRepository[];
 
   @Field(_type => [Organization], { defaultValue: [] })
   @ManyToMany(_type => Organization, organization => organization.id, {
     cascade: true,
   })
-  organizations: Organization[];
+  organizations?: Organization[];
 
   @Field(__type => APILevel)
   @Column({ type: "enum", enum: APILevel, default: APILevel.BASIC })
@@ -83,7 +83,7 @@ export class User extends UserGitHubData implements RepositoryOwner {
   personalAccessToken?: string;
 
   @Field(_type => UserGitHubData)
-  @OneToOne(_type => UserGitHubData, { cascade: true })
+  @OneToOne(_type => UserGitHubData, { cascade: true, nullable: false })
   @JoinColumn()
   userGitHubData: UserGitHubData;
 }

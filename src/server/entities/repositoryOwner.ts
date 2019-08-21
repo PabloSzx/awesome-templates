@@ -1,7 +1,7 @@
 import { Field, ID, ObjectType } from "type-graphql";
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryColumn } from "typeorm";
 
-import { Organization } from "./organization";
+import { OrganizationGithubData } from "./organization";
 import { GitRepository } from "./repository";
 import { UserGitHubData } from "./user";
 
@@ -35,8 +35,8 @@ export class RepositoryOwner {
   @JoinColumn()
   user?: UserGitHubData;
 
-  @Field(_type => Organization, { nullable: true })
-  @OneToOne(_type => Organization, { cascade: true })
+  @Field(_type => OrganizationGithubData, { nullable: true })
+  @OneToOne(_type => OrganizationGithubData, { cascade: true })
   @JoinColumn()
-  organization?: Organization;
+  organization?: OrganizationGithubData;
 }

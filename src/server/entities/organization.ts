@@ -7,7 +7,7 @@ import { UserGitHubData } from "./user";
 
 @ObjectType()
 @Entity()
-export class Organization implements RepositoryOwner {
+export class OrganizationGithubData implements RepositoryOwner {
   @Field(_type => ID)
   @PrimaryColumn()
   id: string;
@@ -24,30 +24,34 @@ export class Organization implements RepositoryOwner {
   @Column()
   url: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  email?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  description?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  websiteUrl?: string;
+}
+
+@ObjectType()
+@Entity()
+export class Organization extends OrganizationGithubData {
   @Field(_type => GitRepository)
   @OneToMany(_type => GitRepository, repository => repository.owner, {
     cascade: true,
   })
   repositories?: GitRepository[];
 
-  @Field()
-  @Column()
-  email: string;
-
-  @Field()
-  @Column()
-  name: string;
-
-  @Field()
-  @Column()
-  description: string;
-
-  @Field()
-  @Column()
-  websiteUrl: string;
-
   @Field(_type => [UserGitHubData])
   @ManyToMany(_type => UserGitHubData, member => member.id, { cascade: true })
   @JoinTable()
-  members: UserGitHubData[];
+  members?: UserGitHubData[];
 }
