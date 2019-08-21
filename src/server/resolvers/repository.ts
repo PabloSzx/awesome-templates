@@ -4,12 +4,12 @@ import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { GitHubAPI } from "../../utils";
 import { APILevel } from "../consts";
-import { GitRepository, Language, Organization, User, UserGitHubData } from "../entities";
+import { GitRepository, Language, Organization, User } from "../entities";
 import {
     IRepositoryDataQuery, IRepositoryDataQueryVariables, IRepositoryLanguagesQuery,
     IRepositoryLanguagesQueryVariables, IRepositoryStarCountQuery,
-    IRepositoryStarCountQueryVariables, IRepositoryStarsQuery, IRepositoryStarsQueryVariables,
-    RepositoryDataQuery, RepositoryLanguagesQuery, RepositoryStarCountQuery, RepositoryStarsQuery
+    IRepositoryStarCountQueryVariables, RepositoryDataQuery, RepositoryLanguagesQuery,
+    RepositoryStarCountQuery
 } from "../graphql/repository";
 import { IContext } from "../interfaces";
 
@@ -46,130 +46,103 @@ export class RepositoryResolver {
       },
     });
 
-    this.GitRepoRepository.save(repository);
+    await this.GitRepoRepository.save(repository);
 
     return repository;
   }
 
-  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
-  async stargazers(
-    @Root() repo: GitRepository,
-    @Ctx() { authGitHub: context }: IContext
-  ) {
-    const stargazers: UserGitHubData[] = [];
-
-    let cursor: string | undefined;
-    let hasNextPage: boolean;
-    do {
-      const {
-        data: {
-          repository: {
-            stargazers: { pageInfo, nodes },
-          },
-        },
-      } = await GitHubAPI.query<
-        IRepositoryStarsQuery,
-        IRepositoryStarsQueryVariables
-      >({
-        query: RepositoryStarsQuery,
-        variables: {
-          name: repo.name,
-          owner: repo.owner.login,
-          after: cursor,
-        },
-        context,
-      });
-
-      stargazers.push(...nodes);
-
-      cursor = pageInfo.endCursor;
-      hasNextPage = pageInfo.hasNextPage;
-    } while (hasNextPage);
-
-    this.GitRepoRepository.save({
-      id: repo.id,
-      stargazers,
-    });
-
-    return stargazers;
+  async stargazers(@Root() repo: GitRepository) {
+    if (repo.stargazers === undefined) {
+      return (await this.GitRepoRepository.findOneOrFail(repo.id, {
+        relations: ["stargazers"],
+      })).stargazers;
+    } else {
+      return repo.stargazers;
+    }
   }
 
-  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async starCount(
     @Root() repo: GitRepository,
     @Ctx() { authGitHub: context }: IContext
   ) {
-    const {
-      data: {
-        repository: {
-          stargazers: { totalCount: starCount },
+    if (repo.starCount === undefined) {
+      const {
+        data: {
+          repository: {
+            stargazers: { totalCount: starCount },
+          },
         },
-      },
-    } = await GitHubAPI.query<
-      IRepositoryStarCountQuery,
-      IRepositoryStarCountQueryVariables
-    >({
-      query: RepositoryStarCountQuery,
-      variables: {
-        name: repo.name,
-        owner: repo.owner.login,
-      },
-      context,
-    });
+      } = await GitHubAPI.query<
+        IRepositoryStarCountQuery,
+        IRepositoryStarCountQueryVariables
+      >({
+        query: RepositoryStarCountQuery,
+        variables: {
+          name: repo.name,
+          owner: repo.owner.login,
+        },
+        context,
+      });
 
-    this.GitRepoRepository.save({
-      id: repo.id,
-      starCount,
-    });
+      this.GitRepoRepository.save({
+        id: repo.id,
+        starCount,
+      });
 
-    return starCount;
+      return starCount;
+    } else {
+      return repo.starCount;
+    }
   }
 
-  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async languages(
     @Root() repo: GitRepository,
     @Ctx() { authGitHub: context }: IContext
   ) {
-    const sortedLanguages: Language[] = [];
+    if (repo.languages === undefined) {
+      const sortedLanguages: Language[] = [];
 
-    let cursor: string | undefined;
-    let hasNextPage: boolean;
-    do {
-      const {
-        data: {
-          repository: { languages },
-        },
-      } = await GitHubAPI.query<
-        IRepositoryLanguagesQuery,
-        IRepositoryLanguagesQueryVariables
-      >({
-        query: RepositoryLanguagesQuery,
-        variables: {
-          name: repo.name,
-          owner: repo.owner.login,
-          after: cursor,
-        },
-        context,
+      let cursor: string | undefined;
+      let hasNextPage: boolean;
+      do {
+        const {
+          data: {
+            repository: { languages },
+          },
+        } = await GitHubAPI.query<
+          IRepositoryLanguagesQuery,
+          IRepositoryLanguagesQueryVariables
+        >({
+          query: RepositoryLanguagesQuery,
+          variables: {
+            name: repo.name,
+            owner: repo.owner.login,
+            after: cursor,
+          },
+          context,
+        });
+
+        if (languages) {
+          sortedLanguages.push(...languages.nodes);
+
+          cursor = languages.pageInfo.endCursor;
+          hasNextPage = languages.pageInfo.hasNextPage;
+        } else {
+          hasNextPage = false;
+        }
+      } while (hasNextPage);
+
+      this.GitRepoRepository.save({
+        id: repo.id,
+        languages: sortedLanguages,
       });
 
-      if (languages) {
-        sortedLanguages.push(...languages.nodes);
-
-        cursor = languages.pageInfo.endCursor;
-        hasNextPage = languages.pageInfo.hasNextPage;
-      } else {
-        hasNextPage = false;
-      }
-    } while (hasNextPage);
-
-    this.GitRepoRepository.save({
-      id: repo.id,
-      languages: sortedLanguages,
-    });
-
-    return sortedLanguages;
+      return sortedLanguages;
+    } else {
+      return repo.languages;
+    }
   }
 }

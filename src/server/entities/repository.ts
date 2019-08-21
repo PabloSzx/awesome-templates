@@ -4,7 +4,7 @@ import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryColumn } from 
 
 import { Language } from "./language";
 import { RepositoryOwner } from "./repositoryOwner";
-import { UserGitHubData } from "./user";
+import { User } from "./user";
 
 @ObjectType()
 export class RepositoryGithubData {
@@ -70,7 +70,7 @@ export class RepositoryGithubData {
   url: string;
 
   @Field(_type => RepositoryOwner)
-  @ManyToOne(_type => RepositoryOwner, user => user.repositories, {
+  @ManyToOne(_type => RepositoryOwner, repoOwner => repoOwner.repositories, {
     cascade: true,
     eager: true,
   })
@@ -84,13 +84,12 @@ export class GitRepository extends RepositoryGithubData {
   @Column({ default: -1 })
   starCount: number;
 
-  @Field(_type => [UserGitHubData])
-  @ManyToMany(_type => UserGitHubData, user => user.id, { cascade: true })
-  @JoinTable()
-  stargazers: UserGitHubData[];
+  @Field(_type => [User])
+  @ManyToMany(_type => User, user => user.starredRepositories, {})
+  stargazers: User[];
 
   @Field(_type => [Language], { nullable: true })
-  @ManyToMany(_type => Language, language => language.id, {
+  @ManyToMany(_type => Language, language => language.repositories, {
     cascade: true,
     nullable: true,
     eager: true,

@@ -47,24 +47,25 @@ export class User extends UserGitHubData {
   @Column({ default: false })
   admin: boolean;
 
-  @Field()
   @Column()
   accessToken: string;
 
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @OneToMany(_type => GitRepository, repository => repository.owner)
+  @OneToMany(_type => GitRepository, repository => repository.owner, {})
   repositories?: GitRepository[];
 
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @ManyToMany(_type => GitRepository, repository => repository.id, {
+  @ManyToMany(_type => GitRepository, repository => repository.stargazers, {
     cascade: true,
+    eager: true,
   })
   @JoinTable()
   starredRepositories?: GitRepository[];
 
   @Field(_type => [Organization], { defaultValue: [] })
-  @ManyToMany(_type => Organization, organization => organization.id, {
+  @ManyToMany(_type => Organization, organization => organization.members, {
     cascade: true,
+    eager: true,
   })
   organizations?: Organization[];
 
@@ -72,7 +73,6 @@ export class User extends UserGitHubData {
   @Column({ type: "enum", enum: APILevel, default: APILevel.BASIC })
   APILevel: APILevel;
 
-  @Field({ nullable: true })
   @Column({ nullable: true })
   personalAccessToken?: string;
 

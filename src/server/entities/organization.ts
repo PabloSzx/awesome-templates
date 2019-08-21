@@ -3,7 +3,7 @@ import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from 
 
 import { GitRepository } from "./repository";
 import { RepositoryOwner } from "./repositoryOwner";
-import { UserGitHubData } from "./user";
+import { User } from "./user";
 
 @ObjectType()
 @Entity()
@@ -45,11 +45,11 @@ export class OrganizationGithubData implements RepositoryOwner {
 @Entity()
 export class Organization extends OrganizationGithubData {
   @Field(_type => GitRepository)
-  @OneToMany(_type => GitRepository, repository => repository.owner)
+  @OneToMany(_type => GitRepository, repository => repository.owner, {})
   repositories?: GitRepository[];
 
-  @Field(_type => [UserGitHubData])
-  @ManyToMany(_type => UserGitHubData, member => member.id, { cascade: true })
+  @Field(_type => [User])
+  @ManyToMany(_type => User, member => member.organizations, {})
   @JoinTable()
-  members?: UserGitHubData[];
+  members?: User[];
 }

@@ -1,5 +1,4 @@
-import { Type } from "class-transformer";
-import { Field, ID, ObjectType } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
 
 import { GitRepository } from "./repository";
@@ -7,10 +6,6 @@ import { GitRepository } from "./repository";
 @ObjectType()
 @Entity()
 export class Language {
-  @Field(_type => ID)
-  @PrimaryColumn()
-  id: string;
-
   @Field()
   @PrimaryColumn()
   name: string;
@@ -19,8 +14,7 @@ export class Language {
   @Column({ nullable: true })
   color?: string;
 
-  @Type(() => GitRepository)
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @OneToMany(_type => GitRepository, repository => repository.id, {})
+  @OneToMany(_type => GitRepository, repository => repository.languages, {})
   repositories?: GitRepository[];
 }
