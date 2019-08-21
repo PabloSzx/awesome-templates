@@ -1,4 +1,4 @@
-import { Field, ID, ObjectType, registerEnumType } from "type-graphql";
+import { Field, ID, ObjectType } from "type-graphql";
 import {
     Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn
 } from "typeorm";
@@ -7,10 +7,6 @@ import { APILevel } from "../consts";
 import { Organization } from "./organization";
 import { GitRepository } from "./repository";
 import { RepositoryOwner } from "./repositoryOwner";
-
-registerEnumType(APILevel, {
-  name: "APILevel",
-});
 
 @ObjectType()
 @Entity()
@@ -56,9 +52,7 @@ export class User extends UserGitHubData {
   accessToken: string;
 
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @OneToMany(_type => GitRepository, repository => repository.owner, {
-    cascade: true,
-  })
+  @OneToMany(_type => GitRepository, repository => repository.owner)
   repositories?: GitRepository[];
 
   @Field(_type => [GitRepository], { defaultValue: [] })

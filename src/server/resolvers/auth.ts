@@ -1,27 +1,15 @@
-import { IsEmail, Length } from "class-validator";
-import { Ctx, Field, InputType, Mutation, Query, Resolver } from "type-graphql";
+import _ from "lodash";
+import requireEnv from "require-env-variable";
+import { Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { getGitHubAPIv3 } from "../../utils";
+import { APILevel } from "../consts";
 import { User } from "../entities";
 import { IContext } from "../interfaces";
 
-@InputType()
-export class LoginInput {
-  @Field()
-  @IsEmail()
-  email: string;
-
-  @Field()
-  @Length(3, 100)
-  password: string;
-}
-
-@InputType()
-export class SignUpInput extends LoginInput {
-  @Field({ nullable: true, defaultValue: "Default" })
-  name: string;
-}
+const { GITHUB_APP_ID } = requireEnv(["GITHUB_APP_ID"]);
 
 @Resolver()
 export class AuthResolver {
@@ -43,5 +31,78 @@ export class AuthResolver {
       return true;
     }
     return false;
+  }
+
+  @Authorized()
+  @Query(_returns => APILevel)
+  async checkAPILevel(@Ctx() { user }: IContext) {
+    const [appInstalled, validPersonalToken] = await Promise.all([
+      new Promise<boolean>(async resolve => {
+        try {
+          const { data } = await getGitHubAPIv3<{
+            total_count: number;
+            installations: { id: number; app_id: number }[];
+          }>("/user/installations", {
+            headers: {
+              Authorization: `token ${user.accessToken}`,
+            },
+          });
+
+          resolve(
+            _.some(
+              data && data.installations,
+              ({ app_id }) => app_id === _.toInteger(GITHUB_APP_ID)
+            )
+          );
+        } catch (err) {
+          console.error(err);
+          resolve(false);
+        }
+      }),
+      new Promise<boolean>(async resolve => {
+        try {
+          if (user.personalAccessToken) {
+            const { headers } = await getGitHubAPIv3(`/user`, {
+              headers: {
+                Authorization: `token ${user.personalAccessToken}`,
+              },
+            });
+
+            const minScopes = ["read:org", "read:user"];
+
+            const scopes = _.split(
+              _.get<string>(headers, "x-oauth-scopes", ""),
+              ", "
+            );
+            if (scopes) {
+              const intersectedScopes = _.intersection(scopes, minScopes);
+              return resolve(
+                _.isEqual(_.sortBy(minScopes), _.sortBy(intersectedScopes))
+              );
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          resolve(false);
+        }
+      }),
+    ]);
+
+    if (validPersonalToken) {
+      user.APILevel = APILevel.ADVANCED;
+      this.UserRepository.save({ id: user.id, APILevel: APILevel.ADVANCED });
+      return APILevel.ADVANCED;
+    }
+
+    if (appInstalled) {
+      user.APILevel = APILevel.MEDIUM;
+      this.UserRepository.save({ id: user.id, APILevel: APILevel.MEDIUM });
+      return APILevel.MEDIUM;
+    }
+
+    user.APILevel = APILevel.BASIC;
+    this.UserRepository.save({ id: user.id, APILevel: APILevel.BASIC });
+    return APILevel.BASIC;
   }
 }

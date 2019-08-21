@@ -28,7 +28,8 @@ export function getGitHubAPIv3<T = any>(
     _.merge(
       {
         headers: {
-          Accept: "application/vnd.github.v3+json",
+          // Accept: "application/vnd.github.v3+json",
+          Accept: "application/vnd.github.machine-man-preview+json",
         },
       },
       config

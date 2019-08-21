@@ -1,3 +1,5 @@
+import { registerEnumType } from "type-graphql";
+
 export const ADMIN = "admin";
 export const APP_INSTALLED = "app_installed";
 export const WRONG_INFO = "WRONG_INFO";
@@ -11,3 +13,7 @@ export enum APILevel {
   MEDIUM = "MEDIUM",
   ADVANCED = "ADVANCED",
 }
+
+registerEnumType(APILevel, {
+  name: "APILevel",
+});

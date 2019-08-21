@@ -45,9 +45,7 @@ export class OrganizationGithubData implements RepositoryOwner {
 @Entity()
 export class Organization extends OrganizationGithubData {
   @Field(_type => GitRepository)
-  @OneToMany(_type => GitRepository, repository => repository.owner, {
-    cascade: true,
-  })
+  @OneToMany(_type => GitRepository, repository => repository.owner)
   repositories?: GitRepository[];
 
   @Field(_type => [UserGitHubData])

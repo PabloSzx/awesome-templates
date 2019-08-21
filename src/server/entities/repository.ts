@@ -69,7 +69,9 @@ export class RepositoryGithubData {
   url: string;
 
   @Field(_type => RepositoryOwner)
-  @ManyToOne(_type => RepositoryOwner, user => user.repositories)
+  @ManyToOne(_type => RepositoryOwner, user => user.repositories, {
+    cascade: true,
+  })
   owner: RepositoryOwner;
 }
 

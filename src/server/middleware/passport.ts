@@ -68,7 +68,7 @@ auth.use("/api/login/github", async (req, res) => {
     }
 
     const {
-      data: { access_token: accessToken, ...restxd },
+      data: { access_token: accessToken },
     } = await axios.post<{
       access_token: string;
       token_type: string;
@@ -109,38 +109,31 @@ auth.use("/api/login/github", async (req, res) => {
       },
     });
 
-    console.log("restxd :", restxd);
-    // console.log("scope :", scope);
-
     console.log("restData", restData);
 
     const UserRepository = (await connection).getRepository(User);
 
+    const userData = UserRepository.create({
+      id,
+      avatarUrl,
+      login,
+      url,
+      name,
+      email,
+      accessToken,
+      bio,
+    });
+
+    userData.userGitHubData = userData;
+
     const user = (await UserRepository.createQueryBuilder()
       .insert()
       .into(User)
-      .values({
-        id,
-        avatarUrl,
-        login,
-        url,
-        name,
-        email,
-        accessToken,
-        bio,
-      })
+      .values(userData)
       .onConflict(
         `("id") DO UPDATE SET "avatarUrl" = :avatarUrl, "url" = :url, "login" = :login, "name" = :name, "email" = :email,"accessToken" = :accessToken, "bio" = :bio`
       )
-      .setParameters({
-        login,
-        avatarUrl,
-        url,
-        name,
-        email,
-        accessToken,
-        bio,
-      })
+      .setParameters(userData)
       .returning("*")
       .execute()).generatedMaps[0] as User;
 

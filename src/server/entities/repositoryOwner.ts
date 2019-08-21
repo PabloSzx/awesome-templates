@@ -25,9 +25,7 @@ export class RepositoryOwner {
   url: string;
 
   @Field(_type => GitRepository)
-  @OneToMany(_type => GitRepository, repository => repository.owner, {
-    cascade: true,
-  })
+  @OneToMany(_type => GitRepository, repository => repository.owner)
   repositories?: GitRepository[];
 
   @Field(_type => UserGitHubData, { nullable: true })
