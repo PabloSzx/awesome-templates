@@ -57,6 +57,7 @@ export class RepositoryGithubData {
   @ManyToOne(_type => Language, language => language.repositories, {
     cascade: true,
     nullable: true,
+    eager: true,
   })
   primaryLanguage?: Language;
 
@@ -71,6 +72,7 @@ export class RepositoryGithubData {
   @Field(_type => RepositoryOwner)
   @ManyToOne(_type => RepositoryOwner, user => user.repositories, {
     cascade: true,
+    eager: true,
   })
   owner: RepositoryOwner;
 }
@@ -91,6 +93,7 @@ export class GitRepository extends RepositoryGithubData {
   @ManyToMany(_type => Language, language => language.id, {
     cascade: true,
     nullable: true,
+    eager: true,
   })
   @JoinTable()
   languages?: Language[];

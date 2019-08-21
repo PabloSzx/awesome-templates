@@ -29,12 +29,12 @@ export class RepositoryOwner {
   repositories?: GitRepository[];
 
   @Field(_type => UserGitHubData, { nullable: true })
-  @OneToOne(_type => UserGitHubData, { cascade: true })
+  @OneToOne(_type => UserGitHubData, { cascade: true, eager: true })
   @JoinColumn()
   user?: UserGitHubData;
 
   @Field(_type => OrganizationGithubData, { nullable: true })
-  @OneToOne(_type => OrganizationGithubData, { cascade: true })
+  @OneToOne(_type => OrganizationGithubData, { cascade: true, eager: true })
   @JoinColumn()
   organization?: OrganizationGithubData;
 }
