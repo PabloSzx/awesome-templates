@@ -61,7 +61,7 @@ export class SearchResolver {
       })
     );
 
-    this.GitRepoRepository.save(nodes);
+    await this.GitRepoRepository.save(nodes);
 
     return nodes;
   }

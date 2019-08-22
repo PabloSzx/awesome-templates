@@ -1,6 +1,7 @@
 import { Field, ObjectType } from "type-graphql";
-import { Entity, JoinColumn, OneToOne } from "typeorm";
+import { Entity, JoinColumn, JoinTable, ManyToMany, OneToOne } from "typeorm";
 
+import { Language } from "./language";
 import { GitRepository } from "./repository";
 
 @ObjectType()
@@ -12,6 +13,15 @@ export class PublishedRepository {
     primary: true,
     eager: true,
   })
-  @JoinColumn()
+  @JoinColumn({ name: "repository" })
   repository: GitRepository;
+
+  @Field(_type => [Language], { nullable: true })
+  @ManyToMany(_type => Language, language => language.publishedRepositories, {
+    cascade: true,
+    nullable: true,
+    eager: true,
+  })
+  @JoinTable()
+  languages?: Language[];
 }

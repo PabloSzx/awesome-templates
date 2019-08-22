@@ -137,7 +137,11 @@ export class UserResolver {
 
       return GitRepos;
     } else {
-      return user.repositories;
+      return _.orderBy(
+        user.repositories,
+        ["starCount", "name"],
+        ["desc", "asc"]
+      );
     }
   }
 

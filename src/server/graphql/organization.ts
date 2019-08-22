@@ -47,7 +47,12 @@ export const OrganizationReposQuery = gql`
   query repositories($after: String, $login: String!) {
     organization(login: $login) {
       id
-      repositories(first: 100, privacy: PUBLIC, after: $after) {
+      repositories(
+        first: 100
+        privacy: PUBLIC
+        after: $after
+        orderBy: { direction: DESC, field: STARGAZERS }
+      ) {
         totalCount
         pageInfo {
           hasNextPage

@@ -77,7 +77,10 @@ export class User extends UserGitHubData {
   personalAccessToken?: string;
 
   @Field(_type => UserGitHubData)
-  @OneToOne(_type => UserGitHubData, { cascade: true, nullable: false })
-  @JoinColumn()
+  @OneToOne(_type => UserGitHubData, {
+    cascade: true,
+    nullable: false,
+  })
+  @JoinColumn({ name: "userData" })
   userGitHubData: UserGitHubData;
 }

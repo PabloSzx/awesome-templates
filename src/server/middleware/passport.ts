@@ -113,29 +113,22 @@ auth.use("/api/login/github", async (req, res) => {
 
     const UserRepository = (await connection).getRepository(User);
 
-    const userData = UserRepository.create({
+    const userGitHubData = {
       id,
       avatarUrl,
       login,
       url,
       name,
       email,
-      accessToken,
       bio,
+    };
+    let user = UserRepository.create({
+      ...userGitHubData,
+      accessToken,
+      userGitHubData,
     });
 
-    userData.userGitHubData = userData;
-
-    const user = (await UserRepository.createQueryBuilder()
-      .insert()
-      .into(User)
-      .values(userData)
-      .onConflict(
-        `("id") DO UPDATE SET "avatarUrl" = :avatarUrl, "url" = :url, "login" = :login, "name" = :name, "email" = :email,"accessToken" = :accessToken, "bio" = :bio`
-      )
-      .setParameters(userData)
-      .returning("*")
-      .execute()).generatedMaps[0] as User;
+    user = await UserRepository.save(user);
 
     req.login(user, err => {
       if (err) {

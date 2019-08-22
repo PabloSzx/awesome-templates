@@ -64,108 +64,120 @@ export class OrganizationResolver {
     return org;
   }
 
-  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async repositories(
     @Root() organization: Organization,
     @Ctx() { authGitHub: context }: IContext,
     @Arg("isTemplate", { nullable: true }) isTemplate?: boolean
   ) {
-    let GitRepos: RepositoryGithubData[] = [];
+    if (organization.repositories === undefined) {
+      let GitRepos: RepositoryGithubData[] = [];
 
-    let cursor: string | undefined;
+      let cursor: string | undefined;
 
-    let hasNextPage: boolean;
-    do {
-      const {
-        data: {
-          organization: {
-            repositories: { nodes, pageInfo },
+      let hasNextPage: boolean;
+      do {
+        const {
+          data: {
+            organization: {
+              repositories: { nodes, pageInfo },
+            },
           },
-        },
-      } = await GitHubAPI.query<
-        IOrganizationReposQuery,
-        IOrganizationReposQueryVariables
-      >({
-        query: OrganizationReposQuery,
-        context,
-        variables: {
-          after: cursor,
-          login: organization.login,
-        },
+        } = await GitHubAPI.query<
+          IOrganizationReposQuery,
+          IOrganizationReposQueryVariables
+        >({
+          query: OrganizationReposQuery,
+          context,
+          variables: {
+            after: cursor,
+            login: organization.login,
+          },
+        });
+
+        GitRepos.push(
+          ..._.compact(
+            _.map(nodes, repo => {
+              if (
+                repo &&
+                (isTemplate !== undefined
+                  ? repo.isTemplate === isTemplate
+                  : true)
+              ) {
+                return {
+                  ...repo,
+                  createdAt: new Date(repo.createdAt),
+                  updatedAt: new Date(repo.updatedAt),
+                };
+              }
+              return undefined;
+            })
+          )
+        );
+
+        hasNextPage = pageInfo.hasNextPage;
+        cursor = pageInfo.endCursor;
+      } while (hasNextPage);
+
+      this.OrganizationRepository.save({
+        id: organization.id,
+        repositories: GitRepos,
       });
 
-      GitRepos.push(
-        ..._.compact(
-          _.map(nodes, repo => {
-            if (
-              repo &&
-              (isTemplate !== undefined ? repo.isTemplate === isTemplate : true)
-            ) {
-              return {
-                ...repo,
-                createdAt: new Date(repo.createdAt),
-                updatedAt: new Date(repo.updatedAt),
-              };
-            }
-            return undefined;
-          })
-        )
+      return GitRepos;
+    } else {
+      return _.orderBy(
+        organization.repositories,
+        ["starCount", "name"],
+        ["desc", "asc"]
       );
-
-      hasNextPage = pageInfo.hasNextPage;
-      cursor = pageInfo.endCursor;
-    } while (hasNextPage);
-
-    this.OrganizationRepository.save({
-      id: organization.id,
-      repositories: GitRepos,
-    });
-
-    return GitRepos;
+    }
   }
 
-  @Authorized(APILevel.MEDIUM)
   @FieldResolver()
   async members(
     @Root() organization: Organization,
     @Ctx() { authGitHub: context }: IContext
   ) {
-    let members: UserGitHubData[] = [];
+    if (organization.members === undefined) {
+      let members: UserGitHubData[] = [];
 
-    let cursor: string | undefined;
+      let cursor: string | undefined;
 
-    let hasNextPage: boolean;
-    do {
-      const {
-        data: {
-          organization: {
-            members: { nodes, pageInfo },
+      let hasNextPage: boolean;
+      do {
+        const {
+          data: {
+            organization: {
+              members: { nodes, pageInfo },
+            },
           },
-        },
-      } = await GitHubAPI.query<
-        IOrganizationMembersQuery,
-        IOrganizationMembersQueryVariables
-      >({
-        query: OrganizationMembersQuery,
-        context,
-        variables: {
-          after: cursor,
-          login: organization.login,
-        },
+        } = await GitHubAPI.query<
+          IOrganizationMembersQuery,
+          IOrganizationMembersQueryVariables
+        >({
+          query: OrganizationMembersQuery,
+          context,
+          variables: {
+            after: cursor,
+            login: organization.login,
+          },
+        });
+
+        members.push(...nodes);
+
+        hasNextPage = pageInfo.hasNextPage;
+        cursor = pageInfo.endCursor;
+      } while (hasNextPage);
+
+      this.OrganizationRepository.save({
+        id: organization.id,
+        members,
       });
 
-      members.push(...nodes);
-
-      hasNextPage = pageInfo.hasNextPage;
-      cursor = pageInfo.endCursor;
-    } while (hasNextPage);
-
-    this.OrganizationRepository.save({
-      id: organization.id,
-      members,
-    });
-
-    return members;
+      return members;
+    } else {
+      return organization.members;
+    }
   }
 }

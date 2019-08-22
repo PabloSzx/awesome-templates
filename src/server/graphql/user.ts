@@ -24,7 +24,12 @@ export const UserReposQuery = gql`
   query repositories($after: String, $login: String!) {
     user(login: $login) {
       id
-      repositories(first: 100, privacy: PUBLIC, after: $after) {
+      repositories(
+        first: 100
+        privacy: PUBLIC
+        after: $after
+        orderBy: { direction: DESC, field: STARGAZERS }
+      ) {
         totalCount
         pageInfo {
           hasNextPage
@@ -84,7 +89,11 @@ export const UserStarredReposQuery = gql`
   query repositories($after: String, $login: String!) {
     user(login: $login) {
       id
-      starredRepositories(first: 100, after: $after) {
+      starredRepositories(
+        first: 100
+        after: $after
+        orderBy: { direction: DESC, field: STARRED_AT }
+      ) {
         totalCount
         pageInfo {
           hasNextPage

@@ -8,6 +8,7 @@ export const authChecker: AuthChecker<IContext> = async (
   roles
 ) => {
   const authenticated = isAuthenticated();
+
   if (!authenticated) return false;
 
   for (const role of roles) {

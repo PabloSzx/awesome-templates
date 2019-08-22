@@ -1,6 +1,7 @@
 import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, OneToMany, PrimaryColumn } from "typeorm";
+import { Column, Entity, ManyToMany, PrimaryColumn } from "typeorm";
 
+import { PublishedRepository } from "./publishRepository";
 import { GitRepository } from "./repository";
 
 @ObjectType()
@@ -15,6 +16,17 @@ export class Language {
   color?: string;
 
   @Field(_type => [GitRepository], { defaultValue: [] })
-  @OneToMany(_type => GitRepository, repository => repository.languages, {})
+  @ManyToMany(_type => GitRepository, repository => repository.languages, {})
   repositories?: GitRepository[];
+
+  @Field(_type => [PublishedRepository], { defaultValue: [] })
+  @ManyToMany(
+    _type => PublishedRepository,
+    publishedRepo => publishedRepo.languages
+  )
+  publishedRepositories?: PublishedRepository[];
+
+  @Field()
+  @Column({ default: 0 })
+  publishedRepositoriesCount: number;
 }

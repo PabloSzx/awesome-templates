@@ -27,11 +27,13 @@ export class PublishRepositoryResolver {
   @Authorized()
   @Mutation(_returns => PublishedRepository, { nullable: true })
   async publishRepository(@Arg("id") id: string) {
-    const repository = await this.GitRepoRepository.findOne(id);
-    if (repository) {
+    const repository = await this.GitRepoRepository.findOneOrFail(id);
+    if (repository.languages) {
       const publishedRepo = this.PublishedRepoRepository.create({
         repository,
+        languages: repository.languages,
       });
+
       return await this.PublishedRepoRepository.save(publishedRepo);
     }
   }

@@ -33,7 +33,6 @@ export const Auth: FunctionComponent = ({ children }) => {
           repositories {
             name
           }
-          accessToken
         }
       }
     `,
