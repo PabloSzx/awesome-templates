@@ -50,11 +50,11 @@ export class User extends UserGitHubData {
   @Column()
   accessToken: string;
 
-  @Field(_type => [GitRepository], { defaultValue: [] })
+  @Field(_type => [GitRepository], {})
   @OneToMany(_type => GitRepository, repository => repository.owner, {})
   repositories?: GitRepository[];
 
-  @Field(_type => [GitRepository], { defaultValue: [] })
+  @Field(_type => [GitRepository], {})
   @ManyToMany(_type => GitRepository, repository => repository.stargazers, {
     cascade: true,
     eager: true,
@@ -62,7 +62,7 @@ export class User extends UserGitHubData {
   @JoinTable()
   starredRepositories?: GitRepository[];
 
-  @Field(_type => [Organization], { defaultValue: [] })
+  @Field(_type => [Organization], {})
   @ManyToMany(_type => Organization, organization => organization.members, {
     cascade: true,
     eager: true,

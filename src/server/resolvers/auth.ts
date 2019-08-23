@@ -51,7 +51,7 @@ export class AuthResolver {
           resolve(
             _.some(
               data && data.installations,
-              ({ app_id }) => app_id === _.toInteger(GITHUB_APP_ID)
+              ({ app_id }) => _.toInteger(app_id) === _.toInteger(GITHUB_APP_ID)
             )
           );
         } catch (err) {
@@ -68,17 +68,14 @@ export class AuthResolver {
               },
             });
 
-            const minScopes = ["read:org", "read:user"];
+            // minScopes = ["read:org", "read:user"];
 
-            const scopes = _.split(
-              _.get<string>(headers, "x-oauth-scopes", ""),
-              ", "
-            );
-            if (scopes) {
-              const intersectedScopes = _.intersection(scopes, minScopes);
-              return resolve(
-                _.isEqual(_.sortBy(minScopes), _.sortBy(intersectedScopes))
-              );
+            if (
+              _.get<string>(headers, "x-oauth-scopes", "").match(
+                /(?=.*read:org.*)(?=.*read:user.*)/
+              )
+            ) {
+              resolve(true);
             }
           }
         } catch (err) {

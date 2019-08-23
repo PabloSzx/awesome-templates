@@ -30,33 +30,35 @@ export class LanguageResolver {
   }
 
   @Query(_returns => Language, { nullable: true })
-  async language(@Arg("name") name: string) {
-    return await this.LanguageRepository.findOne(name);
+  async language(
+    @Arg("name") name: string,
+    @Arg("exact", { defaultValue: false }) exact: boolean
+  ) {
+    if (exact) return await this.LanguageRepository.findOne(name);
+
+    return await this.LanguageRepository.findOne({
+      where: `"name" ILIKE '${name}'`,
+    });
   }
 
   @FieldResolver()
   async repositories(@Root() language: Language) {
-    const { repositories } = await this.LanguageRepository.findOneOrFail(
-      language.name,
-      {
+    return _.orderBy(
+      (await this.LanguageRepository.findOneOrFail(language.name, {
         relations: ["repositories"],
-      }
+      })).repositories,
+      ["starCount", "name"],
+      ["desc", "asc"]
     );
-
-    return _.orderBy(repositories, ["starCount", "name"], ["desc", "asc"]);
   }
 
   @FieldResolver()
   async publishedRepositories(@Root() language: Language) {
-    const {
-      publishedRepositories,
-    } = await this.LanguageRepository.findOneOrFail(language.name, {
-      relations: ["publishedRepositories"],
-      order: {},
-    });
-
     return _.orderBy(
-      publishedRepositories,
+      (await this.LanguageRepository.findOneOrFail(language.name, {
+        relations: ["publishedRepositories"],
+        order: {},
+      })).publishedRepositories,
       ["repository.starCount", "repository.name"],
       ["desc", "asc"]
     );
@@ -65,16 +67,30 @@ export class LanguageResolver {
   @FieldResolver()
   async publishedRepositoriesCount(@Root() language: Language) {
     // TODO: Optimize using an intermediate connection, like github api itself
-    const {
-      publishedRepositories,
-    } = await this.LanguageRepository.findOneOrFail(language.name, {
-      relations: ["publishedRepositories"],
-    });
+    const publishedRepositoriesCount = _.size(
+      (await this.LanguageRepository.findOneOrFail(language.name, {
+        relations: ["publishedRepositories"],
+      })).publishedRepositories
+    );
 
     this.LanguageRepository.update(language.name, {
-      publishedRepositoriesCount: _.size(publishedRepositories),
+      publishedRepositoriesCount,
     });
 
-    return _.size(publishedRepositories);
+    return publishedRepositoriesCount;
+  }
+
+  @FieldResolver()
+  async libraries(@Root() language: Language) {
+    return (await this.LanguageRepository.findOneOrFail(language.name, {
+      relations: ["libraries"],
+    })).libraries;
+  }
+
+  @FieldResolver()
+  async frameworks(@Root() language: Language) {
+    return (await this.LanguageRepository.findOneOrFail(language.name, {
+      relations: ["frameworks"],
+    })).frameworks;
   }
 }
