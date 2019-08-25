@@ -1,10 +1,16 @@
 import { Field, ObjectType } from "type-graphql";
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryColumn } from "typeorm";
 
-import { RepositoryOwnerGitHub } from "../githubApi/RepositoryOwnerGitHub";
+import { RepositoryOwnerGitHub } from "../githubAPI/RepositoryOwnerGitHub";
 import { GitRepository } from "./GitRepository";
 import { Organization } from "./Organization";
 import { UserGitHub } from "./UserGitHub";
+
+/**
+ * TODO: Optimize entity to not duplicate info using GraphQL unions
+ * https://typegraphql.ml/docs/unions.html
+ * https://graphql.org/learn/schema/#union-types
+ */
 
 @Entity()
 @ObjectType()

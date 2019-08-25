@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "type-graphql";
 
-import { GitHubOrganization } from "../classTypes/GitHubOrganization";
+import { GitHubOrganization } from "../types/GitHubOrganization";
 import { RepositoryGitHub } from "./RepositoryGitHub";
 import { UserGitHubAPI } from "./UserGitHubAPI";
 

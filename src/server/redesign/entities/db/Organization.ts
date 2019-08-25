@@ -1,7 +1,7 @@
 import { Field, ObjectType } from "type-graphql";
 import { Column, Entity, JoinTable, ManyToMany, OneToMany } from "typeorm";
 
-import { OrganizationGitHub } from "../githubApi/OrganizationGitHub";
+import { OrganizationGitHub } from "../githubAPI/OrganizationGitHub";
 import { GitRepository } from "./GitRepository";
 import { UserGitHub } from "./UserGitHub";
 

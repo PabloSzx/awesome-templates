@@ -1,9 +1,8 @@
 import { Field, ObjectType } from "type-graphql";
 
-import { GitHubRepository } from "../classTypes/GitHubRepository";
+import { GitHubRepository } from "../types/GitHubRepository";
 import { LanguageGitHub } from "./LanguageGitHub";
 import { RepositoryOwnerGitHub } from "./RepositoryOwnerGitHub";
-import { UserGitHubAPI } from "./UserGitHubAPI";
 
 @ObjectType()
 export class RepositoryGitHub implements GitHubRepository {
@@ -57,7 +56,4 @@ export class RepositoryGitHub implements GitHubRepository {
 
   @Field()
   starCount: number;
-
-  @Field(() => [UserGitHubAPI])
-  stargazers: UserGitHubAPI[];
 }

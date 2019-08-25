@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "type-graphql";
 
-import { GitHubLanguage } from "../classTypes/GitHubLanguage";
+import { GitHubLanguage } from "../types/GitHubLanguage";
 
 @ObjectType()
 export class LanguageGitHub implements GitHubLanguage {
