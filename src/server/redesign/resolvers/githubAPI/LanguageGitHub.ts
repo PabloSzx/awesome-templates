@@ -66,8 +66,7 @@ export class LanguageGitHubResolver {
       _.flatMap(nodes, ({ languages: { nodes } }) => nodes),
       _.isEqual
     );
-
-    this.LanguageRepository.save(languages);
+    if (!_.isEmpty(languages)) this.LanguageRepository.save(languages);
 
     return languages;
   }

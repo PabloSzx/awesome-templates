@@ -26,7 +26,7 @@ export class RepositoryGitHubResolver {
       data: { repository },
     } = await GitHubAPI.query<
       {
-        repository: GitHubRepository;
+        repository: GitHubRepository | null;
       },
       {
         name: string;
@@ -71,7 +71,7 @@ export class RepositoryGitHubResolver {
       context,
     });
 
-    this.GitRepoRepository.save(repository);
+    if (repository) this.GitRepoRepository.save(repository);
 
     return repository;
   }
@@ -80,7 +80,7 @@ export class RepositoryGitHubResolver {
   async starCount(
     @Ctx() { authGitHub: context }: IContext,
     @Root() { id, name, owner: { login: owner } }: GitHubRepository
-  ) {
+  ): Promise<number> {
     const {
       data: {
         repository: {

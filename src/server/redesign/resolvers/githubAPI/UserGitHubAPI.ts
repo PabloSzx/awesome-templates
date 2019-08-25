@@ -7,7 +7,9 @@ import { InjectRepository } from "typeorm-typedi-extensions";
 import { GitHubAPI } from "../../../../utils";
 import { APILevel } from "../../../consts";
 import { IContext } from "../../../interfaces";
-import { GitHubRepository, GitHubUser, UserGitHub, UserGitHubAPI } from "../../entities";
+import {
+    GitHubOrganization, GitHubRepository, GitHubUser, UserGitHub, UserGitHubAPI
+} from "../../entities";
 
 @Resolver(() => UserGitHubAPI)
 export class UserGitHubAPIResolver {
@@ -46,7 +48,7 @@ export class UserGitHubAPIResolver {
   }
 
   @Authorized(APILevel.ADVANCED)
-  @Query(() => UserGitHubAPI)
+  @Query(() => UserGitHubAPI, { nullable: true })
   async user(
     @Ctx() { authGitHub: context }: IContext,
     @Arg("login") login: string
@@ -55,7 +57,7 @@ export class UserGitHubAPIResolver {
       data: { user },
     } = await GitHubAPI.query<
       {
-        user: GitHubUser;
+        user: GitHubUser | null;
       },
       {
         login: string;
@@ -80,7 +82,7 @@ export class UserGitHubAPIResolver {
       },
     });
 
-    this.UserGitHubRepository.save(user);
+    if (user) this.UserGitHubRepository.save(user);
 
     return user;
   }
@@ -196,10 +198,7 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    this.UserGitHubRepository.save({
-      id,
-      repositories,
-    });
+    this.UserGitHubRepository.update(id, { repositories });
 
     return repositories;
   }
@@ -314,11 +313,64 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    this.UserGitHubRepository.save({
-      id,
-      starredRepositories,
-    });
+    this.UserGitHubRepository.update(id, { starredRepositories });
 
     return starredRepositories;
+  }
+
+  @FieldResolver()
+  async organizations(
+    @Ctx() { authGitHub: context }: IContext,
+    @Root() { id, login }: GitHubUser
+  ) {
+    const {
+      data: {
+        user: {
+          organizations: { nodes: organizations },
+        },
+      },
+    } = await GitHubAPI.query<
+      {
+        user: {
+          organizations: {
+            nodes: Array<GitHubOrganization>;
+          };
+        };
+      },
+      {
+        login: string;
+      }
+    >({
+      query: gql`
+      query (login: String!) {
+        user(login: $login) {
+          organizations(first: 50) {
+            nodes {
+              id
+            avatarUrl
+            login
+            url
+            email
+            name
+            description
+            websiteUrl
+            }
+            
+          }
+
+        }
+      }
+      `,
+      variables: {
+        login,
+      },
+      context,
+    });
+
+    this.UserGitHubRepository.update(id, {
+      organizations,
+    });
+
+    return organizations;
   }
 }
