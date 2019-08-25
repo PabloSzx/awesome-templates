@@ -91,7 +91,7 @@ export class UserGitHubAPIResolver {
   async repositories(
     @Root() { id, login }: UserGitHub,
     @Ctx() { authGitHub: context }: IContext,
-    @Arg("isTemplate", { defaultValue: undefined })
+    @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
   ) {
     let repositories: GitHubRepository[] = [];
@@ -198,7 +198,7 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    this.UserGitHubRepository.update(id, { repositories });
+    this.UserGitHubRepository.save({ id, repositories });
 
     return repositories;
   }
@@ -207,8 +207,8 @@ export class UserGitHubAPIResolver {
   async starredRepositories(
     @Root() { id, login }: UserGitHub,
     @Ctx() { authGitHub: context }: IContext,
-    @Arg("isTemplate", { defaultValue: undefined })
-    isTemplate: boolean | undefined
+    @Arg("isTemplate", { defaultValue: undefined, nullable: true })
+    isTemplate: boolean
   ) {
     let starredRepositories: GitHubRepository[] = [];
 
@@ -244,7 +244,7 @@ export class UserGitHubAPIResolver {
           query repositories($after: String, $login: String!) {
             user(login: $login) {
               id
-              repositories(
+              starredRepositories(
                 first: 100
                 after: $after
                 orderBy: { direction: DESC, field: STARRED_AT }
@@ -313,7 +313,7 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    this.UserGitHubRepository.update(id, { starredRepositories });
+    this.UserGitHubRepository.save({ id, starredRepositories });
 
     return starredRepositories;
   }
@@ -342,24 +342,22 @@ export class UserGitHubAPIResolver {
       }
     >({
       query: gql`
-      query (login: String!) {
-        user(login: $login) {
-          organizations(first: 50) {
-            nodes {
-              id
-            avatarUrl
-            login
-            url
-            email
-            name
-            description
-            websiteUrl
+        query($login: String!) {
+          user(login: $login) {
+            organizations(first: 50) {
+              nodes {
+                id
+                avatarUrl
+                login
+                url
+                email
+                name
+                description
+                websiteUrl
+              }
             }
-            
           }
-
         }
-      }
       `,
       variables: {
         login,
@@ -367,7 +365,8 @@ export class UserGitHubAPIResolver {
       context,
     });
 
-    this.UserGitHubRepository.update(id, {
+    this.UserGitHubRepository.save({
+      id,
       organizations,
     });
 

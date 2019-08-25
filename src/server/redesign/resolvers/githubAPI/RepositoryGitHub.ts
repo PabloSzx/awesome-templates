@@ -118,9 +118,7 @@ export class RepositoryGitHubResolver {
       context,
     });
 
-    this.GitRepoRepository.update(id, {
-      starCount,
-    });
+    this.GitRepoRepository.save({ id, starCount });
 
     return starCount;
   }
@@ -198,9 +196,7 @@ export class RepositoryGitHubResolver {
       }
     } while (hasNextPage);
 
-    this.GitRepoRepository.update(id, {
-      languages: repoLanguages,
-    });
+    this.GitRepoRepository.save({ id, languages: repoLanguages });
 
     return repoLanguages;
   }

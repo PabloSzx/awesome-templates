@@ -1,6 +1,9 @@
 import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn } from "typeorm";
+import {
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn
+} from "typeorm";
 
+import { APILevel } from "../../../consts";
 import { Template } from "./Template";
 import { UserGitHub } from "./UserGitHub";
 
@@ -18,6 +21,13 @@ export class User {
   @Column()
   accessToken: string;
 
+  @Field(__type => APILevel)
+  @Column({ type: "enum", enum: APILevel, default: APILevel.BASIC })
+  APILevel: APILevel;
+
+  @Column({ nullable: true })
+  personalAccessToken?: string;
+
   @Field(() => [Template])
   @OneToMany(() => Template, template => template.owner)
   templates: Template[];
@@ -31,6 +41,8 @@ export class User {
   @OneToOne(() => UserGitHub, {
     cascade: true,
     nullable: false,
+    eager: true,
   })
+  @JoinColumn({ name: "data" })
   data: UserGitHub;
 }

@@ -8,7 +8,7 @@ import { TypeormStore } from "typeorm-store";
 
 import { WRONG_INFO } from "../consts";
 import { connection } from "../db";
-import { Session, User } from "../entities";
+import { Session, User } from "../redesign/entities";
 
 const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, COOKIE_KEY } = requireEnv([
   "GITHUB_CLIENT_ID",
@@ -113,7 +113,7 @@ auth.use("/api/login/github", async (req, res) => {
 
     const UserRepository = (await connection).getRepository(User);
 
-    const userGitHubData = {
+    const data = {
       id,
       avatarUrl,
       login,
@@ -123,9 +123,9 @@ auth.use("/api/login/github", async (req, res) => {
       bio,
     };
     let user = UserRepository.create({
-      ...userGitHubData,
+      id,
       accessToken,
-      userGitHubData,
+      data,
     });
 
     user = await UserRepository.save(user);

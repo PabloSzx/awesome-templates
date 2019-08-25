@@ -4,7 +4,7 @@ import { values } from "lodash";
 import { buildSchemaSync } from "type-graphql";
 import { Container as container } from "typedi";
 
-import * as resolvers from "./resolvers";
+import * as resolvers from "./redesign/resolvers";
 import { authChecker, buildContext } from "./utils";
 
 const apolloServer = new ApolloServer({

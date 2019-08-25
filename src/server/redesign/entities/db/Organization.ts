@@ -1,5 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, OneToMany } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
 
 import { OrganizationGitHub } from "../githubAPI/OrganizationGitHub";
 import { GitRepository } from "./GitRepository";
@@ -9,7 +9,7 @@ import { UserGitHub } from "./UserGitHub";
 @ObjectType()
 export class Organization implements OrganizationGitHub {
   @Field()
-  @Column()
+  @PrimaryColumn()
   id: string;
 
   @Field()
@@ -30,7 +30,7 @@ export class Organization implements OrganizationGitHub {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  name?: string | undefined;
+  name?: string;
 
   @Field({ nullable: true })
   @Column({ nullable: true })

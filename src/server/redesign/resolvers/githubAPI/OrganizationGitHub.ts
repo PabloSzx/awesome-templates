@@ -124,9 +124,7 @@ export class OrganizationGitHubResolver {
       after = organization.membersWithRole.pageInfo.endCursor;
       hasNextPage = organization.membersWithRole.pageInfo.hasNextPage;
     } while (hasNextPage);
-    this.OrganizationRepository.update(id, {
-      members,
-    });
+    this.OrganizationRepository.save({ id, members });
 
     return members;
   }
@@ -135,7 +133,8 @@ export class OrganizationGitHubResolver {
   async repositories(
     @Ctx() { authGitHub: context }: IContext,
     @Root() { login, id }: GitHubOrganization,
-    @Arg("isTemplate", { defaultValue: undefined }) isTemplate: boolean
+    @Arg("isTemplate", { defaultValue: undefined, nullable: true })
+    isTemplate: boolean
   ) {
     let after: string | undefined;
     let hasNextPage: boolean;
@@ -240,9 +239,7 @@ export class OrganizationGitHubResolver {
       hasNextPage = pageInfo.hasNextPage;
     } while (hasNextPage);
 
-    this.OrganizationRepository.update(id, {
-      repositories,
-    });
+    this.OrganizationRepository.save({ id, repositories });
 
     return repositories;
   }

@@ -7,6 +7,6 @@ export class LanguageGitHub implements GitHubLanguage {
   @Field()
   name: string;
 
-  @Field()
+  @Field({ nullable: true })
   color?: string;
 }

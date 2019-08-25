@@ -1,5 +1,7 @@
 import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToOne } from "typeorm";
+import {
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
+} from "typeorm";
 
 import { Framework } from "./Framework";
 import { GitRepository } from "./GitRepository";
@@ -10,6 +12,10 @@ import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Template {
+  @Field()
+  @PrimaryGeneratedColumn()
+  id: number;
+
   @Field(() => User)
   @ManyToOne(() => User, user => user.templates, {
     cascade: true,
@@ -23,6 +29,7 @@ export class Template {
 
   @Field(() => GitRepository)
   @OneToOne(() => GitRepository, { nullable: false })
+  @JoinColumn({ name: "repository" })
   repository: GitRepository;
 
   @Field()

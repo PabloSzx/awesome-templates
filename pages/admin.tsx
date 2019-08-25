@@ -8,9 +8,11 @@ export default () => {
   const { loading, data } = useQuery<{ users: User[] }>(gql`
     query {
       users {
-        email
-        login
-        name
+        data {
+          email
+          login
+          name
+        }
         admin
       }
     }
@@ -32,7 +34,7 @@ export default () => {
             </tr>
           </thead>
           <tbody>
-            {data.users.map(({ email, name, admin }, key) => (
+            {data.users.map(({ data: { email, name }, admin }, key) => (
               <tr key={key}>
                 <td>{email}</td>
                 <td>{name}</td>

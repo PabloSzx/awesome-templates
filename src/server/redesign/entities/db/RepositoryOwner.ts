@@ -33,12 +33,12 @@ export class RepositoryOwner implements RepositoryOwnerGitHub {
 
   @Field(() => UserGitHub, { nullable: true })
   @OneToOne(() => UserGitHub, { cascade: true, eager: true })
-  @JoinColumn()
+  @JoinColumn({ name: "user" })
   user?: UserGitHub;
 
   @Field(() => Organization, { nullable: true })
   @OneToOne(() => Organization, { cascade: true, eager: true })
-  @JoinColumn()
+  @JoinColumn({ name: "organization" })
   organization?: Organization;
 
   @Field(() => [GitRepository])

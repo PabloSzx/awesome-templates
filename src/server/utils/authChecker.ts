@@ -4,7 +4,7 @@ import { ADMIN, APILevel } from "../consts";
 import { IContext } from "../interfaces/server";
 
 export const authChecker: AuthChecker<IContext> = async (
-  { context: { isAuthenticated, user, authGitHub } },
+  { context: { isAuthenticated, user } },
   roles
 ) => {
   const authenticated = isAuthenticated();
@@ -20,9 +20,7 @@ export const authChecker: AuthChecker<IContext> = async (
             continue;
           default:
             throw new Error(
-              `You need to have API Level of ${APILevel.MEDIUM} or ${
-                APILevel.ADVANCED
-              }`
+              `You need to have API Level of ${APILevel.MEDIUM} or ${APILevel.ADVANCED}`
             );
         }
       }

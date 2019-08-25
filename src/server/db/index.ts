@@ -2,7 +2,7 @@ import { values } from "lodash";
 import { Container } from "typedi";
 import { ConnectionOptions, createConnection, useContainer } from "typeorm";
 
-import * as entities from "../entities";
+import * as entities from "../redesign/entities";
 
 const dbConfig: ConnectionOptions = {
   type: "postgres",

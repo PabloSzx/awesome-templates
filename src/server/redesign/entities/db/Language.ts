@@ -1,5 +1,5 @@
 import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, ManyToMany, OneToMany } from "typeorm";
+import { Column, Entity, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
 
 import { LanguageGitHub } from "../githubAPI/LanguageGitHub";
 import { Framework } from "./Framework";
@@ -11,7 +11,7 @@ import { Template } from "./Template";
 @ObjectType()
 export class Language implements LanguageGitHub {
   @Field()
-  @Column()
+  @PrimaryColumn()
   name: string;
 
   @Field({ nullable: true })

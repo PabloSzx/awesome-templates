@@ -1,4 +1,5 @@
 import gql from "graphql-tag";
+import levenshtein from "js-levenshtein";
 import _ from "lodash";
 import { Arg, Authorized, Ctx, Query, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
@@ -62,9 +63,18 @@ export class LanguageGitHubResolver {
       },
       context,
     });
-    const languages = _.uniqWith(
-      _.flatMap(nodes, ({ languages: { nodes } }) => nodes),
-      _.isEqual
+    const languages = _.orderBy(
+      _.uniqWith(
+        _.flatMap(nodes, ({ languages: { nodes } }) => nodes),
+        _.isEqual
+      ),
+      [
+        ({ name }) =>
+          _.includes(name.toLowerCase(), input.toLowerCase()) ||
+          _.includes(input.toLowerCase(), name.toLowerCase()),
+        ({ name }) => levenshtein(name.toLowerCase(), input.toLowerCase()),
+      ],
+      ["desc", "asc"]
     );
     if (!_.isEmpty(languages)) this.LanguageRepository.save(languages);
 

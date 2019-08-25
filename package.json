@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "dev-local": "cross-env NODE_ENV=development ts-node-dev -r dotenv/config --ignore-watch .next --ignore-watch node_modules -P tsconfig.local.json index.ts",
+    "dev-local": "cross-env NODE_ENV=development ts-node-dev -r dotenv/config --ignore-watch .next --ignore-watch node_modules -P tsconfig.local.json --inspect --  index.ts",
     "start": "next start",
     "start-local": "cross-env NODE_ENV=production ts-node -r dotenv/config -P tsconfig.local.json -T index.ts"
   },
