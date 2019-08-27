@@ -19,7 +19,7 @@ export class LanguageGitHubResolver {
 
   @Authorized(APILevel.ADVANCED)
   @Query(() => [LanguageGitHub])
-  async languages(
+  async searchLanguages(
     @Ctx() { authGitHub: context }: IContext,
     @Arg("input") input: string
   ) {

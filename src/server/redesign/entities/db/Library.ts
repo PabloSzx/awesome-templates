@@ -27,6 +27,7 @@ export class Library {
   @ManyToOne(() => Language, lang => lang.libraries, {
     cascade: true,
     nullable: false,
+    eager: true,
   })
   language: Language;
 
