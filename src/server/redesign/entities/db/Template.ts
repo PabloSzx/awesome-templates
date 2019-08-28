@@ -1,6 +1,7 @@
-import { Field, ObjectType } from "type-graphql";
+import { IsBase64, MinLength } from "class-validator";
+import { Field, InputType, ObjectType } from "type-graphql";
 import {
-    Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
+    Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryColumn
 } from "typeorm";
 
 import { Framework } from "./Framework";
@@ -13,8 +14,8 @@ import { User } from "./User";
 @ObjectType()
 export class Template {
   @Field()
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  name: string;
 
   @Field(() => User)
   @ManyToOne(() => User, user => user.templates, {
@@ -60,4 +61,37 @@ export class Template {
   })
   @JoinTable()
   frameworks: Framework[];
+}
+
+@InputType({ description: "Create new template data" })
+export class CreateTemplateInput {
+  @MinLength(3)
+  @Field()
+  name: string;
+
+  @IsBase64()
+  @Field()
+  repositoryId: string;
+
+  @MinLength(1)
+  @Field({ nullable: true })
+  primaryLanguage?: string;
+
+  @MinLength(1, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  languages?: string[];
+
+  @MinLength(2, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  frameworks?: string[];
+
+  @MinLength(2, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  libraries?: string[];
 }
