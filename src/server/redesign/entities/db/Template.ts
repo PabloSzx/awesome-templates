@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "type-graphql";
 import {
-    Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
+    Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
 
 import { Framework } from "./Framework";
@@ -20,6 +20,7 @@ export class Template {
   @ManyToOne(() => User, user => user.templates, {
     cascade: true,
     nullable: false,
+    eager: true,
   })
   owner: User;
 
@@ -27,14 +28,13 @@ export class Template {
   @ManyToMany(() => User, user => user.upvotedTemplates)
   upvotes: User[];
 
+  @Field()
+  upvotesCount: number;
+
   @Field(() => GitRepository)
-  @OneToOne(() => GitRepository, { nullable: false })
+  @OneToOne(() => GitRepository, { nullable: false, eager: true })
   @JoinColumn({ name: "repository" })
   repository: GitRepository;
-
-  @Field()
-  @Column({ default: -1 })
-  upvotesCount: number;
 
   @Field(() => [Language])
   @ManyToMany(() => Language, lang => lang.templates, { cascade: true })
@@ -42,7 +42,10 @@ export class Template {
   languages: Language[];
 
   @Field(() => Language, { nullable: true })
-  @ManyToOne(() => Language, lang => lang.primaryTemplates, { cascade: true })
+  @ManyToOne(() => Language, lang => lang.primaryTemplates, {
+    cascade: true,
+    eager: true,
+  })
   @JoinTable()
   primaryLanguage?: Language;
 

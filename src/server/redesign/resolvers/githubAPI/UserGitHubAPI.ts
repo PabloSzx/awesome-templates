@@ -8,14 +8,19 @@ import { GitHubAPI } from "../../../../utils";
 import { APILevel } from "../../../consts";
 import { IContext } from "../../../interfaces";
 import {
-    GitHubOrganization, GitHubRepository, GitHubUser, UserGitHub, UserGitHubAPI
+    GitHubOrganization, GitHubRepository, GitHubUser, Language, RepositoryOwner, UserGitHub,
+    UserGitHubAPI
 } from "../../entities";
 
 @Resolver(() => UserGitHubAPI)
 export class UserGitHubAPIResolver {
   constructor(
     @InjectRepository(UserGitHub)
-    private readonly UserGitHubRepository: Repository<UserGitHub>
+    private readonly UserGitHubRepository: Repository<UserGitHub>,
+    @InjectRepository(RepositoryOwner)
+    private readonly RepositoryOwnerRepository: Repository<RepositoryOwner>,
+    @InjectRepository(Language)
+    private readonly LanguageRepository: Repository<Language>
   ) {}
 
   @Authorized(APILevel.MEDIUM)
@@ -43,6 +48,10 @@ export class UserGitHubAPIResolver {
     });
 
     this.UserGitHubRepository.save(viewer);
+    this.RepositoryOwnerRepository.save({
+      ...viewer,
+      user: viewer,
+    });
 
     return viewer;
   }
@@ -82,7 +91,13 @@ export class UserGitHubAPIResolver {
       },
     });
 
-    if (user) this.UserGitHubRepository.save(user);
+    if (user) {
+      this.UserGitHubRepository.save(user);
+      this.RepositoryOwnerRepository.save({
+        ...user,
+        user,
+      });
+    }
 
     return user;
   }
@@ -151,9 +166,8 @@ export class UserGitHubAPIResolver {
                   name
                   nameWithOwner
                   primaryLanguage {
-                    color
-                    id
                     name
+                    color
                   }
                   description
                   url
@@ -198,7 +212,19 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    this.UserGitHubRepository.save({ id, repositories });
+    (async () => {
+      await this.LanguageRepository.createQueryBuilder()
+        .insert()
+        .orIgnore()
+        .values(
+          _.uniqWith(
+            _.compact(_.map(repositories, v => v.primaryLanguage)),
+            _.isEqual
+          )
+        )
+        .execute();
+      this.UserGitHubRepository.save({ id, repositories });
+    })();
 
     return repositories;
   }
@@ -266,9 +292,8 @@ export class UserGitHubAPIResolver {
                   name
                   nameWithOwner
                   primaryLanguage {
-                    color
-                    id
                     name
+                    color
                   }
                   description
                   url
@@ -313,7 +338,19 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    this.UserGitHubRepository.save({ id, starredRepositories });
+    (async () => {
+      await this.LanguageRepository.createQueryBuilder()
+        .insert()
+        .orIgnore()
+        .values(
+          _.uniqWith(
+            _.compact(_.map(starredRepositories, v => v.primaryLanguage)),
+            _.isEqual
+          )
+        )
+        .execute();
+      this.UserGitHubRepository.save({ id, starredRepositories });
+    })();
 
     return starredRepositories;
   }

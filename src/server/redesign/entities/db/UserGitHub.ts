@@ -37,7 +37,9 @@ export class UserGitHub implements UserGitHubAPI {
   bio?: string;
 
   @Field(() => [GitRepository])
-  @OneToMany(() => GitRepository, repo => repo.owner)
+  @OneToMany(() => GitRepository, repo => repo.owner, {
+    cascade: ["insert", "update"],
+  })
   repositories: GitRepository[];
 
   @Field(() => [GitRepository])

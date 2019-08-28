@@ -25,9 +25,5 @@ export class RepositoryOwnerGitHub implements GitHubRepositoryOwner {
   @Field(() => OrganizationGitHub, { nullable: true })
   organization?: OrganizationGitHub;
 
-  /**
-   * There is no point requesting this API field here (hence no @Field decorator), since it would be
-   * just duplicating code, and you can request the same info inside "user" and "organization"
-   */
   repositories: RepositoryGitHub[];
 }

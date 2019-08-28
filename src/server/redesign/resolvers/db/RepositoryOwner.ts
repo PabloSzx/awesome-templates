@@ -1,29 +1,30 @@
-import { Arg, Query, Resolver } from "type-graphql";
+import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
-import { Organization, RepositoryOwnerUnion, UserGitHub } from "../../entities";
+import { RepositoryOwner } from "../../entities";
 
-@Resolver()
+@Resolver(() => RepositoryOwner)
 export class RepositoryOwnerResolver {
   constructor(
-    @InjectRepository(UserGitHub)
-    private readonly UserGitHubRepository: Repository<UserGitHub>,
-    @InjectRepository(Organization)
-    private readonly OrganizationRepository: Repository<Organization>
+    @InjectRepository(RepositoryOwner)
+    private readonly RepositoryOwnerRepository: Repository<RepositoryOwner>
   ) {}
 
-  @Query(() => RepositoryOwnerUnion, { nullable: true })
+  @Query(() => [RepositoryOwner])
+  async repositoryOwners() {
+    return await this.RepositoryOwnerRepository.find();
+  }
+
+  @Query(() => RepositoryOwner, { nullable: true })
   async repositoryOwnerDB(@Arg("id") id: string) {
-    const [user, org] = await Promise.all([
-      this.UserGitHubRepository.findOne(id),
-      this.OrganizationRepository.findOne(id),
-    ]);
+    return await this.RepositoryOwnerRepository.findOne(id);
+  }
 
-    if (user) return user;
-
-    if (org) return org;
-
-    return null;
+  @FieldResolver()
+  async repositories(@Root() { id }: RepositoryOwner) {
+    return (await this.RepositoryOwnerRepository.findOneOrFail(id, {
+      relations: ["repositories"],
+    })).repositories;
   }
 }

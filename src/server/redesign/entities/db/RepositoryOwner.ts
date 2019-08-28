@@ -6,12 +6,6 @@ import { GitRepository } from "./GitRepository";
 import { Organization } from "./Organization";
 import { UserGitHub } from "./UserGitHub";
 
-/**
- * TODO: Optimize entity to not duplicate info using GraphQL unions
- * https://typegraphql.ml/docs/unions.html
- * https://graphql.org/learn/schema/#union-types
- */
-
 @Entity()
 @ObjectType()
 export class RepositoryOwner implements RepositoryOwnerGitHub {

@@ -1,4 +1,4 @@
-import { Authorized, Query, Resolver } from "type-graphql";
+import { Authorized, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -15,5 +15,19 @@ export class UserResolver {
   @Query(() => [User])
   async users() {
     return await this.UserRepository.find();
+  }
+
+  @FieldResolver()
+  async templates(@Root() { id }: User) {
+    return (await this.UserRepository.findOneOrFail(id, {
+      relations: ["templates"],
+    })).templates;
+  }
+
+  @FieldResolver()
+  async upvotedTemplates(@Root() { id }: User) {
+    return (await this.UserRepository.findOneOrFail(id, {
+      relations: ["upvotedTemplates"],
+    })).upvotedTemplates;
   }
 }

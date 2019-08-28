@@ -17,7 +17,7 @@ export class Library {
 
   @Field({ nullable: true })
   @Column({ nullable: true })
-  avatarUrl?: string;
+  logoUrl?: string;
 
   @Field({ nullable: true })
   @Column({ type: "text", nullable: true })

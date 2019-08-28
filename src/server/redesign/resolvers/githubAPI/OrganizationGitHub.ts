@@ -8,14 +8,17 @@ import { GitHubAPI } from "../../../../utils";
 import { APILevel } from "../../../consts";
 import { IContext } from "../../../interfaces";
 import {
-    GitHubOrganization, GitHubRepository, GitHubUser, Organization, OrganizationGitHub
+    GitHubOrganization, GitHubRepository, GitHubUser, Organization, OrganizationGitHub,
+    RepositoryOwner
 } from "../../entities";
 
 @Resolver(() => OrganizationGitHub)
 export class OrganizationGitHubResolver {
   constructor(
     @InjectRepository(Organization)
-    private readonly OrganizationRepository: Repository<Organization>
+    private readonly OrganizationRepository: Repository<Organization>,
+    @InjectRepository(RepositoryOwner)
+    private readonly RepositoryOwnerRepository: Repository<RepositoryOwner>
   ) {}
 
   @Authorized(APILevel.ADVANCED)
@@ -56,6 +59,10 @@ export class OrganizationGitHubResolver {
 
     if (organization) {
       this.OrganizationRepository.save(organization);
+      this.RepositoryOwnerRepository.save({
+        ...organization,
+        organization,
+      });
     }
 
     return organization;
@@ -92,26 +99,26 @@ export class OrganizationGitHubResolver {
         }
       >({
         query: gql`
-        query($login: String!, after: String) {
-          organization(login: $login) {
-            id
-            membersWithRole(first: 100, after: $after) {
-              pageInfo {
-                endCursor
-                hasNextPage
-              }
-              nodes {
-                id
-                avatarUrl
-                login
-                url
-                email
-                name
-                bio
+          query($login: String!, $after: String) {
+            organization(login: $login) {
+              id
+              membersWithRole(first: 100, after: $after) {
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                }
+                nodes {
+                  id
+                  avatarUrl
+                  login
+                  url
+                  email
+                  name
+                  bio
+                }
               }
             }
           }
-        }
         `,
         variables: {
           login,
@@ -166,10 +173,10 @@ export class OrganizationGitHubResolver {
         }
       >({
         query: gql`
-        query($login: String!, after: String) {
-          organization(login: $login) {
-            id
-            repositories(
+          query($login: String!, $after: String) {
+            organization(login: $login) {
+              id
+              repositories(
                 first: 100
                 privacy: PUBLIC
                 after: $after
@@ -207,8 +214,8 @@ export class OrganizationGitHubResolver {
                   }
                 }
               }
+            }
           }
-        }
         `,
         variables: {
           login,
