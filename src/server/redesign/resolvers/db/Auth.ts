@@ -17,14 +17,14 @@ export class AuthResolver {
     @InjectRepository(User) private readonly UserRepository: Repository<User>
   ) {}
 
-  @Query(_returns => User, { nullable: true })
+  @Query(() => User, { nullable: true })
   async current_user(@Ctx() { isAuthenticated, user }: IContext) {
     if (isAuthenticated()) {
       return user;
     }
   }
 
-  @Mutation(_returns => Boolean)
+  @Mutation(() => Boolean)
   logout(@Ctx() { logout, isAuthenticated }: IContext) {
     if (isAuthenticated()) {
       logout();
@@ -34,7 +34,7 @@ export class AuthResolver {
   }
 
   @Authorized()
-  @Query(_returns => APILevel)
+  @Query(() => APILevel)
   async checkAPILevel(@Ctx() { user }: IContext) {
     const [appInstalled, validPersonalToken] = await Promise.all([
       new Promise<boolean>(async resolve => {

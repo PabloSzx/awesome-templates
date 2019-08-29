@@ -64,6 +64,7 @@ export class GitRepository implements RepositoryGitHub {
   @Field(() => Language, { nullable: true })
   @ManyToOne(() => Language, lang => lang.primaryRepositories, {
     cascade: true,
+    eager: true,
   })
   primaryLanguage?: Language;
 
@@ -71,6 +72,7 @@ export class GitRepository implements RepositoryGitHub {
   @ManyToOne(() => RepositoryOwner, repoOwner => repoOwner.repositories, {
     cascade: true,
     nullable: false,
+    eager: true,
   })
   owner: RepositoryOwner;
 

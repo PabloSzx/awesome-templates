@@ -19,14 +19,18 @@ export class GitRepositoryResolver {
   @FieldResolver()
   async languages(@Root() { id }: GitRepository) {
     return (await this.GitRepoRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["languages"],
+      loadEagerRelations: false,
     })).languages;
   }
 
   @FieldResolver()
   async stargazers(@Root() { id }: GitRepository) {
     return (await this.GitRepoRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["stargazers"],
+      loadEagerRelations: false,
     })).stargazers;
   }
 }

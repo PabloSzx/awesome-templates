@@ -24,7 +24,9 @@ export class RepositoryOwnerResolver {
   @FieldResolver()
   async repositories(@Root() { id }: RepositoryOwner) {
     return (await this.RepositoryOwnerRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["repositories"],
+      loadEagerRelations: false,
     })).repositories;
   }
 }

@@ -21,7 +21,7 @@ export class User {
   @Column()
   accessToken: string;
 
-  @Field(__type => APILevel)
+  @Field(() => APILevel)
   @Column({ type: "enum", enum: APILevel, default: APILevel.BASIC })
   APILevel: APILevel;
 

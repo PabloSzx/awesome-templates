@@ -1,7 +1,7 @@
-import { IsBase64, MinLength } from "class-validator";
+import { IsBase64, IsUUID, MinLength } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 import {
-    Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryColumn
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
 
 import { Framework } from "./Framework";
@@ -14,12 +14,15 @@ import { User } from "./User";
 @ObjectType()
 export class Template {
   @Field()
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
+  @Field()
+  @Column()
   name: string;
 
   @Field(() => User)
   @ManyToOne(() => User, user => user.templates, {
-    cascade: true,
     nullable: false,
     eager: true,
   })
@@ -38,27 +41,24 @@ export class Template {
   repository: GitRepository;
 
   @Field(() => [Language])
-  @ManyToMany(() => Language, lang => lang.templates, { cascade: true })
+  @ManyToMany(() => Language, lang => lang.templates)
   @JoinTable()
   languages: Language[];
 
   @Field(() => Language, { nullable: true })
   @ManyToOne(() => Language, lang => lang.primaryTemplates, {
-    cascade: true,
     eager: true,
   })
   @JoinTable()
   primaryLanguage?: Language;
 
   @Field(() => [Library])
-  @ManyToMany(() => Library, lib => lib.templates, { cascade: true })
+  @ManyToMany(() => Library, lib => lib.templates)
   @JoinTable()
   libraries: Library[];
 
   @Field(() => Framework)
-  @ManyToMany(() => Framework, framework => framework.templates, {
-    cascade: true,
-  })
+  @ManyToMany(() => Framework, framework => framework.templates)
   @JoinTable()
   frameworks: Framework[];
 }
@@ -72,6 +72,43 @@ export class CreateTemplateInput {
   @IsBase64()
   @Field()
   repositoryId: string;
+
+  @MinLength(1)
+  @Field({ nullable: true })
+  primaryLanguage?: string;
+
+  @MinLength(1, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  languages?: string[];
+
+  @MinLength(2, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  frameworks?: string[];
+
+  @MinLength(2, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  libraries?: string[];
+}
+
+@InputType({ description: "Edit template data" })
+export class UpdateTemplateInput implements Partial<CreateTemplateInput> {
+  @IsUUID()
+  @Field()
+  templateId: string;
+
+  @MinLength(3)
+  @Field({ nullable: true })
+  name?: string;
+
+  @IsBase64()
+  @Field({ nullable: true })
+  repositoryId?: string;
 
   @MinLength(1)
   @Field({ nullable: true })

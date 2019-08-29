@@ -20,14 +20,18 @@ export class UserResolver {
   @FieldResolver()
   async templates(@Root() { id }: User) {
     return (await this.UserRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["templates"],
+      loadEagerRelations: false,
     })).templates;
   }
 
   @FieldResolver()
   async upvotedTemplates(@Root() { id }: User) {
     return (await this.UserRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["upvotedTemplates"],
+      loadEagerRelations: false,
     })).upvotedTemplates;
   }
 }

@@ -19,14 +19,18 @@ export class OrganizationResolver {
   @FieldResolver()
   async members(@Root() { id }: Organization) {
     return (await this.OrganizationRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["members"],
+      loadEagerRelations: false,
     })).members;
   }
 
   @FieldResolver()
   async repositories(@Root() { id }: Organization) {
     return (await this.OrganizationRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["repositories"],
+      loadEagerRelations: false,
     })).repositories;
   }
 }

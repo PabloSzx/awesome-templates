@@ -1,10 +1,11 @@
-import { Arg, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
+import _ from "lodash";
+import { Arg, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { IContext } from "../../../interfaces";
 import {
-    CreateTemplateInput, Framework, GitRepository, Language, Library, Template
+    CreateTemplateInput, Framework, GitRepository, Language, Library, Template, UpdateTemplateInput
 } from "../../entities";
 
 @Resolver(() => Template)
@@ -27,6 +28,7 @@ export class TemplateResolver {
     return await this.TemplateRepository.find();
   }
 
+  @Authorized()
   @Mutation(() => Template)
   async createTemplate(
     @Arg("data")
@@ -40,69 +42,150 @@ export class TemplateResolver {
     }: CreateTemplateInput,
     @Ctx() { user: owner }: IContext
   ) {
-    const repository = await this.GitRepoRepository.findOneOrFail(repositoryId);
-
     const newTemplate = this.TemplateRepository.create({
       name,
-      repository,
       owner,
     });
 
-    if (primaryLanguage) {
-      newTemplate.primaryLanguage = await this.LanguageRepository.findOneOrFail(
-        primaryLanguage
-      );
-    }
-    if (languages) {
-      newTemplate.languages = await this.LanguageRepository.findByIds(
-        languages
-      );
-    }
-    if (frameworks) {
-      newTemplate.frameworks = await this.FrameworkRepository.findByIds(
-        frameworks
-      );
-    }
-    if (libraries) {
-      newTemplate.libraries = await this.LibraryRepository.findByIds(libraries);
-    }
+    await Promise.all([
+      (async () => {
+        newTemplate.repository = await this.GitRepoRepository.findOneOrFail(
+          repositoryId,
+          {
+            relations: !languages ? ["languages"] : undefined,
+          }
+        );
+        if (!primaryLanguage)
+          newTemplate.primaryLanguage = newTemplate.repository.primaryLanguage;
 
-    await this.TemplateRepository.save(newTemplate);
-    return newTemplate;
+        if (!languages)
+          newTemplate.languages = newTemplate.repository.languages;
+      })(),
+      (async () => {
+        if (primaryLanguage)
+          newTemplate.primaryLanguage = await this.LanguageRepository.findOneOrFail(
+            primaryLanguage
+          );
+      })(),
+      (async () => {
+        if (languages)
+          newTemplate.languages = await this.LanguageRepository.findByIds(
+            languages
+          );
+      })(),
+      (async () => {
+        if (frameworks)
+          newTemplate.frameworks = await this.FrameworkRepository.findByIds(
+            frameworks
+          );
+      })(),
+      (async () => {
+        if (libraries)
+          newTemplate.libraries = await this.LibraryRepository.findByIds(
+            libraries
+          );
+      })(),
+    ]);
+
+    return await this.TemplateRepository.save(newTemplate);
+  }
+
+  @Authorized()
+  @Mutation(() => Template)
+  async updateTemplate(@Arg("data")
+  {
+    templateId,
+    name,
+    repositoryId,
+    primaryLanguage,
+    languages,
+    frameworks,
+    libraries,
+  }: UpdateTemplateInput) {
+    const partialTemplate: Partial<Template> = {
+      name,
+    };
+    let [template] = await Promise.all([
+      this.TemplateRepository.findOneOrFail(templateId),
+      (async () => {
+        if (repositoryId)
+          partialTemplate.repository = await this.GitRepoRepository.findOneOrFail(
+            repositoryId
+          );
+      })(),
+      (async () => {
+        if (primaryLanguage)
+          partialTemplate.primaryLanguage = await this.LanguageRepository.findOneOrFail(
+            primaryLanguage
+          );
+      })(),
+      (async () => {
+        if (languages)
+          partialTemplate.languages = await this.LanguageRepository.findByIds(
+            languages
+          );
+      })(),
+      (async () => {
+        if (frameworks)
+          partialTemplate.frameworks = await this.FrameworkRepository.findByIds(
+            frameworks
+          );
+      })(),
+      (async () => {
+        if (libraries)
+          partialTemplate.libraries = await this.LibraryRepository.findByIds(
+            libraries
+          );
+      })(),
+    ]);
+
+    _.assign(template, _.omitBy(partialTemplate, _.isUndefined));
+
+    return await this.TemplateRepository.save(template);
   }
 
   @FieldResolver()
-  async upvotes(@Root() { name }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(name, {
+  async upvotes(@Root() { id }: Template) {
+    return (await this.TemplateRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["upvotes"],
+      loadEagerRelations: false,
     })).upvotes;
   }
 
   @FieldResolver()
-  async upvotesCount(@Root() { name }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(name, {
+  async upvotesCount(@Root() { id }: Template) {
+    return (await this.TemplateRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["upvotes"],
+      loadEagerRelations: false,
     })).upvotes.length;
   }
 
   @FieldResolver()
-  async languages(@Root() { name }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(name, {
+  async languages(@Root() { id }: Template) {
+    return (await this.TemplateRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["languages"],
+      loadEagerRelations: false,
     })).languages;
   }
 
   @FieldResolver()
-  async libraries(@Root() { name }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(name, {
+  async libraries(@Root() { id }: Template) {
+    return (await this.TemplateRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["libraries"],
+      loadEagerRelations: false,
     })).libraries;
   }
 
   @FieldResolver()
-  async frameworks(@Root() { name }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(name, {
+  async frameworks(@Root() { id }: Template) {
+    return (await this.TemplateRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["frameworks"],
+      loadEagerRelations: false,
     })).frameworks;
   }
 }
