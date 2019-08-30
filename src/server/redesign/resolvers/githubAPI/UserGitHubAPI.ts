@@ -193,10 +193,7 @@ export class UserGitHubAPIResolver {
       repositories.push(
         ..._.compact(
           _.map(nodes, repo => {
-            if (
-              repo &&
-              (isTemplate !== undefined ? repo.isTemplate === isTemplate : true)
-            ) {
+            if (repo) {
               return {
                 ...repo,
                 createdAt: new Date(repo.createdAt),
@@ -226,7 +223,9 @@ export class UserGitHubAPIResolver {
       this.UserGitHubRepository.save({ id, repositories });
     })();
 
-    return repositories;
+    return _.filter(repositories, repo =>
+      isTemplate !== undefined ? repo.isTemplate === isTemplate : true
+    );
   }
 
   @FieldResolver()
@@ -319,10 +318,7 @@ export class UserGitHubAPIResolver {
       starredRepositories.push(
         ..._.compact(
           _.map(nodes, repo => {
-            if (
-              repo &&
-              (isTemplate !== undefined ? repo.isTemplate === isTemplate : true)
-            ) {
+            if (repo) {
               return {
                 ...repo,
                 createdAt: new Date(repo.createdAt),
@@ -352,7 +348,9 @@ export class UserGitHubAPIResolver {
       this.UserGitHubRepository.save({ id, starredRepositories });
     })();
 
-    return starredRepositories;
+    return _.filter(starredRepositories, repo =>
+      isTemplate !== undefined ? repo.isTemplate === isTemplate : true
+    );
   }
 
   @FieldResolver()
@@ -381,6 +379,7 @@ export class UserGitHubAPIResolver {
       query: gql`
         query($login: String!) {
           user(login: $login) {
+            id
             organizations(first: 50) {
               nodes {
                 id
