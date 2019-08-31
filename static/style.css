@@ -1,0 +1,6 @@
+.cursorHover:hover {
+  cursor: pointer;
+}
+body {
+  left: 200px !important;
+}

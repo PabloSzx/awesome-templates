@@ -28,6 +28,24 @@ export class TemplateResolver {
     return await this.TemplateRepository.find();
   }
 
+  @Query(() => Template, { nullable: true })
+  async template(@Arg("name") name: string, @Arg("owner") owner: string) {
+    const templates = await this.TemplateRepository.find({
+      where: `"Template"."name" ILIKE '${name}'`,
+    });
+
+    owner = _.toLower(owner);
+
+    return _.find(
+      templates,
+      ({
+        owner: {
+          data: { login },
+        },
+      }) => _.toLower(login) === owner
+    );
+  }
+
   @Authorized()
   @Mutation(() => Template)
   async createTemplate(

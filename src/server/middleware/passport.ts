@@ -1,36 +1,46 @@
 import axios from "axios";
+import connectRedis from "connect-redis";
 import { Router } from "express";
 import ExpressSession from "express-session";
 import passport from "passport";
+import redis from "redis";
 import requireEnv from "require-env-variable";
-import { Repository } from "typeorm";
-import { TypeormStore } from "typeorm-store";
 
 import { WRONG_INFO } from "../consts";
 import { connection } from "../db";
-import { Session, User } from "../redesign/entities";
+import { User } from "../redesign/entities";
 
-const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, COOKIE_KEY } = requireEnv([
+const {
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+  COOKIE_KEY,
+  REDIS_URL,
+  NODE_ENV,
+} = requireEnv([
   "GITHUB_CLIENT_ID",
   "GITHUB_CLIENT_SECRET",
   "COOKIE_KEY",
+  "REDIS_URL",
+  "NODE_ENV",
 ]);
 export const auth = Router();
 
-function SessionMiddleware(repository: Repository<Session>) {
-  return ExpressSession({
+const RedisStore = connectRedis(ExpressSession);
+const client = redis.createClient({
+  url: REDIS_URL,
+  db: NODE_ENV === "production" ? 1 : 0,
+});
+
+auth.use(
+  ExpressSession({
+    store: new RedisStore({ client }),
     secret: COOKIE_KEY,
     resave: false,
     saveUninitialized: false,
     rolling: true,
     cookie: { maxAge: 86400000, secure: false },
-    store: new TypeormStore({ repository }),
-  });
-}
-
-auth.use(async (req, res, next) => {
-  SessionMiddleware((await connection).getRepository(Session))(req, res, next);
-});
+  })
+);
 
 auth.use(passport.initialize());
 auth.use(passport.session());

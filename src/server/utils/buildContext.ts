@@ -28,7 +28,7 @@ export const buildContext = <OptionsType = any>({ req }: { req: Request }) => {
     isAuthenticated: () => req.isAuthenticated(),
     isUnauthenticated: () => req.isUnauthenticated(),
     get user(): User {
-      return req.user;
+      return req.user as User;
     },
     get authGitHub() {
       const {
