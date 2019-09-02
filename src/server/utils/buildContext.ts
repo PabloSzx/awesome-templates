@@ -1,4 +1,4 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 
 import { APILevel as APILevelEnum } from "../consts";
 import { User } from "../redesign/entities";
@@ -15,15 +15,24 @@ const promisifiedLogin = <T = any, S = any>(
     })
   );
 
-export const buildContext = <OptionsType = any>({ req }: { req: Request }) => {
+export const buildContext = <OptionsType = any>({
+  req,
+  res,
+}: {
+  req: Request;
+  res: Response;
+}) => {
   return {
     login: (user: User, options?: OptionsType) =>
       promisifiedLogin(req, user, options),
     logout: () => {
-      if (req.session) {
-        req.session.destroy(() => {});
-      }
       req.logout();
+      if (req.session) {
+        req.session.destroy(err => {
+          if (err) console.error(err);
+        });
+      }
+      res.clearCookie("connect.sid");
     },
     isAuthenticated: () => req.isAuthenticated(),
     isUnauthenticated: () => req.isUnauthenticated(),

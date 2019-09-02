@@ -71,7 +71,11 @@ export class RepositoryGitHubResolver {
       context,
     });
 
-    if (repository) this.GitRepoRepository.save(repository);
+    if (repository) {
+      repository.createdAt = new Date(repository.createdAt);
+      repository.updatedAt = new Date(repository.updatedAt);
+      this.GitRepoRepository.save(repository);
+    }
 
     return repository;
   }

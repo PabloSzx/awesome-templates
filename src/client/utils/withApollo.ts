@@ -13,6 +13,6 @@ export const withApollo = nextWithApollo(
   ({ ctx, headers, initialState }) =>
     new ApolloClient({
       uri: GRAPHQL_URL,
-      cache: new InMemoryCache().restore(initialState || {}),
+      cache: new InMemoryCache({}).restore(initialState || {}),
     })
 );

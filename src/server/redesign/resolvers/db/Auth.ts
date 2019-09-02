@@ -1,6 +1,6 @@
 import _ from "lodash";
 import requireEnv from "require-env-variable";
-import { Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -34,6 +34,38 @@ export class AuthResolver {
   }
 
   @Authorized()
+  @Mutation(() => Boolean)
+  async modifyPersonalAccessToken(
+    @Arg("token") token: string,
+    @Ctx() { user }: IContext
+  ) {
+    try {
+      const { headers } = await getGitHubAPIv3(`/user`, {
+        headers: {
+          Authorization: `token ${token}`,
+        },
+      });
+
+      // minScopes = ["read:org", "read:user"];
+
+      if (
+        _.get<string>(headers, "x-oauth-scopes", "").match(
+          /(?=.*read:org.*)(?=.*read:user.*)/
+        )
+      ) {
+        await this.UserRepository.update(user.id, {
+          personalAccessToken: token,
+        });
+        return true;
+      }
+    } catch {}
+    await this.UserRepository.update(user.id, {
+      personalAccessToken: "",
+    });
+    return false;
+  }
+
+  @Authorized()
   @Query(() => APILevel)
   async checkAPILevel(@Ctx() { user }: IContext) {
     const [appInstalled, validPersonalToken] = await Promise.all([
@@ -55,7 +87,7 @@ export class AuthResolver {
             )
           );
         } catch (err) {
-          console.error(err);
+          // console.error(err);
           resolve(false);
         }
       }),

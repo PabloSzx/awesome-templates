@@ -1,6 +1,7 @@
 import { gql } from "apollo-boost";
 import { NextPage } from "next";
-import { Card, Grid } from "semantic-ui-react";
+import Link from "next/link";
+import { Button, Card, Grid } from "semantic-ui-react";
 
 import Modal from "../../src/client/Components/Modal";
 
@@ -45,6 +46,14 @@ const Templates: NextPage<{ data: TemplatesQuery }> = ({ data }) => {
                   <h2>
                     <a href={url}>{url}</a>
                   </h2>
+                </Grid.Row>
+                <Grid.Row>
+                  <Link
+                    href={"/templates/[owner]/[name]"}
+                    as={`/templates/${owner.data.login}/${name}`}
+                  >
+                    <Button primary>More info</Button>
+                  </Link>
                 </Grid.Row>
               </Grid>
             </Modal>
