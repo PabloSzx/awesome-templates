@@ -206,4 +206,13 @@ export class TemplateResolver {
       loadEagerRelations: false,
     })).frameworks;
   }
+
+  @FieldResolver()
+  async environments(@Root() { id }: Template) {
+    return (await this.TemplateRepository.findOneOrFail(id, {
+      select: ["id"],
+      relations: ["environments"],
+      loadEagerRelations: false,
+    })).environments;
+  }
 }

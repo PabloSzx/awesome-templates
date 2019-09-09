@@ -4,6 +4,7 @@ import {
     Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
 
+import { Environment } from "./Environment";
 import { Framework } from "./Framework";
 import { GitRepository } from "./GitRepository";
 import { Language } from "./Language";
@@ -56,6 +57,11 @@ export class Template {
   @ManyToMany(() => Library, lib => lib.templates)
   @JoinTable()
   libraries: Library[];
+
+  @Field(() => [Environment])
+  @ManyToMany(() => Environment, env => env.templates)
+  @JoinTable()
+  environments: Environment[];
 
   @Field(() => Framework)
   @ManyToMany(() => Framework, framework => framework.templates)

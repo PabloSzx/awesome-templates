@@ -1,8 +1,6 @@
 import { IsUrl, Length, MinLength } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
-import {
-    Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryColumn
-} from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm";
 
 import { Language } from "./Language";
 import { Template } from "./Template";
@@ -40,7 +38,7 @@ export class Library {
   templates: Template[];
 
   @Field(() => User)
-  @OneToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: "creator" })
   creator: User;
 }
