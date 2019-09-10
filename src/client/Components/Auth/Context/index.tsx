@@ -2,8 +2,18 @@ import gql from "graphql-tag";
 import { createContext, FunctionComponent, useEffect, useState } from "react";
 import { useQuery } from "react-apollo";
 
-import { User } from "../../../../server";
-
+type User = {
+  id: string;
+  admin: boolean;
+  data: {
+    avatarUrl: string;
+    login: string;
+    url: string;
+    email: string;
+    name?: string;
+    bio?: string;
+  };
+};
 export const AuthContext = createContext({
   user: null,
   setUser: () => {},
@@ -40,12 +50,9 @@ export const Auth: FunctionComponent = ({ children }) => {
   );
 
   useEffect(() => {
-    if (!queryLoading) {
-      setLoading(false);
-    }
-    if (data && data.current_user) {
-      setUser(data.current_user);
-    }
+    if (!queryLoading) setLoading(false);
+
+    if (data && data.current_user) setUser(data.current_user);
   }, [queryLoading, data]);
 
   return (

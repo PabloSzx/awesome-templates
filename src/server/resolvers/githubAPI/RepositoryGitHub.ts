@@ -1,5 +1,6 @@
 import gql from "graphql-tag";
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import _ from "lodash";
+import { Arg, Authorized, Ctx, FieldResolver, Mutation, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -16,68 +17,80 @@ export class RepositoryGitHubResolver {
   ) {}
 
   @Authorized(APILevel.ADVANCED)
-  @Query(() => RepositoryGitHub, { nullable: true })
-  async repository(
+  @Mutation(() => [RepositoryGitHub], { nullable: true })
+  async searchRepository(
     @Ctx() { authGitHub: context }: IContext,
-    @Arg("name") name: string,
-    @Arg("owner") owner: string
+    @Arg("input") input: string
   ) {
     const {
-      data: { repository },
+      data: {
+        search: { nodes },
+      },
     } = await GitHubAPI.query<
       {
-        repository: GitHubRepository | null;
+        search: {
+          nodes: GitHubRepository[];
+        };
       },
       {
-        name: string;
-        owner: string;
+        input: string;
       }
     >({
       query: gql`
-        query repository($name: String!, $owner: String!) {
-          repository(name: $name, owner: $owner) {
-            id
-            createdAt
-            updatedAt
-            isLocked
-            isArchived
-            isDisabled
-            isFork
-            isTemplate
-            forkCount
-            name
-            nameWithOwner
-            primaryLanguage {
-              color
-              id
-              name
-            }
-            description
-            url
+        query search($input: String!) {
+          search(type: REPOSITORY, query: $input, first: 20) {
+            nodes {
+              ... on Repository {
+                id
+                createdAt
+                updatedAt
+                isLocked
+                isArchived
+                isDisabled
+                isFork
+                isTemplate
+                forkCount
+                name
+                nameWithOwner
+                primaryLanguage {
+                  color
+                  id
+                  name
+                }
+                description
+                url
 
-            owner {
-              id
-              avatarUrl
-              login
-              url
+                owner {
+                  id
+                  avatarUrl
+                  login
+                  url
+                }
+              }
             }
           }
         }
       `,
       variables: {
-        name,
-        owner,
+        input,
       },
       context,
     });
 
-    if (repository && repository.createdAt && repository.updatedAt) {
-      repository.createdAt = new Date(repository.createdAt);
-      repository.updatedAt = new Date(repository.updatedAt);
-      this.GitRepoRepository.save(repository);
-    }
+    const repositories = _.compact(
+      nodes.map(
+        ({ createdAt, updatedAt, ...repo }) =>
+          createdAt &&
+          updatedAt && {
+            ...repo,
+            createdAt: new Date(createdAt),
+            updatedAt: new Date(updatedAt),
+          }
+      )
+    );
+    this.GitRepoRepository.save(repositories);
 
-    return repository;
+    return repositories;
   }
 
   @FieldResolver()

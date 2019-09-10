@@ -3,12 +3,14 @@ import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { useQuery } from "react-apollo";
 import {
     Button, Checkbox, Dropdown, Form, Grid, Header, Icon, Image, Label, List, Segment, Table
 } from "semantic-ui-react";
 import styled from "styled-components";
 import { useRememberState } from "use-remember-state";
 
+import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
 
 interface ITemplatesQuery {
@@ -197,7 +199,12 @@ const FilterMenu: FC<{
   ]);
 
   return (
-    <Form>
+    <Form as={Segment.Group}>
+      <Segment>
+        <Header as="h1" textAlign="center" block>
+          Search filters
+        </Header>
+      </Segment>
       <Segment>
         <Header as="h3">Name</Header>
         <Dropdown
@@ -570,7 +577,7 @@ const passAllOrAtLeastOne = (
   return true;
 };
 
-const Templates: NextPage<{ data: ITemplatesQuery }> = ({ data }) => {
+const TemplatesDashboard: FC<{ data: ITemplatesQuery }> = ({ data }) => {
   const [filteredTemplates, setFilteredTemplates] = useState(data.templates);
   const [filters, setFilters] = useState<filtersState>({
     names: [],
@@ -624,12 +631,16 @@ const Templates: NextPage<{ data: ITemplatesQuery }> = ({ data }) => {
   );
 };
 
-Templates.getInitialProps = async ({ apolloClient }) => {
-  const { data } = await apolloClient.query<ITemplatesQuery>({
-    query: TemplatesQuery,
-  });
+const Templates: NextPage = () => {
+  const { data, loading, error } = useQuery<ITemplatesQuery>(TemplatesQuery);
 
-  return { data };
+  if (loading) {
+    return <Loader active />;
+  }
+  if (error || !data) {
+    return <div>{JSON.stringify(error)}</div>;
+  }
+  return <TemplatesDashboard data={data} />;
 };
 
 export default Templates;
