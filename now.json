@@ -5,7 +5,8 @@
     "COOKIE_KEY": "@awesome_templates_cookie_key",
     "GITHUB_CLIENT_ID": "@pszx-awesome-templates-app-id",
     "GITHUB_CLIENT_SECRET": "@pszx-awesome-templates-app-secret",
-    "REDIS_URL": "@pszx-awesome-templates-redis-url"
+    "REDIS_URL": "@pszx-awesome-templates-redis-url",
+    "GITHUB_APP_ID": "@pszx-awesome-templates-github-app-id"
   },
   "builds": [
     {
