@@ -1,14 +1,14 @@
 import gql from "graphql-tag";
 import { NextPage } from "next";
-import { FunctionComponent } from "react";
+import { FC } from "react";
 import { useQuery } from "react-apollo";
-import { Button, Card, Grid } from "semantic-ui-react";
+import { Button, Grid, Icon, Table } from "semantic-ui-react";
 
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
 import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
 
-const Repositories: FunctionComponent = () => {
+const Repositories: FC = () => {
   const { data, loading } = useQuery<{
     viewer: {
       repositories: { name: string; starCount: number; url: string }[];
@@ -30,11 +30,25 @@ const Repositories: FunctionComponent = () => {
   }
 
   return (
-    <Grid centered padded>
-      {data.viewer.repositories.map(({ name, starCount, url }, key) => (
-        <Grid.Row key={key}>
+    <Table selectable sortable>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Name</Table.HeaderCell>
+          <Table.HeaderCell>Star count</Table.HeaderCell>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {data.viewer.repositories.map(({ name, starCount, url }, key) => (
           <Modal
-            trigger={<Card className="cursorHover">{name}</Card>}
+            trigger={
+              <Table.Row className="cursorHover" key={key}>
+                <Table.Cell>{name}</Table.Cell>
+                <Table.Cell>
+                  <Icon name="star" />
+                  {starCount}
+                </Table.Cell>
+              </Table.Row>
+            }
             actions={
               <>
                 <Button primary>Publish Repository</Button>
@@ -50,9 +64,9 @@ const Repositories: FunctionComponent = () => {
               </Grid.Row>
             </Grid>
           </Modal>
-        </Grid.Row>
-      ))}
-    </Grid>
+        ))}
+      </Table.Body>
+    </Table>
   );
 };
 

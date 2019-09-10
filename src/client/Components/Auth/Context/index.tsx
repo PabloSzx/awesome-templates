@@ -50,12 +50,9 @@ export const Auth: FunctionComponent = ({ children }) => {
   );
 
   useEffect(() => {
-    if (!queryLoading) {
-      setLoading(false);
-    }
-    if (data && data.current_user) {
-      setUser(data.current_user);
-    }
+    if (!queryLoading) setLoading(false);
+
+    if (data && data.current_user) setUser(data.current_user);
   }, [queryLoading, data]);
 
   return (

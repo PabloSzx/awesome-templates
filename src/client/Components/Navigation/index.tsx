@@ -79,6 +79,7 @@ const PersonalToken: FunctionComponent<{
                 ? "Add personal access token"
                 : "Modify existing personal access token"}
             </Card.Header>
+
             <Card.Meta>
               It allows you to publish templates from any GitHub repository and
               many more features

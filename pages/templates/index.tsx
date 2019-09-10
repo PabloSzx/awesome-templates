@@ -199,7 +199,12 @@ const FilterMenu: FC<{
   ]);
 
   return (
-    <Form>
+    <Form as={Segment.Group}>
+      <Segment>
+        <Header as="h1" textAlign="center" block>
+          Search filters
+        </Header>
+      </Segment>
       <Segment>
         <Header as="h3">Name</Header>
         <Dropdown
