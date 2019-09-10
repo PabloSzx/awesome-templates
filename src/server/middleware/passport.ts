@@ -8,7 +8,7 @@ import requireEnv from "require-env-variable";
 
 import { WRONG_INFO } from "../consts";
 import { connection } from "../db";
-import { User } from "../redesign/entities";
+import { User } from "../entities";
 
 const {
   GITHUB_CLIENT_ID,

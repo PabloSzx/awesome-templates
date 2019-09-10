@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 
 import { APILevel as APILevelEnum } from "../consts";
-import { User } from "../redesign/entities";
+import { User } from "../entities";
 
 const promisifiedLogin = <T = any, S = any>(
   req: Request,
