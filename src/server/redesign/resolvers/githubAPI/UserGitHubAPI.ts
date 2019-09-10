@@ -193,7 +193,7 @@ export class UserGitHubAPIResolver {
       repositories.push(
         ..._.compact(
           _.map(nodes, repo => {
-            if (repo) {
+            if (repo && repo.createdAt && repo.updatedAt) {
               return {
                 ...repo,
                 createdAt: new Date(repo.createdAt),
