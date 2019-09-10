@@ -625,11 +625,18 @@ const Templates: NextPage<{ data: ITemplatesQuery }> = ({ data }) => {
 };
 
 Templates.getInitialProps = async ({ apolloClient }) => {
-  const { data } = await apolloClient.query<ITemplatesQuery>({
-    query: TemplatesQuery,
-  });
+  try {
+    const { data, errors } = await apolloClient.query<ITemplatesQuery>({
+      query: TemplatesQuery,
+    });
 
-  return { data };
+    console.error(633, errors);
+
+    return { data };
+  } catch (err) {
+    console.error(638, err);
+    throw err;
+  }
 };
 
 export default Templates;
