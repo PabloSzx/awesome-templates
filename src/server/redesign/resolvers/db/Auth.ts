@@ -58,7 +58,7 @@ export class AuthResolver {
         });
         return true;
       }
-    } catch {}
+    } catch (err) {}
     await this.UserRepository.update(user.id, {
       personalAccessToken: "",
     });
