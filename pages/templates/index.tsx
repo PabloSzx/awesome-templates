@@ -1,8 +1,8 @@
 import { gql } from "apollo-boost";
-import sortBy from "lodash/sortBy";
+import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
-import { FunctionComponent, useEffect, useState } from "react";
+import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import {
     Button, Checkbox, Dropdown, Form, Grid, Header, Icon, Image, Label, List, Segment, Table
 } from "semantic-ui-react";
@@ -98,38 +98,129 @@ const ListIcon = styled(List.Icon)`
   color: ${({ color_icon }: { color_icon?: string }) => color_icon || "black"};
 `;
 
-const FilterToggle = () => {
+enum filterToggleEnum {
+  atLeastOne,
+  all,
+}
+const FilterToggle: FC<{
+  name: string;
+  setParentToggle: Dispatch<SetStateAction<filterToggleEnum>>;
+}> = ({ name, setParentToggle }) => {
+  const { atLeastOne, all } = filterToggleEnum;
+
+  const [checked, setChecked] = useRememberState(
+    `${name}Toggle`,
+    atLeastOne,
+    true
+  );
+
+  useEffect(() => {
+    setParentToggle(checked);
+  }, [checked]);
+
   return (
     <FlexCenterEnd padding_botom="1em">
       <Label basic>At least one</Label>
-      <Checkbox slider></Checkbox>
+      <Checkbox
+        slider
+        onChange={() =>
+          setChecked(checked => (checked === atLeastOne ? all : atLeastOne))
+        }
+        checked={checked === all}
+      />
       <Label basic>All</Label>
     </FlexCenterEnd>
   );
 };
 
-const FilterMenu: FunctionComponent<{ data: ITemplatesQuery }> = ({
+const FilterMenu: FC<{
+  data: ITemplatesQuery;
+  setParentFilters: Dispatch<SetStateAction<filtersState>>;
+}> = ({
   data: { templates, languages, libraries, frameworks, environments },
+  setParentFilters,
 }) => {
+  const [filterNames, setFilterNames] = useRememberState<string[]>(
+    "filterMenuNames",
+    [],
+    true
+  );
+  const [filterLanguages, setFilterLanguages] = useRememberState<string[]>(
+    "filterMenuLanguages",
+    [],
+    true
+  );
+  const [filterLanguagesToggle, setFilterLanguagesToggle] = useState(
+    filterToggleEnum.atLeastOne
+  );
+  const [filterEnvironments, setFilterEnvironments] = useRememberState<
+    string[]
+  >("filterMenuEnvironments", [], true);
+  const [filterEnvironmentsToggle, setFilterEnvironmentsToggle] = useState(
+    filterToggleEnum.atLeastOne
+  );
+  const [filterFrameworks, setFilterFrameworks] = useRememberState<string[]>(
+    "filterMenuFrameworks",
+    [],
+    true
+  );
+  const [filterFrameworksToggle, setFilterFrameworksToggle] = useState(
+    filterToggleEnum.atLeastOne
+  );
+  const [filterLibraries, setFilterLibraries] = useRememberState<string[]>(
+    "filterMenuLibraries",
+    [],
+    true
+  );
+  const [filterLibrariesToggle, setFilterLibrariesToggle] = useState(
+    filterToggleEnum.atLeastOne
+  );
+
+  useEffect(() => {
+    setParentFilters({
+      names: filterNames,
+      languages: [filterLanguages, filterLanguagesToggle],
+      environments: [filterEnvironments, filterEnvironmentsToggle],
+      frameworks: [filterFrameworks, filterFrameworksToggle],
+      libraries: [filterLibraries, filterLibrariesToggle],
+    });
+  }, [
+    filterNames,
+    filterLanguages,
+    filterLanguagesToggle,
+    filterEnvironments,
+    filterEnvironmentsToggle,
+    filterFrameworks,
+    filterFrameworksToggle,
+    filterLibraries,
+    filterLibrariesToggle,
+  ]);
+
   return (
     <Form>
       <Segment>
         <Header as="h3">Name</Header>
         <Dropdown
           search
-          text="Search by name"
+          placeholder="Search by name"
           selection
+          multiple
           options={templates.map(({ name: value }, key) => ({
             key,
             value,
             text: value,
           }))}
           fluid
+          onChange={(_e, { value }: any) => setFilterNames(value as string[])}
+          value={filterNames}
         />
       </Segment>
       <Segment>
         <Header as="h3">Languages</Header>
-        <FilterToggle />
+        <FilterToggle
+          name="languages"
+          setParentToggle={setFilterLanguagesToggle}
+        />
         <Dropdown
           clearable
           multiple
@@ -142,11 +233,18 @@ const FilterMenu: FunctionComponent<{ data: ITemplatesQuery }> = ({
             value,
           }))}
           fluid
+          onChange={(_e, { value }: any) =>
+            setFilterLanguages(value as string[])
+          }
+          value={filterLanguages}
         />
       </Segment>
       <Segment>
         <Header as="h3">Environment</Header>
-        <FilterToggle />
+        <FilterToggle
+          name="environment"
+          setParentToggle={setFilterEnvironmentsToggle}
+        />
         <Dropdown
           clearable
           multiple
@@ -159,11 +257,18 @@ const FilterMenu: FunctionComponent<{ data: ITemplatesQuery }> = ({
             value,
           }))}
           fluid
+          onChange={(_e, { value }: any) =>
+            setFilterEnvironments(value as string[])
+          }
+          value={filterEnvironments}
         />
       </Segment>
       <Segment>
         <Header as="h3">Frameworks</Header>
-        <FilterToggle />
+        <FilterToggle
+          name="frameworks"
+          setParentToggle={setFilterFrameworksToggle}
+        />
         <Dropdown
           clearable
           multiple
@@ -176,12 +281,19 @@ const FilterMenu: FunctionComponent<{ data: ITemplatesQuery }> = ({
             value,
           }))}
           fluid
+          onChange={(_e, { value }: any) =>
+            setFilterFrameworks(value as string[])
+          }
+          value={filterFrameworks}
         />
       </Segment>
 
       <Segment>
         <Header as="h3">Libraries</Header>
-        <FilterToggle />
+        <FilterToggle
+          name="libraries"
+          setParentToggle={setFilterLibrariesToggle}
+        />
         <Dropdown
           clearable
           multiple
@@ -194,13 +306,17 @@ const FilterMenu: FunctionComponent<{ data: ITemplatesQuery }> = ({
             value,
           }))}
           fluid
+          onChange={(_e, { value }: any) =>
+            setFilterLibraries(value as string[])
+          }
+          value={filterLibraries}
         />
       </Segment>
     </Form>
   );
 };
 
-enum columnNames {
+enum columnName {
   name = "Name",
   upvotes = "Upvotes / Stars",
   languages = "Languages",
@@ -209,20 +325,20 @@ enum columnNames {
   libraries = "Libraries",
 }
 
-const TemplatesTable: FunctionComponent<{
+const TemplatesTable: FC<{
   templates: ITemplatesQuery["templates"];
 }> = ({ templates }) => {
   const [sortedTemplates, setSortedTemplates] = useState(templates);
   const [direction, setDirection] = useRememberState<
     "ascending" | "descending" | null
   >("templatesTableDirection", null, true);
-  const [column, setColumn] = useRememberState<columnNames | null>(
+  const [column, setColumn] = useRememberState<columnName | null>(
     "templatesTableColumn",
     null,
     true
   );
 
-  const handleSort = (clickedColumn: columnNames) => {
+  const handleSort = (clickedColumn: columnName) => {
     if (column !== clickedColumn) {
       setColumn(clickedColumn);
       setDirection("ascending");
@@ -235,32 +351,48 @@ const TemplatesTable: FunctionComponent<{
   };
 
   useEffect(() => {
-    let sortedTemplatesTemp: typeof templates;
-    sortedTemplatesTemp = sortBy(
-      templates,
-      ({ name, upvotesCount, environments }) => {
-        switch (column) {
-          case columnNames.name:
-            return name;
-          case columnNames.upvotes:
-            return upvotesCount;
-          case columnNames.environment:
-            return environments[0] && environments[0].name;
-          default:
-            return 0;
-        }
-      }
+    setSortedTemplates(
+      _.orderBy(
+        templates,
+        [
+          ({
+            name,
+            upvotesCount,
+            environments,
+            languages,
+            libraries,
+            frameworks,
+          }) => {
+            switch (column) {
+              case columnName.name:
+                return name;
+              case columnName.upvotes:
+                return upvotesCount;
+              case columnName.environment:
+                return _.get(_.head(environments), "name", -1);
+              case columnName.languages:
+                return _.get(_.head(languages), "name", -1);
+              case columnName.libraries:
+                return _.get(_.head(libraries), "name", -1);
+              case columnName.frameworks:
+                return _.get(_.head(frameworks), "name", -1);
+              default:
+                return 0;
+            }
+          },
+          ({ repository: { starCount } }) => starCount,
+          ({ name }) => name,
+        ],
+        [
+          direction === "descending" ? "desc" : "asc",
+          direction === "descending" ? "desc" : "asc",
+          direction === "descending" ? "desc" : "asc",
+        ]
+      )
     );
-    if (direction === "descending") {
-      sortedTemplatesTemp.reverse();
-    }
+  }, [templates, column, direction]);
 
-    setSortedTemplates(sortedTemplatesTemp);
-  }, [column, direction]);
-
-  const TableHeaderCell: FunctionComponent<{ name: columnNames }> = ({
-    name,
-  }) => (
+  const TableHeaderCell: FC<{ name: columnName }> = ({ name }) => (
     <Table.HeaderCell
       sorted={direction && column === name ? direction : undefined}
       onClick={() => handleSort(name)}
@@ -273,7 +405,7 @@ const TemplatesTable: FunctionComponent<{
     <Table selectable sortable>
       <Table.Header>
         <Table.Row>
-          {Object.values(columnNames).map((name: columnNames, key) => (
+          {Object.values(columnName).map((name: columnName, key) => (
             <TableHeaderCell name={name} key={key} />
           ))}
         </Table.Row>
@@ -405,15 +537,87 @@ const TemplatesTable: FunctionComponent<{
   );
 };
 
+type filtersState = {
+  names: string[];
+  languages: [string[], filterToggleEnum];
+  environments: [string[], filterToggleEnum];
+  frameworks: [string[], filterToggleEnum];
+  libraries: [string[], filterToggleEnum];
+};
+
+const passAllOrAtLeastOne = (
+  filter: [string[], filterToggleEnum],
+  listToFilter: { name: string }[]
+) => {
+  if (filter[1] === filterToggleEnum.all) {
+    if (
+      !_.isEqual(
+        _.sortBy(
+          _.intersection(listToFilter.map(({ name }) => name), filter[0])
+        ),
+        _.sortBy(filter[0])
+      )
+    ) {
+      return false;
+    }
+  } else {
+    if (
+      _.isEmpty(_.intersection(listToFilter.map(({ name }) => name), filter[0]))
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
 const Templates: NextPage<{ data: ITemplatesQuery }> = ({ data }) => {
+  const [filteredTemplates, setFilteredTemplates] = useState(data.templates);
+  const [filters, setFilters] = useState<filtersState>({
+    names: [],
+    languages: [[], filterToggleEnum.atLeastOne],
+    environments: [[], filterToggleEnum.atLeastOne],
+    frameworks: [[], filterToggleEnum.atLeastOne],
+    libraries: [[], filterToggleEnum.atLeastOne],
+  });
+
+  useEffect(() => {
+    setFilteredTemplates(
+      _.filter(
+        data.templates,
+        ({ name, languages, environments, frameworks, libraries }) => {
+          if (!_.isEmpty(filters.names)) {
+            if (!_.includes(filters.names, name)) return false;
+          }
+          if (!_.isEmpty(filters.languages[0])) {
+            if (!passAllOrAtLeastOne(filters.languages, languages))
+              return false;
+          }
+          if (!_.isEmpty(filters.environments[0])) {
+            if (!passAllOrAtLeastOne(filters.environments, environments))
+              return false;
+          }
+          if (!_.isEmpty(filters.frameworks[0])) {
+            if (!passAllOrAtLeastOne(filters.frameworks, frameworks))
+              return false;
+          }
+          if (!_.isEmpty(filters.libraries[0])) {
+            if (!passAllOrAtLeastOne(filters.libraries, libraries))
+              return false;
+          }
+          return true;
+        }
+      )
+    );
+  }, [filters]);
+
   return (
     <Grid centered padded>
       <Grid.Row>
         <Grid.Column width={4}>
-          <FilterMenu data={data} />
+          <FilterMenu data={data} setParentFilters={setFilters} />
         </Grid.Column>
         <Grid.Column width={12}>
-          <TemplatesTable templates={data.templates} />
+          <TemplatesTable templates={filteredTemplates} />
         </Grid.Column>
       </Grid.Row>
     </Grid>
