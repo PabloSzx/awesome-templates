@@ -3,12 +3,14 @@ import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { useQuery } from "react-apollo";
 import {
     Button, Checkbox, Dropdown, Form, Grid, Header, Icon, Image, Label, List, Segment, Table
 } from "semantic-ui-react";
 import styled from "styled-components";
 import { useRememberState } from "use-remember-state";
 
+import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
 
 interface ITemplatesQuery {
@@ -570,7 +572,7 @@ const passAllOrAtLeastOne = (
   return true;
 };
 
-const Templates: NextPage<{ data: ITemplatesQuery }> = ({ data }) => {
+const TemplatesDashboard: FC<{ data: ITemplatesQuery }> = ({ data }) => {
   const [filteredTemplates, setFilteredTemplates] = useState(data.templates);
   const [filters, setFilters] = useState<filtersState>({
     names: [],
@@ -624,19 +626,16 @@ const Templates: NextPage<{ data: ITemplatesQuery }> = ({ data }) => {
   );
 };
 
-Templates.getInitialProps = async ({ apolloClient }) => {
-  try {
-    const { data, errors } = await apolloClient.query<ITemplatesQuery>({
-      query: TemplatesQuery,
-    });
+const Templates: NextPage = () => {
+  const { data, loading, error } = useQuery<ITemplatesQuery>(TemplatesQuery);
 
-    console.error(633, errors);
-
-    return { data };
-  } catch (err) {
-    console.error(638, err);
-    throw err;
+  if (loading) {
+    return <Loader active />;
   }
+  if (error || !data) {
+    return <div>{JSON.stringify(error)}</div>;
+  }
+  return <TemplatesDashboard data={data} />;
 };
 
 export default Templates;
