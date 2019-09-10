@@ -1,52 +1,66 @@
 import axios from "axios";
+import connectRedis from "connect-redis";
 import { Router } from "express";
 import ExpressSession from "express-session";
 import passport from "passport";
+import redis from "redis";
 import requireEnv from "require-env-variable";
-import { Repository } from "typeorm";
-import { TypeormStore } from "typeorm-store";
 
 import { WRONG_INFO } from "../consts";
 import { connection } from "../db";
-import { Session, User } from "../entities";
+import { User } from "../redesign/entities";
 
-const { GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, COOKIE_KEY } = requireEnv([
+const {
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+  COOKIE_KEY,
+  REDIS_URL,
+  NODE_ENV,
+} = requireEnv([
   "GITHUB_CLIENT_ID",
   "GITHUB_CLIENT_SECRET",
   "COOKIE_KEY",
+  "REDIS_URL",
+  "NODE_ENV",
 ]);
 export const auth = Router();
 
-function SessionMiddleware(repository: Repository<Session>) {
-  return ExpressSession({
+const RedisStore = connectRedis(ExpressSession);
+const client = redis.createClient({
+  url: REDIS_URL,
+  db: NODE_ENV === "production" ? 1 : 0,
+});
+
+auth.use(
+  ExpressSession({
+    store: new RedisStore({ client }),
     secret: COOKIE_KEY,
     resave: false,
     saveUninitialized: false,
     rolling: true,
     cookie: { maxAge: 86400000, secure: false },
-    store: new TypeormStore({ repository }),
-  });
-}
-
-auth.use(async (req, res, next) => {
-  SessionMiddleware((await connection).getRepository(Session))(req, res, next);
-});
+  })
+);
 
 auth.use(passport.initialize());
 auth.use(passport.session());
 
-passport.serializeUser<User, number>((user, cb) => {
+passport.serializeUser<User, string>((user, cb) => {
   if (user) cb(null, user.id);
   else cb(WRONG_INFO);
 });
 
-passport.deserializeUser<User, number>(async (id, done) => {
+passport.deserializeUser<User | null, string>(async (id, done) => {
   try {
     const UserRepository = (await connection).getRepository(User);
 
     const user = await UserRepository.findOne(id);
 
-    done(null, user);
+    if (user) {
+      done(null, user);
+    } else {
+      done(null, null);
+    }
   } catch (err) {
     console.error(err);
   }
@@ -83,61 +97,49 @@ auth.use("/api/login/github", async (req, res) => {
     const {
       data: {
         email,
-        id,
-        avatar_url,
-        url: profileUrl,
-        login: username,
-        name: displayName,
+        avatar_url: avatarUrl,
+        url,
+        login,
+        name,
+        bio,
+        node_id: id,
+        ...restData
       },
     } = await axios.get<{
       email: string;
-      id: number;
       avatar_url: string;
       login: string;
       name: string;
       url: string;
+      bio: string;
+      node_id: string;
     }>(`https://api.github.com/user`, {
       headers: {
         Authorization: `token ${accessToken}`,
       },
     });
 
+    console.log("restData", restData);
+
     const UserRepository = (await connection).getRepository(User);
 
-    let user = await UserRepository.findOne(id);
+    const data = {
+      id,
+      avatarUrl,
+      login,
+      url,
+      name,
+      email,
+      bio,
+    };
+    let user = UserRepository.create({
+      id,
+      accessToken,
+      data,
+    });
 
-    if (user) {
-      UserRepository.update(id, {
-        email,
-        username,
-        displayName,
-        profileUrl,
-        avatar_url,
-        accessToken,
-      });
-      user = {
-        ...user,
-        id,
-        email,
-        username,
-        displayName,
-        profileUrl,
-        avatar_url,
-        accessToken,
-      };
-    } else {
-      user = await UserRepository.create({
-        id,
-        email,
-        username,
-        displayName,
-        profileUrl,
-        avatar_url,
-        accessToken,
-      });
+    user = await UserRepository.save(user);
 
-      await UserRepository.save(user);
-    }
     req.login(user, err => {
       if (err) {
         console.error(err);

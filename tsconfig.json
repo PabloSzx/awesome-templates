@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "esnext",
     "module": "esnext",
     "jsx": "preserve",
     "strict": true,
@@ -17,6 +17,6 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "old"],
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"]
 }

@@ -2,7 +2,7 @@ import { values } from "lodash";
 import { Container } from "typedi";
 import { ConnectionOptions, createConnection, useContainer } from "typeorm";
 
-import * as entities from "../entities";
+import * as entities from "../redesign/entities/db";
 
 const dbConfig: ConnectionOptions = {
   type: "postgres",
@@ -18,7 +18,8 @@ const dbConfig: ConnectionOptions = {
         port: parseInt(process.env.DB_PORT || "") || 5432,
       }),
   synchronize: true,
-  logging: false,
+  logging: process.env.NODE_ENV !== "production",
+  logger: "file",
 };
 
 useContainer(Container);
