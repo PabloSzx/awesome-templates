@@ -120,18 +120,32 @@ export class AuthResolver {
 
     if (validPersonalToken) {
       user.APILevel = APILevel.ADVANCED;
-      this.UserRepository.save({ id: user.id, APILevel: APILevel.ADVANCED });
+      this.UserRepository.save({
+        id: user.id,
+        APILevel: APILevel.ADVANCED,
+      }).catch(err => {
+        console.error(err);
+      });
       return APILevel.ADVANCED;
     }
 
     if (appInstalled) {
       user.APILevel = APILevel.MEDIUM;
-      this.UserRepository.save({ id: user.id, APILevel: APILevel.MEDIUM });
+      this.UserRepository.save({
+        id: user.id,
+        APILevel: APILevel.MEDIUM,
+      }).catch(err => {
+        console.error(err);
+      });
       return APILevel.MEDIUM;
     }
 
     user.APILevel = APILevel.BASIC;
-    this.UserRepository.save({ id: user.id, APILevel: APILevel.BASIC });
+    this.UserRepository.save({ id: user.id, APILevel: APILevel.BASIC }).catch(
+      err => {
+        console.error(err);
+      }
+    );
     return APILevel.BASIC;
   }
 }

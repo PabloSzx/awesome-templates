@@ -94,7 +94,7 @@ auth.use("/api/login/github", async (req, res) => {
       },
     });
 
-    const {
+    let {
       data: {
         email,
         avatar_url: avatarUrl,
@@ -106,7 +106,7 @@ auth.use("/api/login/github", async (req, res) => {
         ...restData
       },
     } = await axios.get<{
-      email: string;
+      email: string | undefined;
       avatar_url: string;
       login: string;
       name: string;
@@ -118,6 +118,8 @@ auth.use("/api/login/github", async (req, res) => {
         Authorization: `token ${accessToken}`,
       },
     });
+
+    email = email || "";
 
     console.log("restData", restData);
 
@@ -132,7 +134,7 @@ auth.use("/api/login/github", async (req, res) => {
       email,
       bio,
     };
-    let user = UserRepository.create({
+    let user: User = UserRepository.create({
       id,
       accessToken,
       data,

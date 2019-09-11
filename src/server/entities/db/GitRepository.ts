@@ -70,8 +70,8 @@ export class GitRepository implements RepositoryGitHub {
 
   @Field(() => RepositoryOwner)
   @ManyToOne(() => RepositoryOwner, repoOwner => repoOwner.repositories, {
-    cascade: true,
-    nullable: false,
+    cascade: ["insert", "update"],
+    nullable: true,
     eager: true,
   })
   owner: RepositoryOwner;
