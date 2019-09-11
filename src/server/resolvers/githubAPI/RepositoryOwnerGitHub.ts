@@ -110,6 +110,8 @@ export class RepositoryOwnerGitHubResolver {
         ...repoOwner,
         user,
         organization,
+      }).catch(err => {
+        console.error(err);
       });
       return {
         ...repoOwner,

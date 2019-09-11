@@ -6,14 +6,18 @@ import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { GitHubAPI } from "../../../utils";
 import { APILevel } from "../../consts";
-import { GitHubLanguage, GitHubRepository, GitRepository, RepositoryGitHub } from "../../entities";
+import {
+    GitHubLanguage, GitHubRepository, GitRepository, Language, RepositoryGitHub
+} from "../../entities";
 import { IContext } from "../../interfaces";
 
 @Resolver(() => RepositoryGitHub)
 export class RepositoryGitHubResolver {
   constructor(
     @InjectRepository(GitRepository)
-    private readonly GitRepoRepository: Repository<GitRepository>
+    private readonly GitRepoRepository: Repository<GitRepository>,
+    @InjectRepository(Language)
+    private readonly LanguageRepository: Repository<Language>
   ) {}
 
   @Authorized(APILevel.ADVANCED)
@@ -88,7 +92,23 @@ export class RepositoryGitHubResolver {
           }
       )
     );
-    this.GitRepoRepository.save(repositories);
+
+    (async () => {
+      await this.LanguageRepository.createQueryBuilder()
+        .insert()
+        .orIgnore()
+        .values(
+          _.uniqWith(
+            _.compact(_.map(repositories, v => v.primaryLanguage)),
+            _.isEqual
+          )
+        )
+        .execute();
+
+      this.GitRepoRepository.save(repositories).catch(err => {
+        console.error(err);
+      });
+    })();
 
     return repositories;
   }
@@ -135,7 +155,9 @@ export class RepositoryGitHubResolver {
       context,
     });
 
-    this.GitRepoRepository.save({ id, starCount });
+    this.GitRepoRepository.save({ id, starCount }).catch(err => {
+      console.error(err);
+    });
 
     return starCount;
   }
@@ -213,7 +235,9 @@ export class RepositoryGitHubResolver {
       }
     } while (hasNextPage);
 
-    this.GitRepoRepository.save({ id, languages: repoLanguages });
+    this.GitRepoRepository.save({ id, languages: repoLanguages }).catch(err => {
+      console.error(err);
+    });
 
     return repoLanguages;
   }

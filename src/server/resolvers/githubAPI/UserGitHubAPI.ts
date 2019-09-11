@@ -47,10 +47,14 @@ export class UserGitHubAPIResolver {
       context,
     });
 
-    this.UserGitHubRepository.save(viewer);
+    this.UserGitHubRepository.save(viewer).catch(err => {
+      console.error(err);
+    });
     this.RepositoryOwnerRepository.save({
       ...viewer,
       user: viewer,
+    }).catch(err => {
+      console.error(err);
     });
 
     return viewer;
@@ -92,10 +96,14 @@ export class UserGitHubAPIResolver {
     });
 
     if (user) {
-      this.UserGitHubRepository.save(user);
+      this.UserGitHubRepository.save(user).catch(err => {
+        console.error(err);
+      });
       this.RepositoryOwnerRepository.save({
         ...user,
         user,
+      }).catch(err => {
+        console.error(err);
       });
     }
 
@@ -220,7 +228,9 @@ export class UserGitHubAPIResolver {
           )
         )
         .execute();
-      this.UserGitHubRepository.save({ id, repositories });
+      this.UserGitHubRepository.save({ id, repositories }).catch(err => {
+        console.error(err);
+      });
     })();
 
     return _.filter(repositories, repo =>
@@ -345,7 +355,9 @@ export class UserGitHubAPIResolver {
           )
         )
         .execute();
-      this.UserGitHubRepository.save({ id, starredRepositories });
+      this.UserGitHubRepository.save({ id, starredRepositories }).catch(err => {
+        console.error(err);
+      });
     })();
 
     return _.filter(starredRepositories, repo =>
@@ -404,6 +416,8 @@ export class UserGitHubAPIResolver {
     this.UserGitHubRepository.save({
       id,
       organizations,
+    }).catch(err => {
+      console.error(err);
     });
 
     return organizations;

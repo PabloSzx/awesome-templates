@@ -76,7 +76,10 @@ export class LanguageGitHubResolver {
       ],
       ["desc", "asc"]
     );
-    if (!_.isEmpty(languages)) this.LanguageRepository.save(languages);
+    if (!_.isEmpty(languages))
+      this.LanguageRepository.save(languages).catch(err => {
+        console.error(err);
+      });
 
     return languages;
   }

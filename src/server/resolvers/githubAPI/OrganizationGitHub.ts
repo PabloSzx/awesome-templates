@@ -58,10 +58,14 @@ export class OrganizationGitHubResolver {
     });
 
     if (organization) {
-      this.OrganizationRepository.save(organization);
+      this.OrganizationRepository.save(organization).catch(err => {
+        console.error(err);
+      });
       this.RepositoryOwnerRepository.save({
         ...organization,
         organization,
+      }).catch(err => {
+        console.error(err);
       });
     }
 
@@ -131,7 +135,9 @@ export class OrganizationGitHubResolver {
       after = organization.membersWithRole.pageInfo.endCursor;
       hasNextPage = organization.membersWithRole.pageInfo.hasNextPage;
     } while (hasNextPage);
-    this.OrganizationRepository.save({ id, members });
+    this.OrganizationRepository.save({ id, members }).catch(err => {
+      console.error(err);
+    });
 
     return members;
   }
@@ -248,7 +254,9 @@ export class OrganizationGitHubResolver {
       hasNextPage = pageInfo.hasNextPage;
     } while (hasNextPage);
 
-    this.OrganizationRepository.save({ id, repositories });
+    this.OrganizationRepository.save({ id, repositories }).catch(err => {
+      console.error(err);
+    });
 
     return repositories;
   }
