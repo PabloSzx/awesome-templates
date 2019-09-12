@@ -10,4 +10,4 @@ export enum APILevel {
   ADVANCED = "ADVANCED",
 }
 
-export const GRAPHQL_URL = `${DOMAIN}api/graphql`;
+export const GRAPHQL_URL = `${DOMAIN}/api/graphql`;

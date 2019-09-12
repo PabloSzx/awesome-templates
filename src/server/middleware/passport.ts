@@ -7,6 +7,7 @@ import redis from "redis";
 import requireEnv from "require-env-variable";
 
 import { WRONG_INFO } from "../../consts";
+import { DOMAIN } from "../../consts/domain";
 import { connection } from "../db";
 import { User } from "../entities";
 
@@ -73,7 +74,7 @@ auth.use("/api/login/github", async (req, res) => {
     };
     if (!code) {
       return res.redirect(
-        `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}`
+        `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${DOMAIN}/api/login/github`
       );
     }
 

@@ -10,7 +10,11 @@ const dbConfig: ConnectionOptions = {
   ...(process.env.DB_URL
     ? {
         url: process.env.DB_URL,
-        database: process.env.DB_DATABASE || "awesome-templates-dev",
+        database:
+          process.env.DB_DATABASE ||
+          `awesome-templates${
+            process.env.NODE_ENV === "production" ? "" : "-dev"
+          }`,
       }
     : {
         username: process.env.DB_USERNAME || "postgres",
