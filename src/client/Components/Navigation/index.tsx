@@ -10,7 +10,7 @@ import {
 import styled from "styled-components";
 import { useRememberState } from "use-remember-state";
 
-import { APILevel } from "../../../server/consts";
+import { APILevel } from "../../../consts";
 import { AuthContext } from "../Auth/Context";
 import Modal from "../Modal";
 

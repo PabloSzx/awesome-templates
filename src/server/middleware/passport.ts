@@ -6,7 +6,7 @@ import passport from "passport";
 import redis from "redis";
 import requireEnv from "require-env-variable";
 
-import { WRONG_INFO } from "../consts";
+import { WRONG_INFO } from "../../consts";
 import { connection } from "../db";
 import { User } from "../entities";
 

@@ -4,8 +4,8 @@ import { Arg, Authorized, Ctx, FieldResolver, Mutation, Resolver, Root } from "t
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { APILevel } from "../../../consts";
 import { GitHubAPI } from "../../../utils";
-import { APILevel } from "../../consts";
 import {
     GitHubLanguage, GitHubRepository, GitRepository, Language, RepositoryGitHub
 } from "../../entities";
@@ -94,21 +94,23 @@ export class RepositoryGitHubResolver {
     );
 
     (async () => {
-      await this.LanguageRepository.createQueryBuilder()
-        .insert()
-        .orIgnore()
-        .values(
-          _.uniqWith(
-            _.compact(_.map(repositories, v => v.primaryLanguage)),
-            _.isEqual
+      try {
+        await this.LanguageRepository.createQueryBuilder()
+          .insert()
+          .orIgnore()
+          .values(
+            _.uniqWith(
+              _.compact(_.map(repositories, v => v.primaryLanguage)),
+              _.isEqual
+            )
           )
-        )
-        .execute();
+          .execute();
 
-      this.GitRepoRepository.save(repositories).catch(err => {
+        await this.GitRepoRepository.save(repositories);
+      } catch (err) {
         console.error(err);
-      });
-    })();
+      }
+    })().catch(err => console.error(err));
 
     return repositories;
   }
@@ -155,9 +157,14 @@ export class RepositoryGitHubResolver {
       context,
     });
 
-    this.GitRepoRepository.save({ id, starCount }).catch(err => {
-      console.error(err);
-    });
+    this.GitRepoRepository.createQueryBuilder()
+      .update()
+      .set({
+        starCount,
+      })
+      .where("id = :id", { id })
+      .execute()
+      .catch(err => console.error(err));
 
     return starCount;
   }
@@ -235,9 +242,19 @@ export class RepositoryGitHubResolver {
       }
     } while (hasNextPage);
 
-    this.GitRepoRepository.save({ id, languages: repoLanguages }).catch(err => {
-      console.error(err);
-    });
+    (async () => {
+      try {
+        await this.LanguageRepository.createQueryBuilder()
+          .insert()
+          .orIgnore()
+          .values(repoLanguages)
+          .execute();
+
+        await this.GitRepoRepository.save({ id, languages: repoLanguages });
+      } catch (err) {
+        console.error(err);
+      }
+    })();
 
     return repoLanguages;
   }
