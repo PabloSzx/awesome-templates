@@ -1,5 +1,6 @@
 import ApolloClient from "apollo-boost";
 import App from "next/app";
+import Head from "next/head";
 import { ApolloProvider } from "react-apollo";
 
 import { Auth } from "../src/client/Components/Auth/Context";
@@ -12,6 +13,10 @@ class MyApp extends App<{ apollo: ApolloClient<any> }> {
 
     return (
       <ApolloProvider client={apollo}>
+        <Head>
+          <title>Awesome Templates</title>
+        </Head>
+
         <Auth>
           <Navigation />
           <Component {...pageProps} />

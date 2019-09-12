@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "alias": "beta.awesome-templates.dev",
   "env": {
     "DB_URL": "@pszx-awesome-templates-db-url",
     "COOKIE_KEY": "@awesome_templates_cookie_key",
