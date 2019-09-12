@@ -10,6 +10,7 @@ const dbConfig: ConnectionOptions = {
   ...(process.env.DB_URL
     ? {
         url: process.env.DB_URL,
+        database: process.env.DB_DATABASE || "awesome-templates",
       }
     : {
         username: process.env.DB_USERNAME || "postgres",
