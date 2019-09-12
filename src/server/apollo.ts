@@ -4,7 +4,7 @@ import { values } from "lodash";
 import { buildSchemaSync, registerEnumType } from "type-graphql";
 import { Container as container } from "typedi";
 
-import { APILevel } from "./consts";
+import { APILevel } from "../consts";
 import * as resolvers from "./resolvers";
 import { authChecker, buildContext } from "./utils";
 

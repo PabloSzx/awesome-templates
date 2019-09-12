@@ -3,8 +3,8 @@ import { Arg, Authorized, Ctx, Query, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { APILevel } from "../../../consts";
 import { GitHubAPI } from "../../../utils";
-import { APILevel } from "../../consts";
 import {
     GitHubOrganization, GitHubRepositoryOwner, GitHubUser, RepositoryOwner, RepositoryOwnerGitHub
 } from "../../entities";

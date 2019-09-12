@@ -3,7 +3,7 @@ import {
     Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, OneToOne, PrimaryColumn
 } from "typeorm";
 
-import { APILevel } from "../../consts";
+import { APILevel } from "../../../consts";
 import { Template } from "./Template";
 import { UserGitHub } from "./UserGitHub";
 

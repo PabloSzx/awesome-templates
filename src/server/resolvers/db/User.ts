@@ -2,7 +2,7 @@ import { Authorized, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
-import { ADMIN } from "../../consts";
+import { ADMIN } from "../../../consts";
 import { User } from "../../entities";
 
 @Resolver(() => User)

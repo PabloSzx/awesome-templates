@@ -4,8 +4,8 @@ import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { APILevel } from "../../../consts";
 import { GitHubAPI } from "../../../utils";
-import { APILevel } from "../../consts";
 import {
     GitHubOrganization, GitHubRepository, GitHubUser, Organization, OrganizationGitHub,
     RepositoryOwner

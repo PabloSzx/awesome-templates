@@ -4,8 +4,8 @@ import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { APILevel } from "../../../consts";
 import { getGitHubAPIv3 } from "../../../utils";
-import { APILevel } from "../../consts";
 import { User } from "../../entities";
 import { IContext } from "../../interfaces";
 
