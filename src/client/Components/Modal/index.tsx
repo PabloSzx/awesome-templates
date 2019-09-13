@@ -1,8 +1,14 @@
-import React, { cloneElement, FunctionComponent, useState } from "react";
+import React, { cloneElement, FunctionComponent, useEffect, useState } from "react";
 import { Modal as SemanticModal, ModalProps } from "semantic-ui-react";
 
 const Modal: FunctionComponent<
   {
+    /**
+     * Optional ID for persistance on modal open state
+     *
+     * @type {string}
+     */
+    id?: string;
     /**
      * Secondary effect after click on trigger element
      *
@@ -33,8 +39,16 @@ const Modal: FunctionComponent<
      */
     actions?: JSX.Element;
   } & ModalProps
-> = ({ children, onClick, trigger, header, actions, ...rest }) => {
+> = ({ children, onClick, trigger, header, actions, id, ...rest }) => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) setOpen(!!JSON.parse(localStorage.getItem(id) || "0"));
+  }, [id]);
+
+  useEffect(() => {
+    if (id) localStorage.setItem(id, open ? "1" : "0");
+  }, [id, open]);
 
   return (
     <SemanticModal

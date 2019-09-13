@@ -2,15 +2,18 @@ import gql from "graphql-tag";
 import { NextPage } from "next";
 import { FC } from "react";
 import { ExecutionResult, MutationFunctionOptions, useMutation } from "react-apollo";
-import AutoSizeInput from "react-input-autosize";
 import { Flex } from "rebass";
-import { Button, Form, Grid, Icon, Table } from "semantic-ui-react";
+import { Button, Form, Grid, Icon, Input, Table } from "semantic-ui-react";
 import { useRememberState } from "use-remember-state";
 
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
+import Modal from "../../src/client/Components/Modal";
+import RepositoryModalContent from "../../src/client/Components/RepositoryModal";
+import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublishModal";
 
 type ISearchRepoMutation = {
   searchRepository: Array<{
+    id: string;
     nameWithOwner: string;
   }>;
 };
@@ -18,6 +21,7 @@ type ISearchRepoMutation = {
 const SearchRepoMutation = gql`
   mutation($input: String!) {
     searchRepository(input: $input) {
+      id
       nameWithOwner
     }
   }
@@ -41,16 +45,18 @@ const SearchRepository: FC<{
   return (
     <Form>
       <Flex justifyContent="center" alignItems="stretch">
-        <AutoSizeInput
+        <Input
           className="ui input big"
           placeholder="..."
           value={input}
-          minWidth={200}
-          onChange={({ target: { value } }) => setInput(value)}
+          onChange={(_e, { value }) => setInput(value)}
           disabled={loading}
+          style={{
+            width: `${Math.min(Math.max(input.length, 22), 44) * 0.8}rem`,
+          }}
         />
         <Button
-          disabled={loading}
+          disabled={input.length === 0 || loading}
           loading={loading}
           onClick={() => searchRepository({ variables: { input } })}
           primary
@@ -76,11 +82,35 @@ const RepositoriesTable: FC<{ data?: ISearchRepoMutation }> = ({ data }) => {
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {data.searchRepository.map(({ nameWithOwner }, key) => (
-            <Table.Row key={key}>
-              <Table.Cell>{nameWithOwner}</Table.Cell>
-            </Table.Row>
-          ))}
+          {data.searchRepository.map((repo, key) => {
+            const { nameWithOwner } = repo;
+            return (
+              <Modal
+                trigger={
+                  <Table.Row key={key} className="cursorHover">
+                    <Table.Cell>{nameWithOwner}</Table.Cell>
+                  </Table.Row>
+                }
+                actions={
+                  <>
+                    <Modal
+                      trigger={<Button primary>Publish Repository</Button>}
+                    >
+                      <RepositoryPublishModalContent>
+                        {{ ...repo, name: nameWithOwner }}
+                      </RepositoryPublishModalContent>
+                    </Modal>
+                  </>
+                }
+                dimmer="blurring"
+                key={key}
+              >
+                <RepositoryModalContent>
+                  {{ name: nameWithOwner }}
+                </RepositoryModalContent>
+              </Modal>
+            );
+          })}
         </Table.Body>
       </Table>
     );

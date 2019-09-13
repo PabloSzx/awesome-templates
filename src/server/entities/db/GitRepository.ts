@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, ID, ObjectType } from "type-graphql";
 import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm";
 
 import { RepositoryGitHub } from "../githubAPI/RepositoryGitHub";
@@ -9,7 +9,7 @@ import { UserGitHub } from "./UserGitHub";
 @Entity()
 @ObjectType()
 export class GitRepository implements RepositoryGitHub {
-  @Field()
+  @Field(() => ID)
   @PrimaryColumn()
   id: string;
 
