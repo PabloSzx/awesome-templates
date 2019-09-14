@@ -171,10 +171,6 @@ const Navigation: FunctionComponent<{ router: NextRouter }> = ({
   `);
 
   useEffect(() => {
-    document.body.style.cursor = "default";
-  }, [pathname]);
-
-  useEffect(() => {
     if (user) {
       checkAPILevel();
     }
@@ -185,23 +181,10 @@ const Navigation: FunctionComponent<{ router: NextRouter }> = ({
         <Box width={2 / 4}>
           <Menu size="huge" compact secondary>
             <Link href="/">
-              <Menu.Item
-                name="home"
-                active={pathname === "/"}
-                onClick={() => {
-                  if (pathname !== "/") document.body.style.cursor = "wait";
-                }}
-              />
+              <Menu.Item name="home" active={pathname === "/"} />
             </Link>
             <Link href="/templates">
-              <Menu.Item
-                name="Templates"
-                active={pathname === "/templates"}
-                onClick={() => {
-                  if (pathname !== "/templates")
-                    document.body.style.cursor = "wait";
-                }}
-              />
+              <Menu.Item name="Templates" active={pathname === "/templates"} />
             </Link>
             {user && dataCheckAPILevel && (
               <>
@@ -211,10 +194,6 @@ const Navigation: FunctionComponent<{ router: NextRouter }> = ({
                     <Menu.Item
                       name="My Repositories"
                       active={pathname === "/myRepositories"}
-                      onClick={() => {
-                        if (pathname !== "/myRepositories")
-                          document.body.style.cursor = "wait";
-                      }}
                     />
                   </Link>
                 )}
@@ -224,10 +203,6 @@ const Navigation: FunctionComponent<{ router: NextRouter }> = ({
                     <Menu.Item
                       name="Any Repository"
                       active={pathname === "/repository"}
-                      onClick={() => {
-                        if (pathname !== "/repository")
-                          document.body.style.cursor = "wait";
-                      }}
                     />
                   </Link>
                 )}
