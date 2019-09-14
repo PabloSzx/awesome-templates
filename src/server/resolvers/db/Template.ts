@@ -1,5 +1,7 @@
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
+import {
+    Arg, Args, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root
+} from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -49,7 +51,7 @@ export class TemplateResolver {
   @Authorized()
   @Mutation(() => Template)
   async createTemplate(
-    @Arg("data")
+    @Args()
     {
       name,
       repositoryId,

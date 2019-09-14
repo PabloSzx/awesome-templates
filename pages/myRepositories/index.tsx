@@ -15,6 +15,10 @@ export type RepoQueryType = {
   name: string;
   starCount: number;
   url: string;
+  languages: { name: string }[];
+  primaryLanguage?: {
+    name: string;
+  };
 };
 
 const Repositories: FC = () => {
@@ -30,6 +34,12 @@ const Repositories: FC = () => {
           name
           starCount
           url
+          languages {
+            name
+          }
+          primaryLanguage {
+            name
+          }
         }
       }
     }

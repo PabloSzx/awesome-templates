@@ -22,7 +22,6 @@ class MyApp extends App<{ apollo: ApolloClient<any> }> {
         <Head>
           <title>Awesome Templates</title>
         </Head>
-
         <Auth>
           <Navigation />
           <Component {...pageProps} />

@@ -1,5 +1,5 @@
 import { IsBase64, IsUUID, MinLength } from "class-validator";
-import { Field, ID, InputType, ObjectType } from "type-graphql";
+import { ArgsType, Field, ID, InputType, ObjectType } from "type-graphql";
 import {
     Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
@@ -69,7 +69,7 @@ export class Template {
   frameworks: Framework[];
 }
 
-@InputType({ description: "Create new template data" })
+@ArgsType()
 export class CreateTemplateInput {
   @MinLength(3)
   @Field()

@@ -15,6 +15,10 @@ type ISearchRepoMutation = {
   searchRepository: Array<{
     id: string;
     nameWithOwner: string;
+    languages: { name: string }[];
+    primaryLanguage?: {
+      name: string;
+    };
   }>;
 };
 
@@ -23,6 +27,12 @@ const SearchRepoMutation = gql`
     searchRepository(input: $input) {
       id
       nameWithOwner
+      languages {
+        name
+      }
+      primaryLanguage {
+        name
+      }
     }
   }
 `;
@@ -106,7 +116,7 @@ const RepositoriesTable: FC<{ data?: ISearchRepoMutation }> = ({ data }) => {
                 key={key}
               >
                 <RepositoryModalContent>
-                  {{ name: nameWithOwner }}
+                  {{ ...repo, name: nameWithOwner }}
                 </RepositoryModalContent>
               </Modal>
             );
