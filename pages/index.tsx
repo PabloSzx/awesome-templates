@@ -8,7 +8,7 @@ const Home = () => {
 
   return (
     <Grid centered padded>
-      {user && <h1>Welcome {user.data.login}</h1>}
+      {user && <h1>Welcome to Awesome Templates {user.data.login}</h1>}
     </Grid>
   );
 };
