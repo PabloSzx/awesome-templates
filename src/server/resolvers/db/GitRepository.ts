@@ -1,4 +1,4 @@
-import { FieldResolver, Query, Resolver, Root } from "type-graphql";
+import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -14,6 +14,11 @@ export class GitRepositoryResolver {
   @Query(() => [GitRepository])
   async gitRepositories() {
     return await this.GitRepoRepository.find();
+  }
+
+  @Query(() => GitRepository, { nullable: true })
+  async gitRepo(@Arg("id") id: string) {
+    return await this.GitRepoRepository.findOne(id);
   }
 
   @FieldResolver()
@@ -32,5 +37,14 @@ export class GitRepositoryResolver {
       relations: ["stargazers"],
       loadEagerRelations: false,
     })).stargazers;
+  }
+
+  @FieldResolver()
+  async template(@Root() { id }: GitRepository) {
+    return (await this.GitRepoRepository.findOneOrFail(id, {
+      select: ["id"],
+      relations: ["template"],
+      loadEagerRelations: false,
+    })).template;
   }
 }

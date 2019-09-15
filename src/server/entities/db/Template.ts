@@ -1,5 +1,5 @@
 import { IsBase64, IsUUID, MinLength } from "class-validator";
-import { ArgsType, Field, ID, InputType, ObjectType } from "type-graphql";
+import { ArgsType, Field, ID, ObjectType } from "type-graphql";
 import {
     Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
@@ -37,7 +37,10 @@ export class Template {
   upvotesCount: number;
 
   @Field(() => GitRepository)
-  @OneToOne(() => GitRepository, { nullable: false, eager: true })
+  @OneToOne(() => GitRepository, repo => repo.template, {
+    nullable: false,
+    eager: true,
+  })
   @JoinColumn({ name: "repository" })
   repository: GitRepository;
 
@@ -100,9 +103,15 @@ export class CreateTemplateInput {
   })
   @Field(() => [String], { nullable: true })
   libraries?: string[];
+
+  @MinLength(2, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  environments?: string[];
 }
 
-@InputType({ description: "Edit template data" })
+@ArgsType()
 export class UpdateTemplateInput implements Partial<CreateTemplateInput> {
   @IsUUID()
   @Field()
@@ -137,4 +146,10 @@ export class UpdateTemplateInput implements Partial<CreateTemplateInput> {
   })
   @Field(() => [String], { nullable: true })
   libraries?: string[];
+
+  @MinLength(2, {
+    each: true,
+  })
+  @Field(() => [String], { nullable: true })
+  environments?: string[];
 }

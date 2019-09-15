@@ -577,7 +577,10 @@ const passAllOrAtLeastOne = (
   return true;
 };
 
-const TemplatesDashboard: FC<{ data: ITemplatesQuery }> = ({ data }) => {
+const TemplatesDashboard: FC<{
+  data: ITemplatesQuery;
+  refetch: () => Promise<any>;
+}> = ({ data, refetch }) => {
   const [filteredTemplates, setFilteredTemplates] = useState(data.templates);
   const [filters, setFilters] = useState<filtersState>({
     names: [],
@@ -615,7 +618,9 @@ const TemplatesDashboard: FC<{ data: ITemplatesQuery }> = ({ data }) => {
         }
       )
     );
-  }, [filters]);
+  }, [filters, data]);
+
+  const [loading, setLoading] = useState(false);
 
   return (
     <Grid centered padded>
@@ -624,6 +629,21 @@ const TemplatesDashboard: FC<{ data: ITemplatesQuery }> = ({ data }) => {
           <FilterMenu data={data} setParentFilters={setFilters} />
         </Grid.Column>
         <Grid.Column width={12}>
+          <Grid.Row textAlign="center">
+            <Button
+              circular
+              icon
+              positive
+              onClick={() => {
+                setLoading(true);
+                refetch().then(() => setLoading(false));
+              }}
+              loading={loading}
+              disabled={loading}
+            >
+              <Icon name="refresh" />
+            </Button>
+          </Grid.Row>
           <TemplatesTable templates={filteredTemplates} />
         </Grid.Column>
       </Grid.Row>
@@ -632,15 +652,15 @@ const TemplatesDashboard: FC<{ data: ITemplatesQuery }> = ({ data }) => {
 };
 
 const Templates: NextPage = () => {
-  const { data, loading, error } = useQuery<ITemplatesQuery>(TemplatesQuery);
+  const { data, error, refetch } = useQuery<ITemplatesQuery>(TemplatesQuery);
 
-  if (loading) {
+  if (!data) {
     return <Loader active />;
   }
-  if (error || !data) {
+  if (error) {
     return <div>{JSON.stringify(error)}</div>;
   }
-  return <TemplatesDashboard data={data} />;
+  return <TemplatesDashboard data={data} refetch={refetch} />;
 };
 
 export default Templates;

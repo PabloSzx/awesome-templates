@@ -1,9 +1,10 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryColumn } from "typeorm";
 
 import { RepositoryGitHub } from "../githubAPI/RepositoryGitHub";
 import { Language } from "./Language";
 import { RepositoryOwner } from "./RepositoryOwner";
+import { Template } from "./Template";
 import { UserGitHub } from "./UserGitHub";
 
 @Entity()
@@ -90,4 +91,8 @@ export class GitRepository implements RepositoryGitHub {
   @Field(() => [UserGitHub])
   @ManyToMany(() => UserGitHub, user => user.starredRepositories)
   stargazers: UserGitHub[];
+
+  @Field(() => Template, { nullable: true })
+  @OneToOne(() => Template, template => template.repository, { nullable: true })
+  template?: Template;
 }

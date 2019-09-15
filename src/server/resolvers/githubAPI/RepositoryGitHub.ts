@@ -93,7 +93,7 @@ export class RepositoryGitHubResolver {
       )
     );
 
-    (async () => {
+    async () => {
       try {
         await this.LanguageRepository.createQueryBuilder()
           .insert()
@@ -108,9 +108,9 @@ export class RepositoryGitHubResolver {
 
         await this.GitRepoRepository.save(repositories);
       } catch (err) {
-        console.error(err);
+        console.error(1, err);
       }
-    })().catch(err => console.error(err));
+    };
 
     return repositories;
   }
@@ -242,19 +242,20 @@ export class RepositoryGitHubResolver {
       }
     } while (hasNextPage);
 
-    (async () => {
-      try {
-        await this.LanguageRepository.createQueryBuilder()
-          .insert()
-          .orIgnore()
-          .values(repoLanguages)
-          .execute();
+    if (repoLanguages.length > 0)
+      (async () => {
+        try {
+          await this.LanguageRepository.createQueryBuilder()
+            .insert()
+            .orIgnore()
+            .values(repoLanguages)
+            .execute();
 
-        await this.GitRepoRepository.save({ id, languages: repoLanguages });
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+          await this.GitRepoRepository.save({ id, languages: repoLanguages });
+        } catch (err) {
+          console.error(2, err);
+        }
+      })();
 
     return repoLanguages;
   }

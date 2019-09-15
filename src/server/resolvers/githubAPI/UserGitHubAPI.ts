@@ -229,7 +229,7 @@ export class UserGitHubAPIResolver {
         )
         .execute();
       this.UserGitHubRepository.save({ id, repositories }).catch(err => {
-        console.error(err);
+        console.error(3, err);
       });
     })();
 
@@ -356,7 +356,7 @@ export class UserGitHubAPIResolver {
         )
         .execute();
       this.UserGitHubRepository.save({ id, starredRepositories }).catch(err => {
-        console.error(err);
+        console.error(4, err);
       });
     })();
 

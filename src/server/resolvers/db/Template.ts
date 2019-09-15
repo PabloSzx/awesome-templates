@@ -6,7 +6,8 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import {
-    CreateTemplateInput, Framework, GitRepository, Language, Library, Template, UpdateTemplateInput
+    CreateTemplateInput, Environment, Framework, GitRepository, Language, Library, Template,
+    UpdateTemplateInput
 } from "../../entities";
 import { IContext } from "../../interfaces";
 
@@ -22,7 +23,9 @@ export class TemplateResolver {
     @InjectRepository(Framework)
     private readonly FrameworkRepository: Repository<Framework>,
     @InjectRepository(Library)
-    private readonly LibraryRepository: Repository<Library>
+    private readonly LibraryRepository: Repository<Library>,
+    @InjectRepository(Environment)
+    private readonly EnvironmentRepository: Repository<Environment>
   ) {}
 
   @Query(() => [Template])
@@ -48,6 +51,11 @@ export class TemplateResolver {
     );
   }
 
+  @Query(() => Template, { nullable: true })
+  async templateById(@Arg("id") id: string) {
+    return await this.TemplateRepository.findOne(id);
+  }
+
   @Authorized()
   @Mutation(() => Template)
   async createTemplate(
@@ -59,9 +67,11 @@ export class TemplateResolver {
       languages,
       frameworks,
       libraries,
+      environments,
     }: CreateTemplateInput,
     @Ctx() { user: owner }: IContext
   ) {
+    console.log("arguments :", arguments);
     const newTemplate = this.TemplateRepository.create({
       name,
       owner,
@@ -105,6 +115,12 @@ export class TemplateResolver {
             libraries
           );
       })(),
+      (async () => {
+        if (environments)
+          newTemplate.environments = await this.EnvironmentRepository.findByIds(
+            environments
+          );
+      })(),
     ]);
 
     return await this.TemplateRepository.save(newTemplate);
@@ -112,7 +128,7 @@ export class TemplateResolver {
 
   @Authorized()
   @Mutation(() => Template)
-  async updateTemplate(@Arg("data")
+  async updateTemplate(@Args()
   {
     templateId,
     name,
@@ -121,6 +137,7 @@ export class TemplateResolver {
     languages,
     frameworks,
     libraries,
+    environments,
   }: UpdateTemplateInput) {
     const partialTemplate: Partial<Template> = {
       name,
@@ -155,6 +172,12 @@ export class TemplateResolver {
         if (libraries)
           partialTemplate.libraries = await this.LibraryRepository.findByIds(
             libraries
+          );
+      })(),
+      (async () => {
+        if (environments)
+          partialTemplate.environments = await this.EnvironmentRepository.findByIds(
+            environments
           );
       })(),
     ]);

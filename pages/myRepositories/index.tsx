@@ -1,13 +1,14 @@
 import gql from "graphql-tag";
 import { NextPage } from "next";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
 import { useQuery } from "react-apollo";
-import { Button, Icon, Table } from "semantic-ui-react";
+import { Flex } from "rebass";
+import { Form, Grid, Icon, Input, Label, Table } from "semantic-ui-react";
+import { useRememberState } from "use-remember-state";
 
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
 import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
-import RepositoryModalContent from "../../src/client/Components/RepositoryModal";
 import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublishModal";
 
 export type RepoQueryType = {
@@ -45,55 +46,96 @@ const Repositories: FC = () => {
     }
   `);
 
+  const [filteredData, setFilteredData] = useState([] as RepoQueryType[]);
+
+  const [input, setInput] = useRememberState("filterMyRepositories", "");
+
+  useEffect(() => {
+    if (data) {
+      const loweredInput = input.toLowerCase();
+      setFilteredData(
+        data.viewer.repositories.filter(
+          ({ name, primaryLanguage, languages }) =>
+            name.toLowerCase().includes(loweredInput) ||
+            (primaryLanguage &&
+              primaryLanguage.name.toLowerCase().includes(loweredInput)) ||
+            languages.some(({ name }) =>
+              name.toLowerCase().includes(loweredInput)
+            )
+        )
+      );
+    }
+  }, [data, input]);
+
   if (loading || !data) {
     return <Loader />;
   }
 
   return (
-    <Table selectable sortable>
-      <Table.Header>
-        <Table.Row>
-          <Table.HeaderCell>Name</Table.HeaderCell>
-          <Table.HeaderCell>Star count</Table.HeaderCell>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {data.viewer.repositories.map((repo, key) => {
-          const { starCount, name, url, id } = repo;
-          return (
-            <Modal
-              trigger={
-                <Table.Row className="cursorHover" key={key}>
-                  <Table.Cell>{name}</Table.Cell>
-                  <Table.Cell>
-                    <Icon name="star" />
-                    {starCount}
-                  </Table.Cell>
-                </Table.Row>
-              }
-              actions={
-                <>
-                  <Modal
-                    trigger={<Button primary>Publish Repository</Button>}
-                    id={`${id}MyRepoPublish`}
-                  >
-                    <RepositoryPublishModalContent>
-                      {repo}
-                    </RepositoryPublishModalContent>
-                  </Modal>
-                </>
-              }
-              header={<>{name}</>}
-              dimmer="blurring"
-              key={key}
-              id={`${id}MyRepoModal`}
+    <Grid padded>
+      <Grid.Row centered>
+        <Form>
+          <Flex alignItems="center">
+            <Input
+              placeholder="Filter by name or language"
+              value={input}
+              onChange={(_e, { value }) => setInput(value)}
+              disabled={loading}
+              size="big"
+              style={{
+                width: `${Math.min(Math.max(input.length, 22), 44) * 0.8}rem`,
+              }}
             >
-              <RepositoryModalContent key={key}>{repo}</RepositoryModalContent>
-            </Modal>
-          );
-        })}
-      </Table.Body>
-    </Table>
+              <Label
+                size="big"
+                color="blue"
+                style={{ verticalAlign: "middle" }}
+              >
+                Filter Your Repositories
+              </Label>
+
+              <input />
+            </Input>
+          </Flex>
+        </Form>
+      </Grid.Row>
+      <Grid.Row>
+        <Table selectable sortable>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Name</Table.HeaderCell>
+              <Table.HeaderCell>Star count</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {filteredData.map((repo, key) => {
+              const { starCount, name, url, id } = repo;
+              return (
+                <Modal
+                  trigger={
+                    <Table.Row className="cursorHover" key={key}>
+                      <Table.Cell>{name}</Table.Cell>
+                      <Table.Cell>
+                        <Icon name="star" />
+                        {starCount}
+                      </Table.Cell>
+                    </Table.Row>
+                  }
+                  header={<>{name}</>}
+                  dimmer="blurring"
+                  key={key}
+                  id={`${id}MyRepoModal`}
+                >
+                  <RepositoryPublishModalContent>
+                    {repo}
+                  </RepositoryPublishModalContent>
+                </Modal>
+              );
+            })}
+          </Table.Body>
+        </Table>
+      </Grid.Row>
+    </Grid>
   );
 };
 

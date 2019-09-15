@@ -8,7 +8,6 @@ import { useRememberState } from "use-remember-state";
 
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
 import Modal from "../../src/client/Components/Modal";
-import RepositoryModalContent from "../../src/client/Components/RepositoryModal";
 import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublishModal";
 
 type ISearchRepoMutation = {
@@ -56,11 +55,11 @@ const SearchRepository: FC<{
     <Form>
       <Flex justifyContent="center" alignItems="stretch">
         <Input
-          className="ui input big"
           placeholder="..."
           value={input}
           onChange={(_e, { value }) => setInput(value)}
           disabled={loading}
+          size="big"
           style={{
             width: `${Math.min(Math.max(input.length, 22), 44) * 0.8}rem`,
           }}
@@ -101,23 +100,12 @@ const RepositoriesTable: FC<{ data?: ISearchRepoMutation }> = ({ data }) => {
                     <Table.Cell>{nameWithOwner}</Table.Cell>
                   </Table.Row>
                 }
-                actions={
-                  <>
-                    <Modal
-                      trigger={<Button primary>Publish Repository</Button>}
-                    >
-                      <RepositoryPublishModalContent>
-                        {{ ...repo, name: nameWithOwner }}
-                      </RepositoryPublishModalContent>
-                    </Modal>
-                  </>
-                }
                 dimmer="blurring"
                 key={key}
               >
-                <RepositoryModalContent>
+                <RepositoryPublishModalContent>
                   {{ ...repo, name: nameWithOwner }}
-                </RepositoryModalContent>
+                </RepositoryPublishModalContent>
               </Modal>
             );
           })}
