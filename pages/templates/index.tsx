@@ -2,14 +2,15 @@ import { gql } from "apollo-boost";
 import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
-import { useQuery } from "react-apollo";
+import { Dispatch, FC, SetStateAction, useContext, useEffect, useState } from "react";
+import { useMutation, useQuery } from "react-apollo";
 import {
     Button, Checkbox, Dropdown, Form, Grid, Header, Icon, Image, Label, List, Segment, Table
 } from "semantic-ui-react";
 import styled from "styled-components";
 import { useRememberState } from "use-remember-state";
 
+import { AuthContext } from "../../src/client/Components/Auth/Context";
 import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
 
@@ -19,6 +20,7 @@ interface ITemplatesQuery {
     name: string;
     upvotesCount: number;
     owner: {
+      id: string;
       data: {
         login: string;
       };
@@ -45,6 +47,7 @@ const TemplatesQuery = gql`
       name
       upvotesCount
       owner {
+        id
         data {
           login
         }
@@ -334,7 +337,9 @@ enum columnName {
 
 const TemplatesTable: FC<{
   templates: ITemplatesQuery["templates"];
-}> = ({ templates }) => {
+  refetch: () => Promise<any>;
+}> = ({ templates, refetch }) => {
+  const { user } = useContext(AuthContext);
   const [sortedTemplates, setSortedTemplates] = useState(templates);
   const [direction, setDirection] = useRememberState<
     "ascending" | "descending" | null
@@ -356,6 +361,21 @@ const TemplatesTable: FC<{
       );
     }
   };
+
+  const [removeTemplate, { loading: loadingRemoveTemplate }] = useMutation<
+    {
+      removeTemplate: string;
+    },
+    {
+      id: string;
+    }
+  >(
+    gql`
+      mutation($id: String!) {
+        removeTemplate(id: $id)
+      }
+    `
+  );
 
   useEffect(() => {
     setSortedTemplates(
@@ -421,6 +441,7 @@ const TemplatesTable: FC<{
         {sortedTemplates.map(
           (
             {
+              id,
               name,
               owner,
               upvotesCount,
@@ -515,27 +536,55 @@ const TemplatesTable: FC<{
               dimmer="blurring"
               key={key}
             >
-              <Grid centered>
-                <Grid.Row>
-                  <h1>Owner: {owner.data.login}</h1>
-                </Grid.Row>
-                <Grid.Row>
-                  <h2>Upvotes: {upvotesCount}</h2>
-                </Grid.Row>
-                <Grid.Row>
-                  <h2>
-                    <a href={url}>{url}</a>
-                  </h2>
-                </Grid.Row>
-                <Grid.Row>
-                  <Link
-                    href={"/templates/[owner]/[name]"}
-                    as={`/templates/${owner.data.login}/${name}`}
-                  >
-                    <Button primary>More info</Button>
-                  </Link>
-                </Grid.Row>
-              </Grid>
+              {({ close }) => {
+                return (
+                  <Grid centered>
+                    <Grid.Row>
+                      <h1>Owner: {owner.data.login}</h1>
+                    </Grid.Row>
+                    <Grid.Row>
+                      <h2>Upvotes: {upvotesCount}</h2>
+                    </Grid.Row>
+                    <Grid.Row>
+                      <h2>
+                        <a href={url}>{url}</a>
+                      </h2>
+                    </Grid.Row>
+                    <Grid.Row>
+                      <Link
+                        href={"/templates/[owner]/[name]"}
+                        as={`/templates/${owner.data.login}/${name}`}
+                      >
+                        <Button primary>More info</Button>
+                      </Link>
+                    </Grid.Row>
+                    {user && (user.admin || owner.id === user.id) && (
+                      <>
+                        <Grid.Row>
+                          <Button
+                            negative
+                            onClick={async () => {
+                              await removeTemplate({
+                                variables: {
+                                  id,
+                                },
+                              });
+
+                              close();
+
+                              await refetch();
+                            }}
+                            loading={loadingRemoveTemplate}
+                            disabled={loadingRemoveTemplate}
+                          >
+                            Remove Template
+                          </Button>
+                        </Grid.Row>
+                      </>
+                    )}
+                  </Grid>
+                );
+              }}
             </Modal>
           )
         )}
@@ -618,7 +667,7 @@ const TemplatesDashboard: FC<{
         }
       )
     );
-  }, [filters, data]);
+  }, [filters, data.templates]);
 
   const [loading, setLoading] = useState(false);
 
@@ -644,7 +693,7 @@ const TemplatesDashboard: FC<{
               <Icon name="refresh" />
             </Button>
           </Grid.Row>
-          <TemplatesTable templates={filteredTemplates} />
+          <TemplatesTable templates={filteredTemplates} refetch={refetch} />
         </Grid.Column>
       </Grid.Row>
     </Grid>
@@ -652,7 +701,9 @@ const TemplatesDashboard: FC<{
 };
 
 const Templates: NextPage = () => {
-  const { data, error, refetch } = useQuery<ITemplatesQuery>(TemplatesQuery);
+  const { data, error, refetch } = useQuery<ITemplatesQuery>(TemplatesQuery, {
+    notifyOnNetworkStatusChange: true,
+  });
 
   if (!data) {
     return <Loader active />;

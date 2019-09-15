@@ -1,4 +1,5 @@
-import React, { cloneElement, FunctionComponent, useEffect, useState } from "react";
+import isFunction from "lodash/isFunction";
+import React, { cloneElement, FC, FunctionComponent, useEffect, useState } from "react";
 import { Modal as SemanticModal, ModalProps } from "semantic-ui-react";
 
 const Modal: FunctionComponent<
@@ -20,12 +21,12 @@ const Modal: FunctionComponent<
      * @type {JSX.Element}
      */
     trigger: JSX.Element;
+
     /**
      * Element to render inside the modal
      *
-     * @type {JSX.Element}
      */
-    children: JSX.Element;
+    children: JSX.Element | FC<{ close: () => void }>;
     /**
      * Optional header inside the modal
      *
@@ -64,7 +65,11 @@ const Modal: FunctionComponent<
       {...rest}
     >
       {header && <SemanticModal.Header>{header}</SemanticModal.Header>}
-      <SemanticModal.Content>{children}</SemanticModal.Content>
+      <SemanticModal.Content>
+        {isFunction(children)
+          ? children({ close: () => setOpen(false) })
+          : children}
+      </SemanticModal.Content>
       {actions && <SemanticModal.Actions>{actions}</SemanticModal.Actions>}
     </SemanticModal>
   );

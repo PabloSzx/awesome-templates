@@ -3,7 +3,7 @@ import { NextPage } from "next";
 import { FC, useEffect, useState } from "react";
 import { useQuery } from "react-apollo";
 import { Flex } from "rebass";
-import { Form, Grid, Icon, Input, Label, Table } from "semantic-ui-react";
+import { Checkbox, Form, Grid, Icon, Input, Label, Table } from "semantic-ui-react";
 import { useRememberState } from "use-remember-state";
 
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
@@ -16,6 +16,7 @@ export type RepoQueryType = {
   name: string;
   starCount: number;
   url: string;
+  isTemplate: boolean;
   languages: { name: string }[];
   primaryLanguage?: {
     name: string;
@@ -31,6 +32,7 @@ const Repositories: FC = () => {
     query {
       viewer {
         repositories(isTemplate: null) {
+          isTemplate
           id
           name
           starCount
@@ -48,6 +50,10 @@ const Repositories: FC = () => {
 
   const [filteredData, setFilteredData] = useState([] as RepoQueryType[]);
 
+  const [onlyTemplates, setOnlyTemplates] = useRememberState(
+    "onlyTemplatesMyRepositories",
+    false
+  );
   const [input, setInput] = useRememberState("filterMyRepositories", "");
 
   useEffect(() => {
@@ -55,17 +61,20 @@ const Repositories: FC = () => {
       const loweredInput = input.toLowerCase();
       setFilteredData(
         data.viewer.repositories.filter(
-          ({ name, primaryLanguage, languages }) =>
-            name.toLowerCase().includes(loweredInput) ||
-            (primaryLanguage &&
-              primaryLanguage.name.toLowerCase().includes(loweredInput)) ||
-            languages.some(({ name }) =>
-              name.toLowerCase().includes(loweredInput)
-            )
+          ({ name, primaryLanguage, languages, isTemplate }) =>
+            (onlyTemplates ? isTemplate : true) &&
+            (input
+              ? name.toLowerCase().includes(loweredInput) ||
+                (primaryLanguage &&
+                  primaryLanguage.name.toLowerCase().includes(loweredInput)) ||
+                languages.some(({ name }) =>
+                  name.toLowerCase().includes(loweredInput)
+                )
+              : true)
         )
       );
     }
-  }, [data, input]);
+  }, [data, input, onlyTemplates]);
 
   if (loading || !data) {
     return <Loader />;
@@ -96,6 +105,16 @@ const Repositories: FC = () => {
 
               <input />
             </Input>
+          </Flex>
+          <Flex alignItems="center" padding="1em">
+            <Label size="big" color="green">
+              Only GitHub Templates
+            </Label>
+            <Checkbox
+              toggle
+              checked={onlyTemplates}
+              onChange={() => setOnlyTemplates(!onlyTemplates)}
+            />
           </Flex>
         </Form>
       </Grid.Row>

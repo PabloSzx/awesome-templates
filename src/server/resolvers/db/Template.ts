@@ -187,6 +187,18 @@ export class TemplateResolver {
     return await this.TemplateRepository.save(template);
   }
 
+  @Authorized()
+  @Mutation(() => String)
+  async removeTemplate(@Arg("id") id: string, @Ctx() { user }: IContext) {
+    const template = await this.TemplateRepository.findOneOrFail(id);
+
+    if (template.owner.id === user.id || user.admin) {
+      await this.TemplateRepository.remove(template);
+      return id;
+    }
+    throw new Error("You are not authorized to remove this template");
+  }
+
   @FieldResolver()
   async upvotes(@Root() { id }: Template) {
     return (await this.TemplateRepository.findOneOrFail(id, {
