@@ -1,11 +1,13 @@
 import { Field, Formik } from "formik";
 import gql from "graphql-tag";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
 import { Flex } from "rebass";
 import { Checkbox, Divider, Dropdown, Form, Grid, Header, Input, Label } from "semantic-ui-react";
 
-import LibraryModal from "../LibraryModal";
+import EnvironmentModal from "../Environment";
+import FrameworkModal from "../Framework";
+import LibraryModal from "../Library";
 import Modal from "../Modal";
 
 const RepositoryPublishModalContent: FC<{
@@ -258,10 +260,7 @@ const RepositoryPublishModalContent: FC<{
           }
         }
       }
-    `,
-    {
-      notifyOnNetworkStatusChange: true,
-    }
+    `
   );
 
   useEffect(() => {
@@ -340,28 +339,15 @@ const RepositoryPublishModalContent: FC<{
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    setLoading(
-      loadingCreateTemplate || loadingGetRepoData || loadingUpdatingTemplate
-    );
+    const tempLoading =
+      loadingCreateTemplate || loadingGetRepoData || loadingUpdatingTemplate;
+    if (loading !== tempLoading) {
+      setLoading(tempLoading);
+    }
   }, [loadingCreateTemplate, loadingGetRepoData, loadingUpdatingTemplate]);
 
-  return (
-    <Grid centered>
-      <Grid.Row>
-        <Flex alignItems="center">
-          <Label color="blue">Repository Data</Label>
-          {update && (
-            <>
-              <Checkbox
-                onChange={() => setToggleFormData(!toggleFormData)}
-                checked={toggleFormData}
-                slider
-              />
-              <Label color="blue">Template Data</Label>
-            </>
-          )}
-        </Flex>
-      </Grid.Row>
+  const MemoizedFormik = useMemo(
+    () => (
       <Formik
         enableReinitialize
         initialValues={initialValues}
@@ -475,30 +461,74 @@ const RepositoryPublishModalContent: FC<{
                   </Form.Field>
                   <Form.Field>
                     <Label color="grey">Frameworks</Label>
-                    <Dropdown
-                      search
-                      placeholder="Select Frameworks"
-                      selection
-                      multiple
-                      clearable
-                      disabled={loading}
-                      loading={loading}
-                      options={
-                        options
-                          ? options.frameworks.map(
-                              ({ name: text, id: value }, key) => ({
-                                key,
-                                text,
-                                value,
-                              })
-                            )
-                          : []
-                      }
-                      onChange={(_e, { value }) =>
-                        setFieldValue("frameworks", value)
-                      }
-                      value={values.frameworks}
-                    />
+                    <Modal<{ id?: string; name: string }>
+                      openOnClick={false}
+                      id={`${id}FrameworkModal`}
+                      defaultData={{ name: "newnew" }}
+                      headerBody={({ data }) => {
+                        return <Header>{data && data.name}</Header>;
+                      }}
+                      trigger={({ open, setData }) => {
+                        return (
+                          <Dropdown
+                            search
+                            placeholder="Select Frameworks"
+                            selection
+                            multiple
+                            clearable
+                            allowAdditions
+                            onAddItem={(_e, { value: name }) => {
+                              setData({ name } as {
+                                name: string;
+                              });
+                              open();
+                            }}
+                            onLabelClick={(
+                              _e,
+                              { value: id, content: name }
+                            ) => {
+                              setData({ id, name } as {
+                                id: string;
+                                name: string;
+                              });
+                              open();
+                            }}
+                            disabled={loading}
+                            loading={loading}
+                            options={
+                              options
+                                ? options.frameworks.map(
+                                    ({ name: text, id: value }, key) => ({
+                                      key,
+                                      text,
+                                      value,
+                                    })
+                                  )
+                                : []
+                            }
+                            onChange={(_e, { value }) =>
+                              setFieldValue("frameworks", value)
+                            }
+                            value={values.frameworks}
+                          />
+                        );
+                      }}
+                    >
+                      {({ data, close }) => {
+                        console.log("data :", data);
+                        if (data) {
+                          return (
+                            <FrameworkModal
+                              id={data.id}
+                              name={data.name}
+                              close={close}
+                            />
+                          );
+                        }
+
+                        return null;
+                      }}
+                    </Modal>
                   </Form.Field>
                   <Form.Field>
                     <Label color="grey">Libraries</Label>
@@ -571,30 +601,73 @@ const RepositoryPublishModalContent: FC<{
                   </Form.Field>
                   <Form.Field>
                     <Label color="grey">Environments</Label>
-                    <Dropdown
-                      search
-                      placeholder="Select Environments"
-                      selection
-                      clearable
-                      multiple
-                      disabled={loading}
-                      loading={loading}
-                      options={
-                        options
-                          ? options.environments.map(
-                              ({ name: text, id: value }, key) => ({
-                                key,
-                                text,
-                                value,
-                              })
-                            )
-                          : []
-                      }
-                      onChange={(_e, { value }) =>
-                        setFieldValue("environment", value)
-                      }
-                      value={values.environments}
-                    />
+                    <Modal<{ id?: string; name: string }>
+                      defaultData={{ name: "newnew" }}
+                      openOnClick={false}
+                      id={`${id}EnvironmentModal`}
+                      headerBody={({ data }) => {
+                        return <Header>{data && data.name}</Header>;
+                      }}
+                      trigger={({ setData, open }) => {
+                        return (
+                          <Dropdown
+                            search
+                            placeholder="Select Environments"
+                            selection
+                            clearable
+                            allowAdditions
+                            onAddItem={(_e, { value: name }) => {
+                              setData({ name } as {
+                                name: string;
+                              });
+                              open();
+                            }}
+                            onLabelClick={(
+                              _e,
+                              { value: id, content: name }
+                            ) => {
+                              setData({ id, name } as {
+                                id: string;
+                                name: string;
+                              });
+                              open();
+                            }}
+                            multiple
+                            disabled={loading}
+                            loading={loading}
+                            options={
+                              options
+                                ? options.environments.map(
+                                    ({ name: text, id: value }, key) => ({
+                                      key,
+                                      text,
+                                      value,
+                                    })
+                                  )
+                                : []
+                            }
+                            onChange={(_e, { value }) =>
+                              setFieldValue("environment", value)
+                            }
+                            value={values.environments}
+                          />
+                        );
+                      }}
+                    >
+                      {({ data, close }) => {
+                        if (data) {
+                          return (
+                            <EnvironmentModal
+                              id={data.id}
+                              name={data.name}
+                              close={close}
+                            />
+                          );
+                        }
+
+                        return null;
+                      }}
+                    </Modal>
                   </Form.Field>
                   <Divider />
                   <Form.Button
@@ -611,6 +684,28 @@ const RepositoryPublishModalContent: FC<{
           );
         }}
       </Formik>
+    ),
+    [loading, initialValues]
+  );
+
+  return (
+    <Grid centered>
+      <Grid.Row>
+        <Flex alignItems="center">
+          <Label color="blue">Repository Data</Label>
+          {update && (
+            <>
+              <Checkbox
+                onChange={() => setToggleFormData(!toggleFormData)}
+                checked={toggleFormData}
+                slider
+              />
+              <Label color="blue">Template Data</Label>
+            </>
+          )}
+        </Flex>
+      </Grid.Row>
+      {MemoizedFormik}
     </Grid>
   );
 };

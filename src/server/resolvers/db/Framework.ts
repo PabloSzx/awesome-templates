@@ -1,5 +1,7 @@
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
+import {
+    Arg, Args, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root
+} from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -20,10 +22,15 @@ export class FrameworkResolver {
     return await this.FrameworkRepository.find();
   }
 
+  @Query(() => Framework, { nullable: true })
+  async framework(@Arg("id") id: string) {
+    return await this.FrameworkRepository.findOne(id);
+  }
+
   @Authorized()
   @Mutation(() => Framework)
   async createFramework(
-    @Arg("data")
+    @Args()
     { name, url, logoUrl, description, languages }: CreateFrameworkInput,
     @Ctx() { user: creator }: IContext
   ) {
@@ -45,24 +52,24 @@ export class FrameworkResolver {
 
   @Authorized()
   @Mutation(() => Framework)
-  async updateFramework(@Arg("data")
+  async updateFramework(@Args()
   {
+    id,
     name,
-    newName,
     url,
     logoUrl,
     description,
     languages,
   }: UpdateFrameworkInput) {
     const partialFramework: Partial<Framework> = {
-      name: newName,
+      name,
       url,
       logoUrl,
       description,
     };
 
     const [framework] = await Promise.all([
-      this.FrameworkRepository.findOneOrFail(name),
+      this.FrameworkRepository.findOneOrFail(id),
       (async () => {
         if (languages) {
           partialFramework.languages = await this.LanguageRepository.findByIds(

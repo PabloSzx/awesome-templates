@@ -77,7 +77,6 @@ const TemplatesQuery = gql`
       }
     }
     languages {
-      id
       name
     }
     libraries {

@@ -60,7 +60,8 @@
     "typedi": "^0.8.0",
     "typeorm": "npm:@pablosz/typeorm",
     "typeorm-typedi-extensions": "^0.2.3",
-    "use-remember-state": "^1.0.4"
+    "use-remember-state": "^1.0.4",
+    "validator": "^11.1.0"
   },
   "devDependencies": {
     "@types/connect-redis": "^0.0.11",

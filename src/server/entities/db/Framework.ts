@@ -1,5 +1,5 @@
-import { IsUrl, Length, MinLength } from "class-validator";
-import { Field, ID, InputType, ObjectType } from "type-graphql";
+import { IsUrl, IsUUID, Length, MinLength } from "class-validator";
+import { ArgsType, Field, ID, ObjectType } from "type-graphql";
 import {
     Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
@@ -48,7 +48,7 @@ export class Framework {
   creator: User;
 }
 
-@InputType()
+@ArgsType()
 export class CreateFrameworkInput {
   @Length(2, 30)
   @Field()
@@ -80,14 +80,15 @@ export class CreateFrameworkInput {
   languages?: string[];
 }
 
-@InputType()
+@ArgsType()
 export class UpdateFrameworkInput implements Partial<CreateFrameworkInput> {
+  @IsUUID()
   @Field()
-  name: string;
+  id: string;
 
   @Length(2, 30)
-  @Field({ nullable: true })
-  newName: string;
+  @Field()
+  name: string;
 
   @IsUrl({
     protocols: ["http", "https"],
