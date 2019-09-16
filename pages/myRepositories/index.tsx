@@ -140,7 +140,7 @@ const Repositories: FC = () => {
                       </Table.Cell>
                     </Table.Row>
                   }
-                  header={<>{name}</>}
+                  headerBody={<>{name}</>}
                   dimmer="blurring"
                   key={key}
                   id={`${id}MyRepoModal`}

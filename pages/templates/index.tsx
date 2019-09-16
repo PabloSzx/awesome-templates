@@ -30,14 +30,14 @@ interface ITemplatesQuery {
       url: string;
     };
     languages: Array<{ name: string; color?: string }>;
-    libraries: Array<{ name: string; logoUrl?: string }>;
-    frameworks: Array<{ name: string; logoUrl?: string }>;
-    environments: Array<{ name: string; logoUrl?: string }>;
+    libraries: Array<{ name: string; logoUrl?: string; id: string }>;
+    frameworks: Array<{ name: string; logoUrl?: string; id: string }>;
+    environments: Array<{ name: string; logoUrl?: string; id: string }>;
   }>;
-  languages: Array<{ name: string }>;
-  libraries: Array<{ name: string }>;
-  frameworks: Array<{ name: string }>;
-  environments: Array<{ name: string }>;
+  languages: Array<{ name: string; id: string }>;
+  libraries: Array<{ name: string; id: string }>;
+  frameworks: Array<{ name: string; id: string }>;
+  environments: Array<{ name: string; id: string }>;
 }
 
 const TemplatesQuery = gql`
@@ -61,28 +61,35 @@ const TemplatesQuery = gql`
         color
       }
       libraries {
+        id
         name
         logoUrl
       }
       frameworks {
+        id
         name
         logoUrl
       }
       environments {
+        id
         name
         logoUrl
       }
     }
     languages {
+      id
       name
     }
     libraries {
+      id
       name
     }
     frameworks {
+      id
       name
     }
     environments {
+      id
       name
     }
   }
@@ -261,9 +268,9 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Environment"
-          options={environments.map(({ name: value }, key) => ({
+          options={environments.map(({ name: text, id: value }, key) => ({
             key,
-            text: value,
+            text,
             value,
           }))}
           fluid
@@ -285,9 +292,9 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Frameworks"
-          options={frameworks.map(({ name: value }, key) => ({
+          options={frameworks.map(({ name: text, id: value }, key) => ({
             key,
-            text: value,
+            text,
             value,
           }))}
           fluid
@@ -310,9 +317,9 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Libraries"
-          options={libraries.map(({ name: value }, key) => ({
+          options={libraries.map(({ name: text, id: value }, key) => ({
             key,
-            text: value,
+            text,
             value,
           }))}
           fluid
@@ -532,7 +539,7 @@ const TemplatesTable: FC<{
                   </Table.Cell>
                 </Table.Row>
               }
-              header={<h1>{name}</h1>}
+              headerBody={<h1>{name}</h1>}
               dimmer="blurring"
               key={key}
             >

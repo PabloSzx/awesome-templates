@@ -1,6 +1,6 @@
 import { IsUrl, Length } from "class-validator";
-import { Field, InputType, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, ManyToMany, OneToOne, PrimaryColumn } from "typeorm";
+import { Field, ID, InputType, ObjectType } from "type-graphql";
+import { Column, Entity, JoinColumn, ManyToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 import { Template } from "./Template";
 import { User } from "./User";
@@ -8,8 +8,12 @@ import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Environment {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
   @Field()
-  @PrimaryColumn()
+  @Column({ unique: true })
   name: string;
 
   @Field({ nullable: true })

@@ -46,6 +46,7 @@
     "pg": "^7.12.1",
     "react": "16.9.0",
     "react-apollo": "^3.1.0",
+    "react-autosize-textarea": "^7.0.0",
     "react-dom": "16.9.0",
     "react-toastify": "^5.3.2",
     "rebass": "^4.0.5",

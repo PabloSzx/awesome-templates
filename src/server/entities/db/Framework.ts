@@ -1,7 +1,7 @@
 import { IsUrl, Length, MinLength } from "class-validator";
-import { Field, InputType, ObjectType } from "type-graphql";
+import { Field, ID, InputType, ObjectType } from "type-graphql";
 import {
-    Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryColumn
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn
 } from "typeorm";
 
 import { Language } from "./Language";
@@ -11,8 +11,12 @@ import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Framework {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
   @Field()
-  @PrimaryColumn()
+  @Column({ unique: true })
   name: string;
 
   @Field({ nullable: true })

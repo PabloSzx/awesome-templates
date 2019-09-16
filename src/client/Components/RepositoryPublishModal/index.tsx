@@ -3,7 +3,10 @@ import gql from "graphql-tag";
 import { FC, useEffect, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
 import { Flex } from "rebass";
-import { Checkbox, Divider, Dropdown, Form, Grid, Input, Label } from "semantic-ui-react";
+import { Checkbox, Divider, Dropdown, Form, Grid, Header, Input, Label } from "semantic-ui-react";
+
+import LibraryModal from "../LibraryModal";
+import Modal from "../Modal";
 
 const RepositoryPublishModalContent: FC<{
   children: {
@@ -30,12 +33,15 @@ const RepositoryPublishModalContent: FC<{
             name: string;
           };
           libraries: {
+            id: string;
             name: string;
           }[];
           frameworks: {
+            id: string;
             name: string;
           }[];
           environments: {
+            id: string;
             name: string;
           }[];
         };
@@ -58,12 +64,15 @@ const RepositoryPublishModalContent: FC<{
               name
             }
             libraries {
+              id
               name
             }
             frameworks {
+              id
               name
             }
             environments {
+              id
               name
             }
           }
@@ -80,21 +89,24 @@ const RepositoryPublishModalContent: FC<{
 
   const { data: options } = useQuery<{
     languages: { name: string }[];
-    libraries: { name: string }[];
-    frameworks: { name: string }[];
-    environments: { name: string }[];
+    libraries: { name: string; id: string }[];
+    frameworks: { name: string; id: string }[];
+    environments: { name: string; id: string }[];
   }>(gql`
     query {
       languages {
         name
       }
       libraries {
+        id
         name
       }
       frameworks {
+        id
         name
       }
       environments {
+        id
         name
       }
     }
@@ -150,14 +162,17 @@ const RepositoryPublishModalContent: FC<{
             color
           }
           libraries {
+            id
             name
             logoUrl
           }
           frameworks {
+            id
             name
             logoUrl
           }
           environments {
+            id
             name
             logoUrl
           }
@@ -227,14 +242,17 @@ const RepositoryPublishModalContent: FC<{
             color
           }
           libraries {
+            id
             name
             logoUrl
           }
           frameworks {
+            id
             name
             logoUrl
           }
           environments {
+            id
             name
             logoUrl
           }
@@ -304,9 +322,9 @@ const RepositoryPublishModalContent: FC<{
         name,
         languages: languages.map(({ name }) => name),
         primaryLanguage: primaryLanguage ? primaryLanguage.name : undefined,
-        frameworks: frameworks.map(({ name }) => name),
-        libraries: libraries.map(({ name }) => name),
-        environments: environments.map(({ name }) => name),
+        frameworks: frameworks.map(({ id }) => id),
+        libraries: libraries.map(({ id }) => id),
+        environments: environments.map(({ id }) => id),
       });
     } else if (!toggleFormData) {
       setInitialValues({
@@ -393,6 +411,7 @@ const RepositoryPublishModalContent: FC<{
                       type="text"
                       name="name"
                       placeholder="Template Name"
+                      disabled={loading}
                       loading={loading}
                       onChange={(_e, { value }) => setFieldValue("name", value)}
                       value={values.name}
@@ -404,6 +423,7 @@ const RepositoryPublishModalContent: FC<{
                       placeholder="Select the primary language"
                       search
                       selection
+                      disabled={loading}
                       loading={loading}
                       clearable
                       options={values.languages.map((value, key) => ({
@@ -425,6 +445,7 @@ const RepositoryPublishModalContent: FC<{
                       placeholder="Select languages"
                       multiple
                       clearable
+                      disabled={loading}
                       loading={loading}
                       selection
                       options={
@@ -460,14 +481,17 @@ const RepositoryPublishModalContent: FC<{
                       selection
                       multiple
                       clearable
+                      disabled={loading}
                       loading={loading}
                       options={
                         options
-                          ? options.frameworks.map(({ name: value }, key) => ({
-                              key,
-                              text: value,
-                              value,
-                            }))
+                          ? options.frameworks.map(
+                              ({ name: text, id: value }, key) => ({
+                                key,
+                                text,
+                                value,
+                              })
+                            )
                           : []
                       }
                       onChange={(_e, { value }) =>
@@ -478,27 +502,72 @@ const RepositoryPublishModalContent: FC<{
                   </Form.Field>
                   <Form.Field>
                     <Label color="grey">Libraries</Label>
-                    <Dropdown
-                      search
-                      placeholder="Select Libraries"
-                      selection
-                      multiple
-                      clearable
-                      loading={loading}
-                      options={
-                        options
-                          ? options.libraries.map(({ name: value }, key) => ({
-                              key,
-                              text: value,
-                              value,
-                            }))
-                          : []
-                      }
-                      onChange={(_e, { value }) =>
-                        setFieldValue("libraries", value)
-                      }
-                      value={values.libraries}
-                    />
+                    <Modal<{ id?: string; name: string }>
+                      openOnClick={false}
+                      id={`${id}LibraryModal`}
+                      defaultData={{ name: "newnew" }}
+                      headerBody={({ data }) => {
+                        return <Header>{data && data.name}</Header>;
+                      }}
+                      trigger={({ open, setData }) => {
+                        return (
+                          <Dropdown
+                            search
+                            placeholder="Select Libraries"
+                            selection
+                            multiple
+                            clearable
+                            allowAdditions
+                            onAddItem={(_e, { value: name }) => {
+                              setData({ name } as {
+                                name: string;
+                              });
+                              open();
+                            }}
+                            onLabelClick={(
+                              _e,
+                              { value: id, content: name }
+                            ) => {
+                              setData({ id, name } as {
+                                id: string;
+                                name: string;
+                              });
+                              open();
+                            }}
+                            disabled={loading}
+                            loading={loading}
+                            options={
+                              options
+                                ? options.libraries.map(
+                                    ({ name: text, id: value }, key) => ({
+                                      key,
+                                      text,
+                                      value,
+                                    })
+                                  )
+                                : []
+                            }
+                            onChange={(_e, { value }) =>
+                              setFieldValue("libraries", value)
+                            }
+                            value={values.libraries}
+                          />
+                        );
+                      }}
+                    >
+                      {({ data, close }) => {
+                        if (data)
+                          return (
+                            <LibraryModal
+                              name={data.name}
+                              id={data.id}
+                              close={close}
+                            />
+                          );
+
+                        return null;
+                      }}
+                    </Modal>
                   </Form.Field>
                   <Form.Field>
                     <Label color="grey">Environments</Label>
@@ -508,13 +577,14 @@ const RepositoryPublishModalContent: FC<{
                       selection
                       clearable
                       multiple
+                      disabled={loading}
                       loading={loading}
                       options={
                         options
                           ? options.environments.map(
-                              ({ name: value }, key) => ({
+                              ({ name: text, id: value }, key) => ({
                                 key,
-                                text: value,
+                                text,
                                 value,
                               })
                             )
