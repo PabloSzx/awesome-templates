@@ -1,5 +1,7 @@
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
+import {
+    Arg, Args, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root
+} from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -18,10 +20,15 @@ export class EnvironmentResolver {
     return await this.EnvironmentRepository.find();
   }
 
+  @Query(() => Environment, { nullable: true })
+  async environment(@Arg("id") id: string) {
+    return await this.EnvironmentRepository.findOne(id);
+  }
+
   @Authorized()
   @Mutation(() => Environment)
   async createEnvironment(
-    @Arg("data")
+    @Args()
     { name, url, logoUrl, description }: CreateEnvironmentInput,
     @Ctx() { user: creator }: IContext
   ) {
@@ -38,23 +45,23 @@ export class EnvironmentResolver {
 
   @Authorized()
   @Mutation(() => Environment)
-  async updateEnvironment(@Arg("data")
+  async updateEnvironment(@Args()
   {
+    id,
     name,
-    newName,
     url,
     logoUrl,
     description,
   }: UpdateEnvironmentInput) {
     const partialEnvirontment: Partial<Environment> = {
-      name: newName,
+      name,
       url,
       logoUrl,
       description,
     };
 
     const [environment] = await Promise.all([
-      this.EnvironmentRepository.findOneOrFail(name),
+      this.EnvironmentRepository.findOneOrFail(id),
       ,
     ]);
 
@@ -64,10 +71,20 @@ export class EnvironmentResolver {
   }
 
   @FieldResolver()
-  async templates(@Root() { name }: Environment) {
-    return (await this.EnvironmentRepository.findOneOrFail(name, {
+  async templates(@Root() { id }: Environment) {
+    return (await this.EnvironmentRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["templates"],
       loadEagerRelations: false,
     })).templates;
+  }
+
+  @FieldResolver()
+  async creator(@Root() { id }: Environment) {
+    return (await this.EnvironmentRepository.findOneOrFail(id, {
+      select: ["id"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    })).creator;
   }
 }

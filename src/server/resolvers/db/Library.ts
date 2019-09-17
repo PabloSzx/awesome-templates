@@ -1,5 +1,7 @@
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from "type-graphql";
+import {
+    Arg, Args, Authorized, Ctx, FieldResolver, Mutation, Query, Resolver, Root
+} from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
@@ -20,10 +22,15 @@ export class LibraryResolver {
     return await this.LibraryRepository.find();
   }
 
+  @Query(() => Library, { nullable: true })
+  async library(@Arg("id") id: string) {
+    return await this.LibraryRepository.findOne(id);
+  }
+
   @Authorized()
-  @Mutation(() => Library)
+  @Mutation(() => [Library])
   async createLibrary(
-    @Arg("data")
+    @Args()
     { name, url, logoUrl, description, language }: CreateLibraryInput,
     @Ctx() { user: creator }: IContext
   ) {
@@ -36,29 +43,27 @@ export class LibraryResolver {
       language: await this.LanguageRepository.findOneOrFail(language),
     });
 
-    return await this.LibraryRepository.save(newLibrary);
+    await this.LibraryRepository.save(newLibrary);
+
+    return await this.LibraryRepository.find();
   }
 
   @Authorized()
   @Mutation(() => Library)
-  async updateLibrary(@Arg("data")
-  {
-    name,
-    newName,
-    url,
-    logoUrl,
-    description,
-    language,
-  }: UpdateLibraryInput) {
+  async updateLibrary(
+    @Args()
+    { id, name, url, logoUrl, description, language }: UpdateLibraryInput,
+    @Ctx() { user }: IContext
+  ) {
     const partialLibrary: Partial<Library> = {
-      name: newName,
+      name,
       url,
       logoUrl,
       description,
     };
 
     let [library] = await Promise.all([
-      this.LibraryRepository.findOneOrFail(name),
+      this.LibraryRepository.findOneOrFail(id, { relations: ["creator"] }),
       (async () => {
         if (language) {
           partialLibrary.language = await this.LanguageRepository.findOneOrFail(
@@ -70,15 +75,27 @@ export class LibraryResolver {
 
     _.assign(library, _.omitBy(partialLibrary, _.isUndefined));
 
-    return await this.LibraryRepository.save(library);
+    if (library.creator.id === user.id || user.admin) {
+      return await this.LibraryRepository.save(library);
+    }
+    throw new Error("AUTHORIZATION ERROR");
   }
 
   @FieldResolver()
-  async templates(@Root() { name }: Library) {
-    return (await this.LibraryRepository.findOneOrFail(name, {
-      select: ["name"],
+  async templates(@Root() { id }: Library) {
+    return (await this.LibraryRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["templates"],
       loadEagerRelations: false,
     })).templates;
+  }
+
+  @FieldResolver()
+  async creator(@Root() { id }: Library) {
+    return (await this.LibraryRepository.findOneOrFail(id, {
+      select: ["id"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    })).creator;
   }
 }

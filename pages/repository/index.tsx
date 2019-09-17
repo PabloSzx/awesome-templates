@@ -8,7 +8,7 @@ import { useRememberState } from "use-remember-state";
 
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
 import Modal from "../../src/client/Components/Modal";
-import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublishModal";
+import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublish";
 
 type ISearchRepoMutation = {
   searchRepository: Array<{

@@ -89,26 +89,26 @@ export class CreateTemplateInput {
   @MinLength(1, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  languages?: string[];
+  @Field(() => [String])
+  languages: string[];
 
   @MinLength(2, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  frameworks?: string[];
+  @Field(() => [String])
+  frameworks: string[];
 
   @MinLength(2, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  libraries?: string[];
+  @Field(() => [String])
+  libraries: string[];
 
   @MinLength(2, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  environments?: string[];
+  @Field(() => [String])
+  environments: string[];
 }
 
 @ArgsType()
@@ -118,8 +118,8 @@ export class UpdateTemplateInput implements Partial<CreateTemplateInput> {
   templateId: string;
 
   @MinLength(3)
-  @Field({ nullable: true })
-  name?: string;
+  @Field()
+  name: string;
 
   @IsBase64()
   @Field({ nullable: true })
@@ -132,24 +132,24 @@ export class UpdateTemplateInput implements Partial<CreateTemplateInput> {
   @MinLength(1, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  languages?: string[];
+  @Field(() => [String])
+  languages: string[];
 
   @MinLength(2, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  frameworks?: string[];
+  @Field(() => [String])
+  frameworks: string[];
 
   @MinLength(2, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  libraries?: string[];
+  @Field(() => [String])
+  libraries: string[];
 
   @MinLength(2, {
     each: true,
   })
-  @Field(() => [String], { nullable: true })
-  environments?: string[];
+  @Field(() => [String])
+  environments: string[];
 }

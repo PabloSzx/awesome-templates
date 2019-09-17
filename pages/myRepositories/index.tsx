@@ -9,7 +9,7 @@ import { useRememberState } from "use-remember-state";
 import RequireAuth from "../../src/client/Components/Auth/RequireAuth";
 import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
-import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublishModal";
+import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublish";
 
 export type RepoQueryType = {
   id: string;
@@ -140,7 +140,7 @@ const Repositories: FC = () => {
                       </Table.Cell>
                     </Table.Row>
                   }
-                  header={<>{name}</>}
+                  headerBody={<>{name}</>}
                   dimmer="blurring"
                   key={key}
                   id={`${id}MyRepoModal`}

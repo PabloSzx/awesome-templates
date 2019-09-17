@@ -1,7 +1,7 @@
-import { IsUrl, Length, MinLength } from "class-validator";
-import { Field, InputType, ObjectType } from "type-graphql";
+import { IsUrl, IsUUID, Length, MinLength } from "class-validator";
+import { ArgsType, Field, ID, ObjectType } from "type-graphql";
 import {
-    Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryColumn
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn
 } from "typeorm";
 
 import { Language } from "./Language";
@@ -11,8 +11,12 @@ import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Framework {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
   @Field()
-  @PrimaryColumn()
+  @Column({ unique: true })
   name: string;
 
   @Field({ nullable: true })
@@ -31,7 +35,7 @@ export class Framework {
   @ManyToMany(() => Language, lang => lang.frameworks, {
     cascade: true,
   })
-  @JoinTable()
+  @JoinTable({ name: "languages" })
   languages: Language[];
 
   @Field(() => [Template])
@@ -39,12 +43,12 @@ export class Framework {
   templates: Template[];
 
   @Field(() => User)
-  @OneToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: "creator" })
   creator: User;
 }
 
-@InputType()
+@ArgsType()
 export class CreateFrameworkInput {
   @Length(2, 30)
   @Field()
@@ -72,18 +76,19 @@ export class CreateFrameworkInput {
   description?: string;
 
   @MinLength(1, { each: true })
-  @Field(() => [String], { nullable: true })
-  languages?: string[];
+  @Field(() => [String])
+  languages: string[];
 }
 
-@InputType()
+@ArgsType()
 export class UpdateFrameworkInput implements Partial<CreateFrameworkInput> {
+  @IsUUID()
   @Field()
-  name: string;
+  id: string;
 
   @Length(2, 30)
-  @Field({ nullable: true })
-  newName: string;
+  @Field()
+  name: string;
 
   @IsUrl({
     protocols: ["http", "https"],
@@ -107,6 +112,6 @@ export class UpdateFrameworkInput implements Partial<CreateFrameworkInput> {
   description?: string;
 
   @MinLength(1, { each: true })
-  @Field(() => [String], { nullable: true })
-  languages?: string[];
+  @Field(() => [String])
+  languages: string[];
 }

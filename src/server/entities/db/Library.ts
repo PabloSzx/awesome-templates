@@ -1,6 +1,6 @@
-import { IsUrl, Length, MinLength } from "class-validator";
-import { Field, InputType, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryColumn } from "typeorm";
+import { IsUrl, IsUUID, Length, MinLength } from "class-validator";
+import { ArgsType, Field, ID, ObjectType } from "type-graphql";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 import { Language } from "./Language";
 import { Template } from "./Template";
@@ -9,8 +9,12 @@ import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Library {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
   @Field()
-  @PrimaryColumn()
+  @Column({ unique: true })
   name: string;
 
   @Field({ nullable: true })
@@ -25,13 +29,13 @@ export class Library {
   @Column({ type: "text", nullable: true })
   description?: string;
 
-  @Field(() => Language)
+  @Field(() => Language, { nullable: true })
   @ManyToOne(() => Language, lang => lang.libraries, {
     cascade: true,
-    nullable: false,
     eager: true,
+    nullable: true,
   })
-  language: Language;
+  language?: Language;
 
   @Field(() => [Template])
   @ManyToMany(() => Template, template => template.libraries)
@@ -43,7 +47,7 @@ export class Library {
   creator: User;
 }
 
-@InputType()
+@ArgsType()
 export class CreateLibraryInput {
   @Length(2, 60)
   @Field()
@@ -71,18 +75,19 @@ export class CreateLibraryInput {
   description?: string;
 
   @MinLength(1)
-  @Field()
-  language: string;
+  @Field({ nullable: true })
+  language?: string;
 }
 
-@InputType()
+@ArgsType()
 export class UpdateLibraryInput implements Partial<CreateLibraryInput> {
+  @IsUUID()
   @Field()
-  name: string;
+  id: string;
 
   @Length(2, 60)
-  @Field({ nullable: true })
-  newName?: string;
+  @Field()
+  name: string;
 
   @IsUrl({
     allow_underscores: true,

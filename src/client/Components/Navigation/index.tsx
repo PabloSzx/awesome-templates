@@ -87,7 +87,7 @@ const PersonalToken: FunctionComponent<{
           </Card.Content>
         </Card>
       }
-      actions={
+      actionsModal={
         <>
           <Button
             primary

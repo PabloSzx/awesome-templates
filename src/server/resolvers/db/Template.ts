@@ -71,7 +71,6 @@ export class TemplateResolver {
     }: CreateTemplateInput,
     @Ctx() { user: owner }: IContext
   ) {
-    console.log("arguments :", arguments);
     const newTemplate = this.TemplateRepository.create({
       name,
       owner,
@@ -85,11 +84,6 @@ export class TemplateResolver {
             relations: !languages ? ["languages"] : undefined,
           }
         );
-        if (!primaryLanguage)
-          newTemplate.primaryLanguage = newTemplate.repository.primaryLanguage;
-
-        if (!languages)
-          newTemplate.languages = newTemplate.repository.languages;
       })(),
       (async () => {
         if (primaryLanguage)
@@ -98,28 +92,24 @@ export class TemplateResolver {
           );
       })(),
       (async () => {
-        if (languages)
-          newTemplate.languages = await this.LanguageRepository.findByIds(
-            languages
-          );
+        newTemplate.languages = await this.LanguageRepository.findByIds(
+          languages
+        );
       })(),
       (async () => {
-        if (frameworks)
-          newTemplate.frameworks = await this.FrameworkRepository.findByIds(
-            frameworks
-          );
+        newTemplate.frameworks = await this.FrameworkRepository.findByIds(
+          frameworks
+        );
       })(),
       (async () => {
-        if (libraries)
-          newTemplate.libraries = await this.LibraryRepository.findByIds(
-            libraries
-          );
+        newTemplate.libraries = await this.LibraryRepository.findByIds(
+          libraries
+        );
       })(),
       (async () => {
-        if (environments)
-          newTemplate.environments = await this.EnvironmentRepository.findByIds(
-            environments
-          );
+        newTemplate.environments = await this.EnvironmentRepository.findByIds(
+          environments
+        );
       })(),
     ]);
 
@@ -151,34 +141,31 @@ export class TemplateResolver {
           );
       })(),
       (async () => {
-        if (primaryLanguage)
+        if (primaryLanguage) {
           partialTemplate.primaryLanguage = await this.LanguageRepository.findOneOrFail(
             primaryLanguage
           );
+        }
       })(),
       (async () => {
-        if (languages)
-          partialTemplate.languages = await this.LanguageRepository.findByIds(
-            languages
-          );
+        partialTemplate.languages = await this.LanguageRepository.findByIds(
+          languages
+        );
       })(),
       (async () => {
-        if (frameworks)
-          partialTemplate.frameworks = await this.FrameworkRepository.findByIds(
-            frameworks
-          );
+        partialTemplate.frameworks = await this.FrameworkRepository.findByIds(
+          frameworks
+        );
       })(),
       (async () => {
-        if (libraries)
-          partialTemplate.libraries = await this.LibraryRepository.findByIds(
-            libraries
-          );
+        partialTemplate.libraries = await this.LibraryRepository.findByIds(
+          libraries
+        );
       })(),
       (async () => {
-        if (environments)
-          partialTemplate.environments = await this.EnvironmentRepository.findByIds(
-            environments
-          );
+        partialTemplate.environments = await this.EnvironmentRepository.findByIds(
+          environments
+        );
       })(),
     ]);
 

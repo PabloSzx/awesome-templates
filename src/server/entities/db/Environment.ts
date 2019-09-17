@@ -1,6 +1,6 @@
-import { IsUrl, Length } from "class-validator";
-import { Field, InputType, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, ManyToMany, OneToOne, PrimaryColumn } from "typeorm";
+import { IsUrl, IsUUID, Length } from "class-validator";
+import { ArgsType, Field, ID, ObjectType } from "type-graphql";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 import { Template } from "./Template";
 import { User } from "./User";
@@ -8,8 +8,12 @@ import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Environment {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn("uuid")
+  id: string;
+
   @Field()
-  @PrimaryColumn()
+  @Column({ unique: true })
   name: string;
 
   @Field({ nullable: true })
@@ -29,12 +33,12 @@ export class Environment {
   templates: Template[];
 
   @Field(() => User)
-  @OneToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: "creator" })
   creator: User;
 }
 
-@InputType()
+@ArgsType()
 export class CreateEnvironmentInput {
   @Length(2, 30)
   @Field()
@@ -62,14 +66,15 @@ export class CreateEnvironmentInput {
   description?: string;
 }
 
-@InputType()
+@ArgsType()
 export class UpdateEnvironmentInput implements Partial<CreateEnvironmentInput> {
+  @IsUUID()
   @Field()
-  name: string;
+  id: string;
 
   @Length(2, 30)
-  @Field({ nullable: true })
-  newName: string;
+  @Field()
+  name: string;
 
   @IsUrl({
     protocols: ["http", "https"],
