@@ -22,7 +22,7 @@ const dbConfig: ConnectionOptions = {
         database: process.env.DB_DATABASE || "postgres",
         port: parseInt(process.env.DB_PORT || "") || 5432,
       }),
-  synchronize: true,
+  synchronize: process.env.NODE_ENV !== "production",
   logging: process.env.NODE_ENV !== "production",
   logger: "file",
 };

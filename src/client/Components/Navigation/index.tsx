@@ -190,7 +190,7 @@ const Navigation: FunctionComponent<{ router: NextRouter }> = ({
               <>
                 {(dataCheckAPILevel.checkAPILevel === APILevel.MEDIUM ||
                   dataCheckAPILevel.checkAPILevel === APILevel.ADVANCED) && (
-                  <Link href="myRepositories">
+                  <Link href="/myRepositories">
                     <Menu.Item
                       name="My Repositories"
                       active={pathname === "/myRepositories"}
