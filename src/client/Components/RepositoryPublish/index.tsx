@@ -1,14 +1,18 @@
 import { Field, Formik } from "formik";
 import gql from "graphql-tag";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
 import { Flex } from "rebass";
-import { Checkbox, Divider, Dropdown, Form, Grid, Header, Input, Label } from "semantic-ui-react";
+import {
+    Button, Checkbox, Divider, Dropdown, Form, Grid, Header, Input, Label
+} from "semantic-ui-react";
 
+import { AuthContext } from "../Auth/Context";
 import EnvironmentModal from "../Environment";
 import FrameworkModal from "../Framework";
 import LibraryModal from "../Library";
 import Modal from "../Modal";
+import ConfirmModal from "../Modal/Confirm";
 
 const RepositoryPublishModalContent: FC<{
   children: {
@@ -16,8 +20,13 @@ const RepositoryPublishModalContent: FC<{
     id: string;
     languages: { name: string }[];
     primaryLanguage?: { name: string };
+    owner: {
+      id: string;
+    };
   };
-}> = ({ children: { name, id, languages, primaryLanguage } }) => {
+}> = ({ children: { name, id, languages, primaryLanguage, owner } }) => {
+  const { user } = useContext(AuthContext);
+
   const {
     data: gitRepoData,
     loading: loadingGetRepoData,
@@ -46,6 +55,9 @@ const RepositoryPublishModalContent: FC<{
             id: string;
             name: string;
           }[];
+          owner: {
+            id: string;
+          };
         };
       };
     },
@@ -76,6 +88,9 @@ const RepositoryPublishModalContent: FC<{
             environments {
               id
               name
+            }
+            owner {
+              id
             }
           }
         }
@@ -266,27 +281,57 @@ const RepositoryPublishModalContent: FC<{
     `
   );
 
+  const [
+    removeTemplate,
+    { loading: loadingRemoveTemplate, called: calledRemoveTemplate },
+  ] = useMutation<
+    {
+      removeTemplate: string;
+    },
+    {
+      id: string;
+    }
+  >(gql`
+    mutation($id: String!) {
+      removeTemplate(id: $id)
+    }
+  `);
+
   useEffect(() => {
     if (
       (!loadingCreateTemplate && calledCreateTemplate) ||
-      (!loadingUpdatingTemplate && calledUpdateTemplate)
+      (!loadingUpdatingTemplate && calledUpdateTemplate) ||
+      (!loadingRemoveTemplate && calledRemoveTemplate)
     ) {
       refetchGetGitRepoData();
     }
   }, [
     calledCreateTemplate,
     calledUpdateTemplate,
+    calledRemoveTemplate,
     loadingCreateTemplate,
     loadingUpdatingTemplate,
+    loadingRemoveTemplate,
   ]);
 
   const [update, setUpdate] = useState(false);
 
   useEffect(() => {
-    if (gitRepoData && gitRepoData.gitRepo && gitRepoData.gitRepo.template) {
+    if (
+      user &&
+      gitRepoData &&
+      gitRepoData.gitRepo &&
+      gitRepoData.gitRepo.template &&
+      (user.admin ||
+        owner.id === user.id ||
+        gitRepoData.gitRepo.template.owner.id === user.id)
+    ) {
       setUpdate(true);
+      setToggleFormData(true);
+    } else {
+      setUpdate(false);
     }
-  }, [gitRepoData]);
+  }, [gitRepoData, loadingGetRepoData]);
 
   const [toggleFormData, setToggleFormData] = useState(false);
 
@@ -298,12 +343,6 @@ const RepositoryPublishModalContent: FC<{
     libraries: [] as string[],
     environments: [] as string[],
   });
-
-  useEffect(() => {
-    if (gitRepoData && gitRepoData.gitRepo && gitRepoData.gitRepo.template) {
-      setToggleFormData(true);
-    }
-  }, [gitRepoData]);
 
   useEffect(() => {
     if (
@@ -340,14 +379,11 @@ const RepositoryPublishModalContent: FC<{
     }
   }, [toggleFormData]);
 
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    const tempLoading =
-      loadingCreateTemplate || loadingGetRepoData || loadingUpdatingTemplate;
-    if (loading !== tempLoading) {
-      setLoading(tempLoading);
-    }
-  }, [loadingCreateTemplate, loadingGetRepoData, loadingUpdatingTemplate]);
+  const loading =
+    loadingCreateTemplate ||
+    loadingGetRepoData ||
+    loadingUpdatingTemplate ||
+    loadingRemoveTemplate;
 
   const MemoizedFormik = useMemo(
     () => (
@@ -364,6 +400,7 @@ const RepositoryPublishModalContent: FC<{
         }) => {
           try {
             if (
+              update &&
               gitRepoData &&
               gitRepoData.gitRepo &&
               gitRepoData.gitRepo.template
@@ -702,6 +739,48 @@ const RepositoryPublishModalContent: FC<{
                   >
                     {update ? "Update" : "Publish"}
                   </Form.Button>
+                  {user &&
+                  gitRepoData &&
+                  gitRepoData.gitRepo &&
+                  gitRepoData.gitRepo.template &&
+                  (user.admin ||
+                    gitRepoData.gitRepo.template.owner.id === user.id ||
+                    owner.id === user.id) ? (
+                    <ConfirmModal
+                      onConfirm={async () => {
+                        if (
+                          gitRepoData.gitRepo &&
+                          gitRepoData.gitRepo.template
+                        ) {
+                          await removeTemplate({
+                            variables: {
+                              id: gitRepoData.gitRepo.template.id,
+                            },
+                          });
+
+                          await refetchGetGitRepoData();
+                        } else {
+                          throw new Error("NOT VALID TEMPLATE");
+                        }
+                      }}
+                      content={`Are you sure you want to remove the template "${gitRepoData.gitRepo.template.name}"`}
+                      header="Remove Template"
+                      confirmButton={
+                        <Button negative>Yes, remove template</Button>
+                      }
+                    >
+                      <Form.Button
+                        negative
+                        onClick={e => {
+                          e.preventDefault();
+                        }}
+                        loading={loading}
+                        disabled={loading}
+                      >
+                        Remove Template
+                      </Form.Button>
+                    </ConfirmModal>
+                  ) : null}
                 </Form>
               </Grid.Row>
             </>
@@ -709,7 +788,7 @@ const RepositoryPublishModalContent: FC<{
         }}
       </Formik>
     ),
-    [loading, initialValues]
+    [loading, initialValues, update]
   );
 
   return (

@@ -30,6 +30,9 @@ interface ITemplatesQuery {
     repository: {
       starCount: number;
       url: string;
+      owner: {
+        id: string;
+      };
     };
     languages: Array<{ name: string; color?: string }>;
     libraries: Array<{ name: string; logoUrl?: string; id: string }>;
@@ -58,6 +61,9 @@ const TemplatesQuery = gql`
         id
         url
         starCount
+        owner {
+          id
+        }
       }
       languages {
         name
@@ -454,7 +460,11 @@ const TemplatesTable: FC<{
               name,
               owner,
               upvotesCount,
-              repository: { url, starCount },
+              repository: {
+                url,
+                starCount,
+                owner: { id: repoOwnerId },
+              },
               languages,
               environments,
               libraries,
@@ -567,38 +577,41 @@ const TemplatesTable: FC<{
                         <Button primary>More info</Button>
                       </Link>
                     </Grid.Row>
-                    {user && (user.admin || owner.id === user.id) && (
-                      <>
-                        <Grid.Row>
-                          <ConfirmModal
-                            onConfirm={async () => {
-                              await removeTemplate({
-                                variables: {
-                                  id,
-                                },
-                              });
+                    {user &&
+                      (user.admin ||
+                        owner.id === user.id ||
+                        repoOwnerId === user.id) && (
+                        <>
+                          <Grid.Row>
+                            <ConfirmModal
+                              onConfirm={async () => {
+                                await removeTemplate({
+                                  variables: {
+                                    id,
+                                  },
+                                });
 
-                              close();
+                                close();
 
-                              await refetch();
-                            }}
-                            content={`Are you sure you want remove template "${name}"`}
-                            header="Remove Template"
-                            confirmButton={
-                              <Button negative>Yes, remove template</Button>
-                            }
-                          >
-                            <Button
-                              negative
-                              loading={loadingRemoveTemplate}
-                              disabled={loadingRemoveTemplate}
+                                await refetch();
+                              }}
+                              content={`Are you sure you want to remove the template "${name}"`}
+                              header="Remove Template"
+                              confirmButton={
+                                <Button negative>Yes, remove template</Button>
+                              }
                             >
-                              Remove Template
-                            </Button>
-                          </ConfirmModal>
-                        </Grid.Row>
-                      </>
-                    )}
+                              <Button
+                                negative
+                                loading={loadingRemoveTemplate}
+                                disabled={loadingRemoveTemplate}
+                              >
+                                Remove Template
+                              </Button>
+                            </ConfirmModal>
+                          </Grid.Row>
+                        </>
+                      )}
                   </Grid>
                 );
               }}
@@ -647,7 +660,7 @@ const TemplatesDashboard: FC<{
   data: ITemplatesQuery;
   refetch: () => Promise<any>;
   loading: boolean;
-}> = ({ data, refetch, loading: loadingTemplates }) => {
+}> = ({ data, refetch, loading }) => {
   const [filteredTemplates, setFilteredTemplates] = useState(data.templates);
   const [filters, setFilters] = useState<filtersState>({
     names: [],
@@ -687,8 +700,6 @@ const TemplatesDashboard: FC<{
     );
   }, [filters, data.templates]);
 
-  const [loading, setLoading] = useState(false);
-
   return (
     <Grid centered padded>
       <Grid.Row>
@@ -702,8 +713,7 @@ const TemplatesDashboard: FC<{
               icon
               positive
               onClick={() => {
-                setLoading(true);
-                refetch().then(() => setLoading(false));
+                refetch();
               }}
               loading={loading}
               disabled={loading}
@@ -712,13 +722,8 @@ const TemplatesDashboard: FC<{
             </Button>
           </Grid.Row>
 
-          <Dimmer.Dimmable
-            as={Segment}
-            blurring
-            dimmed={loading || loadingTemplates}
-            basic
-          >
-            <Dimmer inverted active={loading || loadingTemplates}>
+          <Dimmer.Dimmable as={Segment} blurring dimmed={loading} basic>
+            <Dimmer inverted active={loading}>
               <LoaderSemantic />
             </Dimmer>
             <TemplatesTable templates={filteredTemplates} refetch={refetch} />
