@@ -18,6 +18,9 @@ type ISearchRepoMutation = {
     primaryLanguage?: {
       name: string;
     };
+    owner: {
+      id: string;
+    };
   }>;
 };
 
@@ -31,6 +34,9 @@ const SearchRepoMutation = gql`
       }
       primaryLanguage {
         name
+      }
+      owner {
+        id
       }
     }
   }

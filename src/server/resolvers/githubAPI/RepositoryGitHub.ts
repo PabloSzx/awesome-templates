@@ -251,7 +251,7 @@ export class RepositoryGitHubResolver {
             .values(repoLanguages)
             .execute();
 
-          await this.GitRepoRepository.save({ id, languages: repoLanguages });
+          await this.GitRepoRepository.update(id, { languages: repoLanguages });
         } catch (err) {
           console.error(2, err);
         }

@@ -157,21 +157,11 @@ const FrameworkModal: FC<{
     }
   `);
 
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(
-      loadingCreateFramework ||
-        loadingFrameworkData ||
-        loadingUpdateFramework ||
-        loadingRemoveFramework
-    );
-  }, [
-    loadingCreateFramework,
-    loadingFrameworkData,
-    loadingUpdateFramework,
-    loadingRemoveFramework,
-  ]);
+  const loading =
+    loadingCreateFramework ||
+    loadingFrameworkData ||
+    loadingUpdateFramework ||
+    loadingRemoveFramework;
 
   useEffect(() => {
     if (

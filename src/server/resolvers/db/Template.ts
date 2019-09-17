@@ -5,6 +5,7 @@ import {
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { NOT_AUTHORIZED } from "../../../consts";
 import {
     CreateTemplateInput, Environment, Framework, GitRepository, Language, Library, Template,
     UpdateTemplateInput
@@ -118,17 +119,20 @@ export class TemplateResolver {
 
   @Authorized()
   @Mutation(() => Template)
-  async updateTemplate(@Args()
-  {
-    templateId,
-    name,
-    repositoryId,
-    primaryLanguage,
-    languages,
-    frameworks,
-    libraries,
-    environments,
-  }: UpdateTemplateInput) {
+  async updateTemplate(
+    @Args()
+    {
+      templateId,
+      name,
+      repositoryId,
+      primaryLanguage,
+      languages,
+      frameworks,
+      libraries,
+      environments,
+    }: UpdateTemplateInput,
+    @Ctx() { user }: IContext
+  ) {
     const partialTemplate: Partial<Template> = {
       name,
     };
@@ -169,21 +173,34 @@ export class TemplateResolver {
       })(),
     ]);
 
-    _.assign(template, _.omitBy(partialTemplate, _.isUndefined));
+    if (
+      user.admin ||
+      template.owner.id === user.id ||
+      template.repository.owner.id === user.id
+    ) {
+      _.assign(template, _.omitBy(partialTemplate, _.isUndefined));
 
-    return await this.TemplateRepository.save(template);
+      return await this.TemplateRepository.save(template);
+    }
+    throw new Error(NOT_AUTHORIZED);
   }
 
   @Authorized()
   @Mutation(() => String)
   async removeTemplate(@Arg("id") id: string, @Ctx() { user }: IContext) {
-    const template = await this.TemplateRepository.findOneOrFail(id);
+    const template = await this.TemplateRepository.findOneOrFail(id, {
+      relations: ["owner", "repository"],
+    });
 
-    if (template.owner.id === user.id || user.admin) {
+    if (
+      user.admin ||
+      template.owner.id === user.id ||
+      template.repository.owner.id === user.id
+    ) {
       await this.TemplateRepository.remove(template);
       return id;
     }
-    throw new Error("You are not authorized to remove this template");
+    throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()
