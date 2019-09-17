@@ -1,10 +1,12 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
 import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
 
+import { AuthContext } from "../Auth/Context";
 import LanguagesDropdown from "../Languages/Dropdown";
+import ConfirmModal from "../Modal/Confirm";
 
 type IFrameworkData = {
   id: string;
@@ -15,12 +17,17 @@ type IFrameworkData = {
   languages: {
     name: string;
   }[];
+  creator: {
+    id: string;
+  };
 };
-const FrameworkModal: FC<{ id?: string; name: string; close: () => void }> = ({
-  id,
-  name,
-  close,
-}) => {
+const FrameworkModal: FC<{
+  id?: string;
+  name: string;
+  close: () => void;
+  refetch: () => void;
+}> = ({ id, name, close, refetch }) => {
+  const { user } = useContext(AuthContext);
   const { data, loading: loadingFrameworkData } = useQuery<
     { framework: IFrameworkData | null },
     { id: string }
@@ -36,6 +43,9 @@ const FrameworkModal: FC<{ id?: string; name: string; close: () => void }> = ({
           languages {
             name
           }
+          creator {
+            id
+          }
         }
       }
     `,
@@ -46,7 +56,10 @@ const FrameworkModal: FC<{ id?: string; name: string; close: () => void }> = ({
       },
     }
   );
-  const [createFramework, { loading: loadingCreateFramework }] = useMutation<
+  const [
+    createFramework,
+    { loading: loadingCreateFramework, called: calledCreateFramework },
+  ] = useMutation<
     {},
     {
       name: string;
@@ -78,11 +91,17 @@ const FrameworkModal: FC<{ id?: string; name: string; close: () => void }> = ({
         languages {
           name
         }
+        creator {
+          id
+        }
       }
     }
   `);
 
-  const [updateFramework, { loading: loadingUpdateFramework }] = useMutation<
+  const [
+    updateFramework,
+    { loading: loadingUpdateFramework, called: calledUpdateFramework },
+  ] = useMutation<
     {},
     {
       id: string;
@@ -117,19 +136,59 @@ const FrameworkModal: FC<{ id?: string; name: string; close: () => void }> = ({
         languages {
           name
         }
+        creator {
+          id
+        }
       }
+    }
+  `);
+
+  const [
+    removeFramework,
+    { loading: loadingRemoveFramework, called: calledRemoveFramework },
+  ] = useMutation<
+    { removeFramework: string },
+    {
+      id: string;
+    }
+  >(gql`
+    mutation($id: String!) {
+      removeFramework(id: $id)
     }
   `);
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const tempLoading =
-      loadingCreateFramework || loadingFrameworkData || loadingUpdateFramework;
-    if (tempLoading !== loading) {
-      setLoading(tempLoading);
+    setLoading(
+      loadingCreateFramework ||
+        loadingFrameworkData ||
+        loadingUpdateFramework ||
+        loadingRemoveFramework
+    );
+  }, [
+    loadingCreateFramework,
+    loadingFrameworkData,
+    loadingUpdateFramework,
+    loadingRemoveFramework,
+  ]);
+
+  useEffect(() => {
+    if (
+      (calledCreateFramework && !loadingCreateFramework) ||
+      (calledUpdateFramework && !loadingUpdateFramework) ||
+      (calledRemoveFramework && !loadingRemoveFramework)
+    ) {
+      refetch();
     }
-  }, [loadingCreateFramework, loadingFrameworkData, loadingUpdateFramework]);
+  }, [
+    calledCreateFramework,
+    calledUpdateFramework,
+    calledRemoveFramework,
+    loadingCreateFramework,
+    loadingUpdateFramework,
+    loadingRemoveFramework,
+  ]);
 
   const [update, setUpdate] = useState(!!id);
 
@@ -257,6 +316,40 @@ const FrameworkModal: FC<{ id?: string; name: string; close: () => void }> = ({
                 {update ? "Update Framework" : "Add Framework"}
               </Form.Button>
             </Form.Field>
+            {user &&
+              id &&
+              data &&
+              data.framework &&
+              (user.admin || data.framework.creator.id === user.id) && (
+                <ConfirmModal
+                  onConfirm={async () => {
+                    await removeFramework({
+                      variables: {
+                        id,
+                      },
+                    });
+                    close();
+                  }}
+                  content={`Are you sure you want to remove the framework "${name}"`}
+                  header="Remove Framework"
+                  confirmButton={
+                    <Button negative>Yes, remove framework</Button>
+                  }
+                >
+                  <Form.Field>
+                    <Form.Button
+                      negative
+                      onClick={async e => {
+                        e.preventDefault();
+                      }}
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Remove Framework
+                    </Form.Button>
+                  </Form.Field>
+                </ConfirmModal>
+              )}
           </Form>
         )}
       </Formik>

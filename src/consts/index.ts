@@ -9,5 +9,5 @@ export enum APILevel {
   MEDIUM = "MEDIUM",
   ADVANCED = "ADVANCED",
 }
-
+export const NOT_AUTHORIZED = "Not Authorized";
 export const GRAPHQL_URL = `${DOMAIN}/api/graphql`;

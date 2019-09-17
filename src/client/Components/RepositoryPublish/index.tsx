@@ -85,10 +85,11 @@ const RepositoryPublishModalContent: FC<{
       variables: {
         id,
       },
+      notifyOnNetworkStatusChange: true,
     }
   );
 
-  const { data: options } = useQuery<{
+  const { data: options, refetch: refetchOptions } = useQuery<{
     languages: { name: string }[];
     libraries: { name: string; id: string }[];
     frameworks: { name: string; id: string }[];
@@ -112,7 +113,10 @@ const RepositoryPublishModalContent: FC<{
           name
         }
       }
-    `
+    `,
+    {
+      notifyOnNetworkStatusChange: true,
+    }
   );
   const [
     createTemplate,
@@ -152,11 +156,13 @@ const RepositoryPublishModalContent: FC<{
           name
           upvotesCount
           owner {
+            id
             data {
               login
             }
           }
           repository {
+            id
             url
             starCount
           }
@@ -226,11 +232,13 @@ const RepositoryPublishModalContent: FC<{
           name
           upvotesCount
           owner {
+            id
             data {
               login
             }
           }
           repository {
+            id
             url
             starCount
           }
@@ -530,6 +538,10 @@ const RepositoryPublishModalContent: FC<{
                               id={data.id}
                               name={data.name}
                               close={close}
+                              refetch={() => {
+                                refetchGetGitRepoData();
+                                refetchOptions();
+                              }}
                             />
                           );
                         }
@@ -598,6 +610,10 @@ const RepositoryPublishModalContent: FC<{
                               name={data.name}
                               id={data.id}
                               close={close}
+                              refetch={() => {
+                                refetchGetGitRepoData();
+                                refetchOptions();
+                              }}
                             />
                           );
 
@@ -665,6 +681,10 @@ const RepositoryPublishModalContent: FC<{
                               id={data.id}
                               name={data.name}
                               close={close}
+                              refetch={() => {
+                                refetchGetGitRepoData();
+                                refetchOptions();
+                              }}
                             />
                           );
                         }

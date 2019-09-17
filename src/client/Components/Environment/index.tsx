@@ -1,8 +1,11 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
-import { Form, Input, Label, TextArea } from "semantic-ui-react";
+import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
+
+import { AuthContext } from "../Auth/Context";
+import ConfirmModal from "../Modal/Confirm";
 
 type IEnvironmentData = {
   id: string;
@@ -10,13 +13,19 @@ type IEnvironmentData = {
   url?: string;
   logoUrl?: string;
   description?: string;
+  creator: {
+    id: string;
+  };
 };
 
 const EnvironmentModal: FC<{
   id?: string;
   name: string;
   close: () => void;
-}> = ({ id, name, close }) => {
+  refetch: () => void;
+}> = ({ id, name, close, refetch }) => {
+  const { user } = useContext(AuthContext);
+
   const { data, loading: loadingEnvironmentData } = useQuery<
     {
       environment: IEnvironmentData | null;
@@ -33,6 +42,9 @@ const EnvironmentModal: FC<{
           url
           logoUrl
           description
+          creator {
+            id
+          }
         }
       }
     `,
@@ -46,7 +58,7 @@ const EnvironmentModal: FC<{
 
   const [
     createEnvironment,
-    { loading: loadingCreateEnvironment },
+    { loading: loadingCreateEnvironment, called: calledCreateEnvironment },
   ] = useMutation<
     {},
     {
@@ -73,13 +85,16 @@ const EnvironmentModal: FC<{
         url
         logoUrl
         description
+        creator {
+          id
+        }
       }
     }
   `);
 
   const [
     updateEnvironment,
-    { loading: loadingUpdateEnvironment },
+    { loading: loadingUpdateEnvironment, called: calledUpdateEnvironment },
   ] = useMutation<
     {},
     {
@@ -109,25 +124,58 @@ const EnvironmentModal: FC<{
         url
         logoUrl
         description
+        creator {
+          id
+        }
       }
+    }
+  `);
+
+  const [
+    removeEnvironment,
+    { loading: loadingRemoveEnvironment, called: calledRemoveEnvironment },
+  ] = useMutation<
+    { removeEnvironment: string },
+    {
+      id: string;
+    }
+  >(gql`
+    mutation($id: String!) {
+      removeEnvironment(id: $id)
     }
   `);
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const tempLoading =
+    setLoading(
       loadingEnvironmentData ||
-      loadingCreateEnvironment ||
-      loadingUpdateEnvironment;
-
-    if (tempLoading !== loading) {
-      setLoading(tempLoading);
-    }
+        loadingCreateEnvironment ||
+        loadingUpdateEnvironment ||
+        loadingRemoveEnvironment
+    );
   }, [
     loadingEnvironmentData,
     loadingCreateEnvironment,
     loadingEnvironmentData,
+    loadingRemoveEnvironment,
+  ]);
+
+  useEffect(() => {
+    if (
+      (calledCreateEnvironment && !loadingCreateEnvironment) ||
+      (calledUpdateEnvironment && !loadingUpdateEnvironment) ||
+      (calledRemoveEnvironment && !loadingRemoveEnvironment)
+    ) {
+      refetch();
+    }
+  }, [
+    calledCreateEnvironment,
+    calledUpdateEnvironment,
+    calledRemoveEnvironment,
+    loadingCreateEnvironment,
+    loadingUpdateEnvironment,
+    loadingRemoveEnvironment,
   ]);
 
   const [update, setUpdate] = useState(!!id);
@@ -239,6 +287,40 @@ const EnvironmentModal: FC<{
                 {update ? "Update Environment" : "Add Environment"}
               </Form.Button>
             </Form.Field>
+            {user &&
+              id &&
+              data &&
+              data.environment &&
+              (user.admin || data.environment.creator.id === user.id) && (
+                <ConfirmModal
+                  onConfirm={async () => {
+                    await removeEnvironment({
+                      variables: {
+                        id,
+                      },
+                    });
+                    close();
+                  }}
+                  content={`Are you sure you want to remove the environment "${name}"`}
+                  header="Remove Environment"
+                  confirmButton={
+                    <Button negative>Yes, remove environment</Button>
+                  }
+                >
+                  <Form.Field>
+                    <Form.Button
+                      onClick={async e => {
+                        e.preventDefault();
+                      }}
+                      negative
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Remove Environment
+                    </Form.Button>
+                  </Form.Field>
+                </ConfirmModal>
+              )}
           </Form>
         )}
       </Formik>

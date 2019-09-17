@@ -1,10 +1,12 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
-import { Form, Input, Label, TextArea } from "semantic-ui-react";
+import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
 
+import { AuthContext } from "../Auth/Context";
 import LanguagesDropdown from "../Languages/Dropdown";
+import ConfirmModal from "../Modal/Confirm";
 
 type ILibraryData = {
   id: string;
@@ -15,12 +17,17 @@ type ILibraryData = {
   language?: {
     name: string;
   };
+  creator: {
+    id: string;
+  };
 };
-const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
-  id,
-  name,
-  close,
-}) => {
+const LibraryModal: FC<{
+  id?: string;
+  name: string;
+  close: () => void;
+  refetch: () => void;
+}> = ({ id, name, close, refetch }) => {
+  const { user } = useContext(AuthContext);
   const { data, loading: loadingLibraryData } = useQuery<
     { library: ILibraryData | null },
     { id: string }
@@ -36,6 +43,9 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
           language {
             name
           }
+          creator {
+            id
+          }
         }
       }
     `,
@@ -46,7 +56,10 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
       },
     }
   );
-  const [createLibrary, { loading: loadingCreateLibrary }] = useMutation<
+  const [
+    createLibrary,
+    { loading: loadingCreateLibrary, called: calledCreateLibrary },
+  ] = useMutation<
     {},
     {
       name: string;
@@ -78,11 +91,17 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
         language {
           name
         }
+        creator {
+          id
+        }
       }
     }
   `);
 
-  const [updateLibrary, { loading: loadingUpdateLibrary }] = useMutation<
+  const [
+    updateLibrary,
+    { loading: loadingUpdateLibrary, called: calledUpdateLibrary },
+  ] = useMutation<
     {},
     {
       id: string;
@@ -117,19 +136,54 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
         language {
           name
         }
+        creator {
+          id
+        }
       }
+    }
+  `);
+
+  const [
+    removeLibrary,
+    { loading: loadingRemoveLibrary, called: calledRemoveLibrary },
+  ] = useMutation<{ removeLibrary: string }, { id: string }>(gql`
+    mutation($id: String!) {
+      removeLibrary(id: $id)
     }
   `);
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const tempLoading =
-      loadingCreateLibrary || loadingLibraryData || loadingUpdateLibrary;
-    if (tempLoading !== loading) {
-      setLoading(tempLoading);
+    setLoading(
+      loadingCreateLibrary ||
+        loadingLibraryData ||
+        loadingUpdateLibrary ||
+        loadingRemoveLibrary
+    );
+  }, [
+    loadingCreateLibrary,
+    loadingLibraryData,
+    loadingUpdateLibrary,
+    loadingRemoveLibrary,
+  ]);
+
+  useEffect(() => {
+    if (
+      (calledCreateLibrary && !loadingCreateLibrary) ||
+      (calledUpdateLibrary && !loadingUpdateLibrary) ||
+      (calledRemoveLibrary && !loadingRemoveLibrary)
+    ) {
+      refetch();
     }
-  }, [loadingCreateLibrary, loadingLibraryData, loadingUpdateLibrary]);
+  }, [
+    calledCreateLibrary,
+    calledUpdateLibrary,
+    calledRemoveLibrary,
+    loadingCreateLibrary,
+    loadingUpdateLibrary,
+    loadingRemoveLibrary,
+  ]);
 
   const [update, setUpdate] = useState(!!id);
 
@@ -257,6 +311,40 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
                 {update ? "Update Library" : "Add Library"}
               </Form.Button>
             </Form.Field>
+            {user &&
+              id &&
+              data &&
+              data.library &&
+              (user.admin || data.library.creator.id === user.id) && (
+                <Form.Field>
+                  <ConfirmModal
+                    onConfirm={async () => {
+                      await removeLibrary({
+                        variables: {
+                          id,
+                        },
+                      });
+                      close();
+                    }}
+                    content={`Are you sure you want to remove library "${name}"`}
+                    header="Remove Library"
+                    confirmButton={
+                      <Button negative>Yes, remove library</Button>
+                    }
+                  >
+                    <Form.Button
+                      negative
+                      onClick={async e => {
+                        e.preventDefault();
+                      }}
+                      disabled={loading}
+                      loading={loading}
+                    >
+                      Remove Library
+                    </Form.Button>
+                  </ConfirmModal>
+                </Form.Field>
+              )}
           </Form>
         )}
       </Formik>
