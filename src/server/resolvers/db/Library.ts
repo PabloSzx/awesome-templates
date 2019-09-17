@@ -49,7 +49,7 @@ export class LibraryResolver {
   }
 
   @Authorized()
-  @Mutation(() => [Library])
+  @Mutation(() => Library)
   async updateLibrary(
     @Args()
     { id, name, url, logoUrl, description, language }: UpdateLibraryInput,
@@ -76,25 +76,24 @@ export class LibraryResolver {
     _.assign(library, _.omitBy(partialLibrary, _.isUndefined));
 
     if (library.creator.id === user.id || user.admin) {
-      await this.LibraryRepository.save(library);
-      return await this.LibraryRepository.find();
+      return await this.LibraryRepository.save(library);
     }
     throw new Error("AUTHORIZATION ERROR");
   }
 
   @FieldResolver()
-  async templates(@Root() { name }: Library) {
-    return (await this.LibraryRepository.findOneOrFail(name, {
-      select: ["name"],
+  async templates(@Root() { id }: Library) {
+    return (await this.LibraryRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["templates"],
       loadEagerRelations: false,
     })).templates;
   }
 
   @FieldResolver()
-  async creator(@Root() { name }: Library) {
-    return (await this.LibraryRepository.findOneOrFail(name, {
-      select: ["name"],
+  async creator(@Root() { id }: Library) {
+    return (await this.LibraryRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["creator"],
       loadEagerRelations: false,
     })).creator;

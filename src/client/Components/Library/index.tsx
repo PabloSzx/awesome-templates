@@ -2,7 +2,9 @@ import { Formik } from "formik";
 import gql from "graphql-tag";
 import { FC, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
-import { Button, Dropdown, Form, Input, Label, TextArea } from "semantic-ui-react";
+import { Form, Input, Label, TextArea } from "semantic-ui-react";
+
+import LanguagesDropdown from "../Languages/Dropdown";
 
 type ILibraryData = {
   id: string;
@@ -19,15 +21,6 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
   name,
   close,
 }) => {
-  const { data: dataLanguages, loading: loadingLanguages } = useQuery<{
-    languages: { name: string }[];
-  }>(gql`
-    query {
-      languages {
-        name
-      }
-    }
-  `);
   const { data, loading: loadingLibraryData } = useQuery<
     { library: ILibraryData | null },
     { id: string }
@@ -54,9 +47,7 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
     }
   );
   const [createLibrary, { loading: loadingCreateLibrary }] = useMutation<
-    {
-      createLibrary: ILibraryData[];
-    },
+    {},
     {
       name: string;
       url?: string;
@@ -92,9 +83,7 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
   `);
 
   const [updateLibrary, { loading: loadingUpdateLibrary }] = useMutation<
-    {
-      updateLibrary: ILibraryData[];
-    },
+    {},
     {
       id: string;
       name: string;
@@ -136,39 +125,32 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
 
   useEffect(() => {
     const tempLoading =
-      loadingCreateLibrary ||
-      loadingLibraryData ||
-      loadingUpdateLibrary ||
-      loadingLanguages;
+      loadingCreateLibrary || loadingLibraryData || loadingUpdateLibrary;
     if (tempLoading !== loading) {
       setLoading(tempLoading);
     }
-  }, [
-    loadingCreateLibrary,
-    loadingLibraryData,
-    loadingUpdateLibrary,
-    loadingLanguages,
-  ]);
+  }, [loadingCreateLibrary, loadingLibraryData, loadingUpdateLibrary]);
 
   const [update, setUpdate] = useState(!!id);
 
   const [initialValues, setInitialValues] = useState({
     name,
-    url: "" as string | undefined,
-    logoUrl: "" as string | undefined,
-    description: "" as string | undefined,
-    language: "" as string | undefined,
+    url: "",
+    logoUrl: "",
+    description: "",
+    language: "",
   });
 
   useEffect(() => {
     if (!loadingLibraryData && data && data.library) {
+      const { name, url, logoUrl, description, language } = data.library;
       setUpdate(true);
       setInitialValues({
-        name: data.library.name,
-        url: data.library.url || "",
-        logoUrl: data.library.logoUrl || "",
-        description: data.library.description || "",
-        language: data.library.language ? data.library.language.name : "",
+        name,
+        url: url || "",
+        logoUrl: logoUrl || "",
+        description: description || "",
+        language: language ? language.name : "",
       });
     }
   }, [data, loadingLibraryData]);
@@ -250,24 +232,15 @@ const LibraryModal: FC<{ id?: string; name: string; close: () => void }> = ({
             </Form.Field>
             <Form.Field>
               <Label color="grey">Language</Label>
-              <Dropdown
+              <LanguagesDropdown
                 clearable
                 selection
                 search
-                placeholder="Select language"
-                options={
-                  dataLanguages
-                    ? dataLanguages.languages.map(({ name: value }, key) => ({
-                        key,
-                        text: value,
-                        value,
-                      }))
-                    : []
-                }
-                onChange={(_e, { value }) => setFieldValue("language", value)}
-                value={values.language}
                 disabled={loading}
                 loading={loading}
+                onChange={value => setFieldValue("language", value)}
+                value={values.language}
+                multiple={false}
               />
             </Form.Field>
             <Form.Field>

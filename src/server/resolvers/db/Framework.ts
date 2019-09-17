@@ -24,7 +24,12 @@ export class FrameworkResolver {
 
   @Query(() => Framework, { nullable: true })
   async framework(@Arg("id") id: string) {
-    return await this.FrameworkRepository.findOne(id);
+    try {
+      return await this.FrameworkRepository.findOne(id);
+    } catch (err) {
+      console.error(1, err);
+      throw err;
+    }
   }
 
   @Authorized()
@@ -40,12 +45,8 @@ export class FrameworkResolver {
       logoUrl,
       description,
       creator,
+      languages: await this.LanguageRepository.findByIds(languages),
     });
-    if (languages) {
-      newFramework.languages = await this.LanguageRepository.findByIds(
-        languages
-      );
-    }
 
     return await this.FrameworkRepository.save(newFramework);
   }
@@ -71,11 +72,9 @@ export class FrameworkResolver {
     const [framework] = await Promise.all([
       this.FrameworkRepository.findOneOrFail(id),
       (async () => {
-        if (languages) {
-          partialFramework.languages = await this.LanguageRepository.findByIds(
-            languages
-          );
-        }
+        partialFramework.languages = await this.LanguageRepository.findByIds(
+          languages
+        );
       })(),
     ]);
 
@@ -85,17 +84,27 @@ export class FrameworkResolver {
   }
 
   @FieldResolver()
-  async languages(@Root() { name }: Framework) {
-    return (await this.FrameworkRepository.findOneOrFail(name, {
-      select: ["name"],
+  async languages(@Root() { id }: Framework) {
+    return (await this.FrameworkRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["languages"],
       loadEagerRelations: false,
     })).languages;
   }
 
   @FieldResolver()
-  async templates(@Root() { name }: Framework) {
-    return (await this.FrameworkRepository.findOneOrFail(name, {
+  async creator(@Root() { id }: Framework) {
+    return (await this.FrameworkRepository.findOneOrFail(id, {
+      select: ["id"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    })).creator;
+  }
+
+  @FieldResolver()
+  async templates(@Root() { id }: Framework) {
+    return (await this.FrameworkRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["templates"],
       loadEagerRelations: false,
     })).templates;

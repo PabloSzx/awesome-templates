@@ -85,7 +85,6 @@ const RepositoryPublishModalContent: FC<{
       variables: {
         id,
       },
-      notifyOnNetworkStatusChange: true,
     }
   );
 
@@ -94,38 +93,40 @@ const RepositoryPublishModalContent: FC<{
     libraries: { name: string; id: string }[];
     frameworks: { name: string; id: string }[];
     environments: { name: string; id: string }[];
-  }>(gql`
-    query {
-      languages {
-        name
+  }>(
+    gql`
+      query {
+        languages {
+          name
+        }
+        libraries {
+          id
+          name
+        }
+        frameworks {
+          id
+          name
+        }
+        environments {
+          id
+          name
+        }
       }
-      libraries {
-        id
-        name
-      }
-      frameworks {
-        id
-        name
-      }
-      environments {
-        id
-        name
-      }
-    }
-  `);
+    `
+  );
   const [
     createTemplate,
     { called: calledCreateTemplate, loading: loadingCreateTemplate },
   ] = useMutation<
-    any,
+    {},
     {
       repositoryId: string;
       name: string;
       primaryLanguage?: string;
-      languages?: string[];
-      frameworks?: string[];
-      libraries?: string[];
-      environments?: string[];
+      languages: string[];
+      frameworks: string[];
+      libraries: string[];
+      environments: string[];
     }
   >(
     gql`
@@ -133,10 +134,10 @@ const RepositoryPublishModalContent: FC<{
         $repositoryId: String!
         $name: String!
         $primaryLanguage: String
-        $languages: [String!]
-        $frameworks: [String!]
-        $libraries: [String!]
-        $environments: [String!]
+        $languages: [String!]!
+        $frameworks: [String!]!
+        $libraries: [String!]!
+        $environments: [String!]!
       ) {
         createTemplate(
           name: $name
@@ -181,41 +182,35 @@ const RepositoryPublishModalContent: FC<{
         }
       }
     `,
-    {
-      notifyOnNetworkStatusChange: true,
-    }
+    {}
   );
 
   const [
     updateTemplate,
-    {
-      data: dataUpdatedTemplate,
-      loading: loadingUpdatingTemplate,
-      called: calledUpdateTemplate,
-    },
+    { loading: loadingUpdatingTemplate, called: calledUpdateTemplate },
   ] = useMutation<
-    { id: string; name: string },
+    {},
     {
       templateId: string;
       repositoryId?: string;
-      name?: string;
+      name: string;
       primaryLanguage?: string;
-      languages?: string[];
-      frameworks?: string[];
-      libraries?: string[];
-      environments?: string[];
+      languages: string[];
+      frameworks: string[];
+      libraries: string[];
+      environments: string[];
     }
   >(
     gql`
       mutation(
         $templateId: String!
         $repositoryId: String
-        $name: String
+        $name: String!
         $primaryLanguage: String
-        $languages: [String!]
-        $frameworks: [String!]
-        $libraries: [String!]
-        $environments: [String!]
+        $languages: [String!]!
+        $frameworks: [String!]!
+        $libraries: [String!]!
+        $environments: [String!]!
       ) {
         updateTemplate(
           templateId: $templateId
@@ -351,16 +346,28 @@ const RepositoryPublishModalContent: FC<{
       <Formik
         enableReinitialize
         initialValues={initialValues}
-        onSubmit={async values => {
+        onSubmit={async ({
+          name,
+          languages,
+          primaryLanguage,
+          frameworks,
+          libraries,
+          environments,
+        }) => {
           try {
             if (
               gitRepoData &&
               gitRepoData.gitRepo &&
               gitRepoData.gitRepo.template
             ) {
-              const { data, errors } = await updateTemplate({
+              const { errors } = await updateTemplate({
                 variables: {
-                  ...values,
+                  name,
+                  languages,
+                  primaryLanguage: primaryLanguage || undefined,
+                  frameworks,
+                  libraries,
+                  environments,
                   templateId: gitRepoData.gitRepo.template.id,
                 },
               });
@@ -368,18 +375,22 @@ const RepositoryPublishModalContent: FC<{
               if (errors) {
                 console.log("errors2", errors);
               }
-
-              console.log("data1", data);
             } else {
-              const { data, errors } = await createTemplate({
-                variables: { ...values, repositoryId: id },
+              const { errors } = await createTemplate({
+                variables: {
+                  name,
+                  languages,
+                  primaryLanguage: primaryLanguage || undefined,
+                  frameworks,
+                  libraries,
+                  environments,
+                  repositoryId: id,
+                },
               });
 
               if (errors) {
                 console.log("errors2", errors);
               }
-
-              console.log("data2", data);
             }
           } catch (err) {
             console.error(err);
@@ -463,8 +474,6 @@ const RepositoryPublishModalContent: FC<{
                     <Label color="grey">Frameworks</Label>
                     <Modal<{ id?: string; name: string }>
                       openOnClick={false}
-                      id={`${id}FrameworkModal`}
-                      defaultData={{ name: "newnew" }}
                       headerBody={({ data }) => {
                         return <Header>{data && data.name}</Header>;
                       }}
@@ -515,7 +524,6 @@ const RepositoryPublishModalContent: FC<{
                       }}
                     >
                       {({ data, close }) => {
-                        console.log("data :", data);
                         if (data) {
                           return (
                             <FrameworkModal
@@ -534,8 +542,6 @@ const RepositoryPublishModalContent: FC<{
                     <Label color="grey">Libraries</Label>
                     <Modal<{ id?: string; name: string }>
                       openOnClick={false}
-                      id={`${id}LibraryModal`}
-                      defaultData={{ name: "newnew" }}
                       headerBody={({ data }) => {
                         return <Header>{data && data.name}</Header>;
                       }}
@@ -602,9 +608,7 @@ const RepositoryPublishModalContent: FC<{
                   <Form.Field>
                     <Label color="grey">Environments</Label>
                     <Modal<{ id?: string; name: string }>
-                      defaultData={{ name: "newnew" }}
                       openOnClick={false}
-                      id={`${id}EnvironmentModal`}
                       headerBody={({ data }) => {
                         return <Header>{data && data.name}</Header>;
                       }}
@@ -647,7 +651,7 @@ const RepositoryPublishModalContent: FC<{
                                 : []
                             }
                             onChange={(_e, { value }) =>
-                              setFieldValue("environment", value)
+                              setFieldValue("environments", value)
                             }
                             value={values.environments}
                           />

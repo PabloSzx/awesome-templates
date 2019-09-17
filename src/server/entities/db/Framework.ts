@@ -1,7 +1,7 @@
 import { IsUrl, IsUUID, Length, MinLength } from "class-validator";
 import { ArgsType, Field, ID, ObjectType } from "type-graphql";
 import {
-    Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn
+    Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn
 } from "typeorm";
 
 import { Language } from "./Language";
@@ -35,7 +35,7 @@ export class Framework {
   @ManyToMany(() => Language, lang => lang.frameworks, {
     cascade: true,
   })
-  @JoinTable()
+  @JoinTable({ name: "languages" })
   languages: Language[];
 
   @Field(() => [Template])
@@ -43,7 +43,7 @@ export class Framework {
   templates: Template[];
 
   @Field(() => User)
-  @OneToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: "creator" })
   creator: User;
 }
@@ -76,8 +76,8 @@ export class CreateFrameworkInput {
   description?: string;
 
   @MinLength(1, { each: true })
-  @Field(() => [String], { nullable: true })
-  languages?: string[];
+  @Field(() => [String])
+  languages: string[];
 }
 
 @ArgsType()
@@ -112,6 +112,6 @@ export class UpdateFrameworkInput implements Partial<CreateFrameworkInput> {
   description?: string;
 
   @MinLength(1, { each: true })
-  @Field(() => [String], { nullable: true })
-  languages?: string[];
+  @Field(() => [String])
+  languages: string[];
 }

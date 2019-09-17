@@ -1,6 +1,8 @@
+import { Formik } from "formik";
 import gql from "graphql-tag";
 import { FC, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
+import { Form, Input, Label, TextArea } from "semantic-ui-react";
 
 type IEnvironmentData = {
   id: string;
@@ -46,7 +48,7 @@ const EnvironmentModal: FC<{
     createEnvironment,
     { loading: loadingCreateEnvironment },
   ] = useMutation<
-    { createEnvironment: IEnvironmentData[] },
+    {},
     {
       name: string;
       url?: string;
@@ -54,13 +56,23 @@ const EnvironmentModal: FC<{
       description?: string;
     }
   >(gql`
-    mutation($name: String!, $url: String, logoUrl: String, description: String) {
-      createEnvironment(name: $name, url: $url, logoUrl: $logoUrl, description: $description) {
+    mutation(
+      $name: String!
+      $url: String
+      $logoUrl: String
+      $description: String
+    ) {
+      createEnvironment(
+        name: $name
+        url: $url
+        logoUrl: $logoUrl
+        description: $description
+      ) {
         id
-      name
-      url
-      logoUrl
-      description
+        name
+        url
+        logoUrl
+        description
       }
     }
   `);
@@ -69,7 +81,7 @@ const EnvironmentModal: FC<{
     updateEnvironment,
     { loading: loadingUpdateEnvironment },
   ] = useMutation<
-    { updateEnvironment: IEnvironmentData[] },
+    {},
     {
       id: string;
       name: string;
@@ -122,28 +134,117 @@ const EnvironmentModal: FC<{
 
   const [initialValues, setInitialValues] = useState({
     name,
-    url: "" as string | undefined,
-    logoUrl: "" as string | undefined,
-    description: "" as string | undefined,
+    url: "",
+    logoUrl: "",
+    description: "",
   });
 
   useEffect(() => {
     if (!loadingEnvironmentData && data && data.environment) {
+      const { name, url, logoUrl, description } = data.environment;
       setUpdate(true);
       setInitialValues({
-        name: data.environment.name,
-        url: data.environment.url || "",
-        logoUrl: data.environment.logoUrl || "",
-        description: data.environment.description || "",
+        name,
+        url: url || "",
+        logoUrl: logoUrl || "",
+        description: description || "",
       });
     }
   }, [data, loadingEnvironmentData]);
 
-  return useMemo(() => <div>hello world</div>, [
-    loading,
-    initialValues,
-    update,
-  ]);
+  return useMemo(
+    () => (
+      <Formik
+        initialValues={initialValues}
+        enableReinitialize
+        onSubmit={async ({ name, url, logoUrl, description }) => {
+          if (id && update) {
+            await updateEnvironment({
+              variables: {
+                id,
+                name,
+                url: url || undefined,
+                logoUrl: logoUrl || undefined,
+                description: description || undefined,
+              },
+            });
+          } else {
+            await createEnvironment({
+              variables: {
+                name,
+                url: url || undefined,
+                logoUrl: logoUrl || undefined,
+                description: description || undefined,
+              },
+            });
+          }
+          close();
+        }}
+      >
+        {({ values, setFieldValue, handleSubmit }) => (
+          <Form>
+            <Form.Field>
+              <Label color="grey">Name</Label>
+              <Input
+                name="name"
+                value={values.name}
+                onChange={(_e, { value }) => setFieldValue("name", value)}
+                disabled={loading}
+                loading={loading}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Label color="grey">URL</Label>
+              <Input
+                name="url"
+                value={values.url}
+                onChange={(_e, { value }) => setFieldValue("url", value)}
+                disabled={loading}
+                loading={loading}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Label color="grey">Logo URL</Label>
+              <Input
+                name="logoUrl"
+                value={values.logoUrl}
+                onChange={(_e, { value }) => setFieldValue("logoUrl", value)}
+                disabled={loading}
+                loading={loading}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Label color="grey">Description</Label>
+              <TextArea
+                name="description"
+                value={values.description}
+                onChange={(_e, { value }) =>
+                  setFieldValue("description", value)
+                }
+                disabled={loading}
+                rows={3}
+              />
+            </Form.Field>
+            <Form.Field>
+              <Form.Button
+                type="submit"
+                onClick={ev => {
+                  ev.preventDefault();
+                  handleSubmit();
+                }}
+                disabled={loading}
+                loading={loading}
+                primary
+              >
+                {update ? "Update Environment" : "Add Environment"}
+              </Form.Button>
+            </Form.Field>
+          </Form>
+        )}
+      </Formik>
+    ),
+    [loading, initialValues, update]
+  );
 };
 
 export default EnvironmentModal;

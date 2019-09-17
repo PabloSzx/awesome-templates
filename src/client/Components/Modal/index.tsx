@@ -119,7 +119,11 @@ function Modal<TData = undefined>({
       onOpen={() => openOnClick && setOpen(true)}
       onClose={() => setOpen(false)}
       open={open}
-      mountNode={document.querySelector("#__next")}
+      mountNode={
+        typeof document !== "undefined"
+          ? document.querySelector("#__next")
+          : undefined
+      }
       {...rest}
     >
       {header && (

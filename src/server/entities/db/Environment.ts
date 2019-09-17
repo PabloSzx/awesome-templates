@@ -1,6 +1,6 @@
 import { IsUrl, IsUUID, Length } from "class-validator";
 import { ArgsType, Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, ManyToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 import { Template } from "./Template";
 import { User } from "./User";
@@ -33,7 +33,7 @@ export class Environment {
   templates: Template[];
 
   @Field(() => User)
-  @OneToOne(() => User, { nullable: false })
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: "creator" })
   creator: User;
 }

@@ -71,10 +71,20 @@ export class EnvironmentResolver {
   }
 
   @FieldResolver()
-  async templates(@Root() { name }: Environment) {
-    return (await this.EnvironmentRepository.findOneOrFail(name, {
+  async templates(@Root() { id }: Environment) {
+    return (await this.EnvironmentRepository.findOneOrFail(id, {
+      select: ["id"],
       relations: ["templates"],
       loadEagerRelations: false,
     })).templates;
+  }
+
+  @FieldResolver()
+  async creator(@Root() { id }: Environment) {
+    return (await this.EnvironmentRepository.findOneOrFail(id, {
+      select: ["id"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    })).creator;
   }
 }

@@ -334,7 +334,7 @@ const FilterMenu: FC<{
 
 enum columnName {
   name = "Name",
-  upvotes = "Upvotes / Stars",
+  upvotes = "Stars / Upvotes",
   languages = "Languages",
   environment = "Environment",
   frameworks = "Frameworks",
@@ -479,7 +479,7 @@ const TemplatesTable: FC<{
                     </FlexCenterStart>
                   </Table.Cell>
                   <Table.Cell>
-                    <List>
+                    <List verticalAlign="middle">
                       {languages.map(({ name, color }, key) => (
                         <List.Item key={key}>
                           <ListIcon name="circle" color_icon={color} />
@@ -489,7 +489,7 @@ const TemplatesTable: FC<{
                     </List>
                   </Table.Cell>
                   <Table.Cell>
-                    <List>
+                    <List verticalAlign="middle">
                       {environments.map(({ name, logoUrl }, key) => (
                         <List.Item key={key}>
                           {logoUrl ? (
@@ -505,7 +505,7 @@ const TemplatesTable: FC<{
                     </List>
                   </Table.Cell>
                   <Table.Cell>
-                    <List>
+                    <List verticalAlign="middle">
                       {frameworks.map(({ name, logoUrl }, key) => (
                         <List.Item key={key}>
                           {logoUrl ? (
@@ -707,11 +707,11 @@ const TemplatesDashboard: FC<{
 };
 
 const Templates: NextPage = () => {
-  const { data, error, refetch } = useQuery<ITemplatesQuery>(TemplatesQuery, {
-    notifyOnNetworkStatusChange: true,
-  });
+  const { data, error, refetch, loading } = useQuery<ITemplatesQuery>(
+    TemplatesQuery
+  );
 
-  if (!data) {
+  if (loading || !data) {
     return <Loader active />;
   }
   if (error) {
