@@ -152,21 +152,11 @@ const LibraryModal: FC<{
     }
   `);
 
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(
-      loadingCreateLibrary ||
-        loadingLibraryData ||
-        loadingUpdateLibrary ||
-        loadingRemoveLibrary
-    );
-  }, [
-    loadingCreateLibrary,
-    loadingLibraryData,
-    loadingUpdateLibrary,
-    loadingRemoveLibrary,
-  ]);
+  const loading =
+    loadingCreateLibrary ||
+    loadingLibraryData ||
+    loadingUpdateLibrary ||
+    loadingRemoveLibrary;
 
   useEffect(() => {
     if (

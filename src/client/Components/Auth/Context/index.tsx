@@ -26,8 +26,9 @@ export const AuthContext = createContext({
 
 export const Auth: FunctionComponent = ({ children }) => {
   const [user, setUser] = useState(null as User | null);
+
   const [loading, setLoading] = useState(true);
-  const { data, loading: queryLoading } = useQuery<{
+  const { data, loading: loadingQuery } = useQuery<{
     current_user: User;
   }>(
     gql`
@@ -50,10 +51,10 @@ export const Auth: FunctionComponent = ({ children }) => {
   );
 
   useEffect(() => {
-    if (!queryLoading) setLoading(false);
+    if (!loadingQuery) setLoading(false);
 
-    if (data && data.current_user) setUser(data.current_user);
-  }, [queryLoading, data]);
+    if (!loadingQuery && data && data.current_user) setUser(data.current_user);
+  }, [loadingQuery, data]);
 
   return (
     <AuthContext.Provider value={{ user, setUser, loading }}>

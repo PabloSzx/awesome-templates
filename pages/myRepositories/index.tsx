@@ -21,6 +21,9 @@ export type RepoQueryType = {
   primaryLanguage?: {
     name: string;
   };
+  owner: {
+    id: string;
+  };
 };
 
 const Repositories: FC = () => {
@@ -42,6 +45,9 @@ const Repositories: FC = () => {
           }
           primaryLanguage {
             name
+          }
+          owner {
+            id
           }
         }
       }

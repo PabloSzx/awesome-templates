@@ -145,21 +145,11 @@ const EnvironmentModal: FC<{
     }
   `);
 
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    setLoading(
-      loadingEnvironmentData ||
-        loadingCreateEnvironment ||
-        loadingUpdateEnvironment ||
-        loadingRemoveEnvironment
-    );
-  }, [
-    loadingEnvironmentData,
-    loadingCreateEnvironment,
-    loadingEnvironmentData,
-    loadingRemoveEnvironment,
-  ]);
+  const loading =
+    loadingEnvironmentData ||
+    loadingCreateEnvironment ||
+    loadingUpdateEnvironment ||
+    loadingRemoveEnvironment;
 
   useEffect(() => {
     if (
