@@ -5,6 +5,7 @@ import {
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { NOT_AUTHORIZED } from "../../../consts";
 import { CreateEnvironmentInput, Environment, UpdateEnvironmentInput } from "../../entities";
 import { IContext } from "../../interfaces";
 
@@ -45,14 +46,11 @@ export class EnvironmentResolver {
 
   @Authorized()
   @Mutation(() => Environment)
-  async updateEnvironment(@Args()
-  {
-    id,
-    name,
-    url,
-    logoUrl,
-    description,
-  }: UpdateEnvironmentInput) {
+  async updateEnvironment(
+    @Args()
+    { id, name, url, logoUrl, description }: UpdateEnvironmentInput,
+    @Ctx() { user }: IContext
+  ) {
     const partialEnvirontment: Partial<Environment> = {
       name,
       url,
@@ -61,13 +59,34 @@ export class EnvironmentResolver {
     };
 
     const [environment] = await Promise.all([
-      this.EnvironmentRepository.findOneOrFail(id),
+      this.EnvironmentRepository.findOneOrFail(id, {
+        relations: ["creator"],
+      }),
       ,
     ]);
 
-    _.assign(environment, _.omitBy(partialEnvirontment, _.isUndefined));
+    if (user.admin || environment.creator.id === user.id) {
+      _.assign(environment, _.omitBy(partialEnvirontment, _.isUndefined));
 
-    return await this.EnvironmentRepository.save(environment);
+      return await this.EnvironmentRepository.save(environment);
+    }
+
+    throw new Error(NOT_AUTHORIZED);
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async removeEnvironment(@Arg("id") id: string, @Ctx() { user }: IContext) {
+    const env = await this.EnvironmentRepository.findOneOrFail(id, {
+      select: ["id", "creator"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    });
+    if (user.admin || env.creator.id === user.id) {
+      await this.EnvironmentRepository.remove(env);
+      return id;
+    }
+    throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()

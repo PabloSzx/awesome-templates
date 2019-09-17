@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Dispatch, FC, SetStateAction, useContext, useEffect, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
 import {
-    Button, Checkbox, Dropdown, Form, Grid, Header, Icon, Image, Label, List, Segment, Table
+    Button, Checkbox, Dimmer, Dropdown, Form, Grid, Header, Icon, Image, Label, List,
+    Loader as LoaderSemantic, Segment, Table
 } from "semantic-ui-react";
 import styled from "styled-components";
 import { useRememberState } from "use-remember-state";
@@ -13,6 +14,7 @@ import { useRememberState } from "use-remember-state";
 import { AuthContext } from "../../src/client/Components/Auth/Context";
 import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
+import ConfirmModal from "../../src/client/Components/Modal/Confirm";
 
 interface ITemplatesQuery {
   templates: Array<{
@@ -53,6 +55,7 @@ const TemplatesQuery = gql`
         }
       }
       repository {
+        id
         url
         starCount
       }
@@ -567,9 +570,8 @@ const TemplatesTable: FC<{
                     {user && (user.admin || owner.id === user.id) && (
                       <>
                         <Grid.Row>
-                          <Button
-                            negative
-                            onClick={async () => {
+                          <ConfirmModal
+                            onConfirm={async () => {
                               await removeTemplate({
                                 variables: {
                                   id,
@@ -580,11 +582,20 @@ const TemplatesTable: FC<{
 
                               await refetch();
                             }}
-                            loading={loadingRemoveTemplate}
-                            disabled={loadingRemoveTemplate}
+                            content={`Are you sure you want remove template "${name}"`}
+                            header="Remove Template"
+                            confirmButton={
+                              <Button negative>Yes, remove template</Button>
+                            }
                           >
-                            Remove Template
-                          </Button>
+                            <Button
+                              negative
+                              loading={loadingRemoveTemplate}
+                              disabled={loadingRemoveTemplate}
+                            >
+                              Remove Template
+                            </Button>
+                          </ConfirmModal>
                         </Grid.Row>
                       </>
                     )}
@@ -635,7 +646,8 @@ const passAllOrAtLeastOne = (
 const TemplatesDashboard: FC<{
   data: ITemplatesQuery;
   refetch: () => Promise<any>;
-}> = ({ data, refetch }) => {
+  loading: boolean;
+}> = ({ data, refetch, loading: loadingTemplates }) => {
   const [filteredTemplates, setFilteredTemplates] = useState(data.templates);
   const [filters, setFilters] = useState<filtersState>({
     names: [],
@@ -699,7 +711,18 @@ const TemplatesDashboard: FC<{
               <Icon name="refresh" />
             </Button>
           </Grid.Row>
-          <TemplatesTable templates={filteredTemplates} refetch={refetch} />
+
+          <Dimmer.Dimmable
+            as={Segment}
+            blurring
+            dimmed={loading || loadingTemplates}
+            basic
+          >
+            <Dimmer inverted active={loading || loadingTemplates}>
+              <LoaderSemantic />
+            </Dimmer>
+            <TemplatesTable templates={filteredTemplates} refetch={refetch} />
+          </Dimmer.Dimmable>
         </Grid.Column>
       </Grid.Row>
     </Grid>
@@ -708,16 +731,19 @@ const TemplatesDashboard: FC<{
 
 const Templates: NextPage = () => {
   const { data, error, refetch, loading } = useQuery<ITemplatesQuery>(
-    TemplatesQuery
+    TemplatesQuery,
+    {
+      notifyOnNetworkStatusChange: true,
+    }
   );
 
-  if (loading || !data) {
+  if (!data) {
     return <Loader active />;
   }
   if (error) {
     return <div>{JSON.stringify(error)}</div>;
   }
-  return <TemplatesDashboard data={data} refetch={refetch} />;
+  return <TemplatesDashboard data={data} refetch={refetch} loading={loading} />;
 };
 
 export default Templates;

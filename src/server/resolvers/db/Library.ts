@@ -5,6 +5,7 @@ import {
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { NOT_AUTHORIZED } from "../../../consts";
 import { CreateLibraryInput, Language, Library, UpdateLibraryInput } from "../../entities";
 import { IContext } from "../../interfaces";
 
@@ -72,13 +73,28 @@ export class LibraryResolver {
         }
       })(),
     ]);
+    if (user.admin || library.creator.id === user.id) {
+      _.assign(library, _.omitBy(partialLibrary, _.isUndefined));
 
-    _.assign(library, _.omitBy(partialLibrary, _.isUndefined));
-
-    if (library.creator.id === user.id || user.admin) {
       return await this.LibraryRepository.save(library);
     }
-    throw new Error("AUTHORIZATION ERROR");
+    throw new Error(NOT_AUTHORIZED);
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async removeLibrary(@Arg("id") id: string, @Ctx() { user }: IContext) {
+    const library = await this.LibraryRepository.findOneOrFail(id, {
+      select: ["id", "creator"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    });
+
+    if (user.admin || library.creator.id === user.id) {
+      await this.LibraryRepository.remove(library);
+      return id;
+    }
+    throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()

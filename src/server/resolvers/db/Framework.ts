@@ -5,6 +5,7 @@ import {
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
+import { NOT_AUTHORIZED } from "../../../consts";
 import { CreateFrameworkInput, Framework, Language, UpdateFrameworkInput } from "../../entities";
 import { IContext } from "../../interfaces";
 
@@ -24,12 +25,7 @@ export class FrameworkResolver {
 
   @Query(() => Framework, { nullable: true })
   async framework(@Arg("id") id: string) {
-    try {
-      return await this.FrameworkRepository.findOne(id);
-    } catch (err) {
-      console.error(1, err);
-      throw err;
-    }
+    return await this.FrameworkRepository.findOne(id);
   }
 
   @Authorized()
@@ -53,15 +49,11 @@ export class FrameworkResolver {
 
   @Authorized()
   @Mutation(() => Framework)
-  async updateFramework(@Args()
-  {
-    id,
-    name,
-    url,
-    logoUrl,
-    description,
-    languages,
-  }: UpdateFrameworkInput) {
+  async updateFramework(
+    @Args()
+    { id, name, url, logoUrl, description, languages }: UpdateFrameworkInput,
+    @Ctx() { user }: IContext
+  ) {
     const partialFramework: Partial<Framework> = {
       name,
       url,
@@ -70,7 +62,9 @@ export class FrameworkResolver {
     };
 
     const [framework] = await Promise.all([
-      this.FrameworkRepository.findOneOrFail(id),
+      this.FrameworkRepository.findOneOrFail(id, {
+        relations: ["creator"],
+      }),
       (async () => {
         partialFramework.languages = await this.LanguageRepository.findByIds(
           languages
@@ -78,9 +72,28 @@ export class FrameworkResolver {
       })(),
     ]);
 
-    _.assign(framework, _.omitBy(partialFramework, _.isUndefined));
+    if (user.admin || framework.creator.id === user.id) {
+      _.assign(framework, _.omitBy(partialFramework, _.isUndefined));
 
-    return await this.FrameworkRepository.save(framework);
+      return await this.FrameworkRepository.save(framework);
+    }
+
+    throw new Error(NOT_AUTHORIZED);
+  }
+
+  @Authorized()
+  @Mutation(() => String)
+  async removeFramework(@Arg("id") id: string, @Ctx() { user }: IContext) {
+    const framework = await this.FrameworkRepository.findOneOrFail(id, {
+      select: ["id", "creator"],
+      relations: ["creator"],
+      loadEagerRelations: false,
+    });
+    if (user.admin || framework.creator.id === user.id) {
+      await this.FrameworkRepository.remove(framework);
+      return id;
+    }
+    throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()
@@ -95,7 +108,7 @@ export class FrameworkResolver {
   @FieldResolver()
   async creator(@Root() { id }: Framework) {
     return (await this.FrameworkRepository.findOneOrFail(id, {
-      select: ["id"],
+      select: ["id", "creator"],
       relations: ["creator"],
       loadEagerRelations: false,
     })).creator;
@@ -104,7 +117,7 @@ export class FrameworkResolver {
   @FieldResolver()
   async templates(@Root() { id }: Framework) {
     return (await this.FrameworkRepository.findOneOrFail(id, {
-      select: ["id"],
+      select: ["id", "creator"],
       relations: ["templates"],
       loadEagerRelations: false,
     })).templates;
