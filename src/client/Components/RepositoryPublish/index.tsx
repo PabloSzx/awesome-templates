@@ -104,7 +104,12 @@ const RepositoryPublishModalContent: FC<{
     }
   );
 
-  const { data: options, refetch: refetchOptions } = useQuery<{
+  const {
+    data: options,
+    refetch: refetchOptions,
+    loading: loadingOptions,
+    called: calledOptions,
+  } = useQuery<{
     languages: { name: string }[];
     libraries: { name: string; id: string }[];
     frameworks: { name: string; id: string }[];
@@ -301,7 +306,8 @@ const RepositoryPublishModalContent: FC<{
     if (
       (!loadingCreateTemplate && calledCreateTemplate) ||
       (!loadingUpdatingTemplate && calledUpdateTemplate) ||
-      (!loadingRemoveTemplate && calledRemoveTemplate)
+      (!loadingRemoveTemplate && calledRemoveTemplate) ||
+      (!loadingOptions && calledOptions)
     ) {
       refetchGetGitRepoData();
     }
@@ -309,9 +315,11 @@ const RepositoryPublishModalContent: FC<{
     calledCreateTemplate,
     calledUpdateTemplate,
     calledRemoveTemplate,
+    calledOptions,
     loadingCreateTemplate,
     loadingUpdatingTemplate,
     loadingRemoveTemplate,
+    loadingOptions,
   ]);
 
   const [update, setUpdate] = useState(false);
@@ -383,7 +391,8 @@ const RepositoryPublishModalContent: FC<{
     loadingCreateTemplate ||
     loadingGetRepoData ||
     loadingUpdatingTemplate ||
-    loadingRemoveTemplate;
+    loadingRemoveTemplate ||
+    loadingOptions;
 
   const MemoizedFormik = useMemo(
     () => (
