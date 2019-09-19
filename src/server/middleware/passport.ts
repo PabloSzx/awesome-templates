@@ -99,7 +99,7 @@ auth.use("/api/login/github", async (req, res) => {
       data: {
         email,
         avatar_url: avatarUrl,
-        url,
+        html_url: url,
         login,
         name,
         bio,
@@ -111,7 +111,7 @@ auth.use("/api/login/github", async (req, res) => {
       avatar_url: string;
       login: string;
       name: string;
-      url: string;
+      html_url: string;
       bio: string;
       node_id: string;
     }>(`https://api.github.com/user`, {

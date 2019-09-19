@@ -1,12 +1,19 @@
 import gql from "graphql-tag";
 import _ from "lodash";
 import { NextPage } from "next";
+import { useQuery } from "react-apollo";
 import { Card, Grid, Icon } from "semantic-ui-react";
 
 type TemplateQuery = {
   template: {
     name: string;
     upvotesCount: number;
+    upvotes: {
+      id: string;
+      data: {
+        login: string;
+      };
+    }[];
     owner: {
       data: {
         login: string;
@@ -20,11 +27,109 @@ type TemplateQuery = {
       starCount: number;
       url: string;
     };
+    languages: {
+      name: string;
+      color: string;
+    }[];
+    primaryLanguage?: {
+      name: string;
+      color: string;
+    };
+    libraries: {
+      id: string;
+      name: string;
+      url?: string;
+      logoUrl?: string;
+    }[];
+    environments: {
+      id: string;
+      name: string;
+      url?: string;
+      logoUrl?: string;
+    }[];
+    frameworks: {
+      id: string;
+      name: string;
+      url?: string;
+      logoUrl?: string;
+    }[];
   } | null;
 };
 
-const TemplatePage: NextPage<TemplateQuery> = ({ template }) => {
-  if (template) {
+const TemplatePage: NextPage<{ name: string; owner: string }> = ({
+  name,
+  owner,
+}) => {
+  const { data } = useQuery<
+    TemplateQuery,
+    {
+      name: string;
+      owner: string;
+    }
+  >(
+    gql`
+      query($name: String!, $owner: String!) {
+        template(name: $name, owner: $owner) {
+          name
+          upvotesCount
+          upvotes {
+            id
+            data {
+              login
+            }
+          }
+          owner {
+            data {
+              login
+              url
+              name
+              bio
+            }
+          }
+          repository {
+            nameWithOwner
+            starCount
+            url
+          }
+          languages {
+            name
+            color
+          }
+          primaryLanguage {
+            name
+            color
+          }
+          libraries {
+            id
+            name
+            url
+            logoUrl
+          }
+          environments {
+            id
+            name
+            url
+            logoUrl
+          }
+          frameworks {
+            id
+            name
+            url
+            logoUrl
+          }
+        }
+      }
+    `,
+    {
+      variables: {
+        owner,
+        name,
+      },
+    }
+  );
+
+  if (data && data.template) {
+    const { template } = data;
     return (
       <Grid centered padded style={{ paddingTop: "2em" }}>
         <Card>
@@ -59,6 +164,7 @@ const TemplatePage: NextPage<TemplateQuery> = ({ template }) => {
                   )}
                 </Card>
               </Grid.Row>
+              {/* <Grid.Row>{JSON.stringify(data.template, null, 4)}</Grid.Row> */}
             </Grid>
           </Card.Content>
         </Card>
@@ -69,47 +175,15 @@ const TemplatePage: NextPage<TemplateQuery> = ({ template }) => {
   return <div>not found!</div>;
 };
 
-TemplatePage.getInitialProps = async ({
-  query: { owner, name },
-  apolloClient,
-}) => {
-  let templateData: TemplateQuery = { template: null };
+TemplatePage.getInitialProps = async ({ query: { owner, name } }) => {
   if (_.isString(owner) && _.isString(name)) {
-    templateData = (await apolloClient.query<
-      TemplateQuery,
-      {
-        name: string;
-        owner: string;
-      }
-    >({
-      query: gql`
-        query($name: String!, $owner: String!) {
-          template(name: $name, owner: $owner) {
-            name
-            upvotesCount
-            owner {
-              data {
-                login
-                url
-                name
-                bio
-              }
-            }
-            repository {
-              nameWithOwner
-              starCount
-              url
-            }
-          }
-        }
-      `,
-      variables: {
-        owner,
-        name,
-      },
-    })).data;
+    return {
+      owner,
+      name,
+    };
   }
-  return templateData;
+
+  throw new Error("Bad query parameters");
 };
 
 export default TemplatePage;

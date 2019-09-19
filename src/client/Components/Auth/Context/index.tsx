@@ -25,11 +25,11 @@ export const AuthContext = createContext({
 });
 
 export const Auth: FunctionComponent = ({ children }) => {
-  const [user, setUser] = useState(null as User | null);
+  const [user, setUser] = useState<User | null>(null);
 
   const [loading, setLoading] = useState(true);
   const { data, loading: loadingQuery } = useQuery<{
-    current_user: User;
+    current_user: User | null;
   }>(
     gql`
       query {
