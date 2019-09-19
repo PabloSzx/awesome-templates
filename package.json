@@ -51,6 +51,7 @@
     "react-autosize-textarea": "^7.0.0",
     "react-dom": "16.9.0",
     "react-toastify": "^5.3.2",
+    "react-use": "^12.2.0",
     "rebass": "^4.0.5",
     "redis": "^2.8.0",
     "reflect-metadata": "^0.1.13",
