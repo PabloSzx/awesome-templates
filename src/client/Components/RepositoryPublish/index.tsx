@@ -1,5 +1,6 @@
 import { Field, Formik } from "formik";
 import gql from "graphql-tag";
+import _ from "lodash";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
 import { Flex } from "rebass";
@@ -18,13 +19,17 @@ const RepositoryPublishModalContent: FC<{
   children: {
     name: string;
     id: string;
-    languages: { name: string }[];
+    languages?: { name: string }[];
     primaryLanguage?: { name: string };
     owner: {
       id: string;
     };
   };
-}> = ({ children: { name, id, languages, primaryLanguage, owner } }) => {
+  disablePublish?: boolean;
+}> = ({
+  disablePublish,
+  children: { name, id, languages = [], primaryLanguage, owner },
+}) => {
   const { user } = useContext(AuthContext);
 
   const {
@@ -322,7 +327,7 @@ const RepositoryPublishModalContent: FC<{
     loadingOptions,
   ]);
 
-  const [update, setUpdate] = useState(false);
+  const [update, setUpdate] = useState(disablePublish ? true : false);
 
   useEffect(() => {
     if (
@@ -337,11 +342,15 @@ const RepositoryPublishModalContent: FC<{
       setUpdate(true);
       setToggleFormData(true);
     } else {
-      setUpdate(false);
+      if (!disablePublish) {
+        setUpdate(false);
+      }
     }
   }, [gitRepoData, loadingGetRepoData]);
 
-  const [toggleFormData, setToggleFormData] = useState(false);
+  const [toggleFormData, setToggleFormData] = useState(
+    disablePublish ? true : false
+  );
 
   const [initialValues, setInitialValues] = useState({
     name,
@@ -540,7 +549,7 @@ const RepositoryPublishModalContent: FC<{
                             multiple
                             clearable
                             allowAdditions
-                            onAddItem={(_e, { value: name }) => {
+                            onAddItem={(e, { value: name }) => {
                               setData({ name } as {
                                 name: string;
                               });
@@ -569,9 +578,20 @@ const RepositoryPublishModalContent: FC<{
                                   )
                                 : []
                             }
-                            onChange={(_e, { value }) =>
-                              setFieldValue("frameworks", value)
-                            }
+                            onChange={(e, { value }) => {
+                              if (options) {
+                                setFieldValue(
+                                  "frameworks",
+                                  _.intersectionBy(
+                                    value as string[],
+                                    options.frameworks,
+                                    a => {
+                                      return _.get(a, "id", a);
+                                    }
+                                  )
+                                );
+                              }
+                            }}
                             value={values.frameworks}
                           />
                         );
@@ -641,9 +661,20 @@ const RepositoryPublishModalContent: FC<{
                                   )
                                 : []
                             }
-                            onChange={(_e, { value }) =>
-                              setFieldValue("libraries", value)
-                            }
+                            onChange={(_e, { value }) => {
+                              if (options) {
+                                setFieldValue(
+                                  "libraries",
+                                  _.intersectionBy(
+                                    value as string[],
+                                    options.libraries,
+                                    a => {
+                                      return _.get(a, "id", a);
+                                    }
+                                  )
+                                );
+                              }
+                            }}
                             value={values.libraries}
                           />
                         );
@@ -712,9 +743,20 @@ const RepositoryPublishModalContent: FC<{
                                   )
                                 : []
                             }
-                            onChange={(_e, { value }) =>
-                              setFieldValue("environments", value)
-                            }
+                            onChange={(_e, { value }) => {
+                              if (options) {
+                                setFieldValue(
+                                  "environments",
+                                  _.intersectionBy(
+                                    value as string[],
+                                    options.environments,
+                                    a => {
+                                      return _.get(a, "id", a);
+                                    }
+                                  )
+                                );
+                              }
+                            }}
                             value={values.environments}
                           />
                         );
@@ -811,6 +853,7 @@ const RepositoryPublishModalContent: FC<{
                 onChange={() => setToggleFormData(!toggleFormData)}
                 checked={toggleFormData}
                 slider
+                disabled={disablePublish || loading}
               />
               <Label color="blue">Template Data</Label>
             </>

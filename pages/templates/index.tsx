@@ -15,6 +15,7 @@ import { AuthContext } from "../../src/client/Components/Auth/Context";
 import Loader from "../../src/client/Components/Loader";
 import Modal from "../../src/client/Components/Modal";
 import ConfirmModal from "../../src/client/Components/Modal/Confirm";
+import RepositoryPublishModalContent from "../../src/client/Components/RepositoryPublish";
 
 interface ITemplatesQuery {
   templates: Array<{
@@ -28,6 +29,7 @@ interface ITemplatesQuery {
       };
     };
     repository: {
+      id: string;
       starCount: number;
       url: string;
       owner: {
@@ -461,6 +463,7 @@ const TemplatesTable: FC<{
               owner,
               upvotesCount,
               repository: {
+                id: repositoryId,
                 url,
                 starCount,
                 owner: { id: repoOwnerId },
@@ -609,6 +612,21 @@ const TemplatesTable: FC<{
                                 Remove Template
                               </Button>
                             </ConfirmModal>
+                          </Grid.Row>
+                          <Grid.Row>
+                            <Modal
+                              trigger={
+                                <Button positive>Update Template</Button>
+                              }
+                            >
+                              <RepositoryPublishModalContent disablePublish>
+                                {{
+                                  id: repositoryId,
+                                  name,
+                                  owner,
+                                }}
+                              </RepositoryPublishModalContent>
+                            </Modal>
                           </Grid.Row>
                         </>
                       )}
