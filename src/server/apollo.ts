@@ -17,6 +17,7 @@ const apolloServer = new ApolloServer({
     resolvers: values(resolvers),
     container,
     authChecker,
+    emitSchemaFile: process.env.NODE_ENV !== "production",
   }),
   introspection: true,
   playground: {
