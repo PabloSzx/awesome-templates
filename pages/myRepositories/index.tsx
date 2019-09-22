@@ -58,9 +58,12 @@ const Repositories: FC = () => {
 
   const [onlyTemplates, setOnlyTemplates] = useRememberState(
     "onlyTemplatesMyRepositories",
-    false
+    false,
+    { SSR: true }
   );
-  const [input, setInput] = useRememberState("filterMyRepositories", "");
+  const [input, setInput] = useRememberState("filterMyRepositories", "", {
+    SSR: true,
+  });
 
   useEffect(() => {
     if (data) {

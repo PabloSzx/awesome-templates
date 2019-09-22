@@ -6,6 +6,9 @@ export const common = Router();
 common.use(
   morgan("combined", {
     skip: (req, res) => {
+      if (req.url.match(/.*\/static.*/)) {
+        return true;
+      }
       if (req.url.match(/(?=\/_next\/.*)/)) {
         return true;
       }

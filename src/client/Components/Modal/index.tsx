@@ -1,5 +1,6 @@
-import isFunction from "lodash/isFunction";
+import { isFunction } from "lodash";
 import { cloneElement, Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import { useUpdateEffect } from "react-use";
 import { Modal as SemanticModal, ModalProps } from "semantic-ui-react";
 
 function Modal<TData = undefined>({
@@ -89,12 +90,27 @@ function Modal<TData = undefined>({
   const [open, setOpen] = useState(false);
 
   const [data, setData] = useState<TData | undefined>(defaultData);
-  useEffect(() => {
-    if (id) setOpen(!!JSON.parse(localStorage.getItem(id) || "0"));
-  }, [id]);
 
   useEffect(() => {
-    if (id) localStorage.setItem(id, open ? "1" : "0");
+    try {
+      if (id) {
+        if (localStorage.getItem(id)) {
+          setOpen(true);
+        }
+      }
+    } catch {}
+  }, [id]);
+
+  useUpdateEffect(() => {
+    try {
+      if (id) {
+        if (open) {
+          localStorage.setItem(id, "1");
+        } else {
+          localStorage.removeItem(id);
+        }
+      }
+    } catch {}
   }, [id, open]);
 
   const helperFunctions = {

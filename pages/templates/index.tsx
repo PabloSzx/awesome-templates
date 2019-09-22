@@ -3,7 +3,7 @@ import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
 import { Dispatch, FC, SetStateAction, useContext, useEffect, useState } from "react";
-import { useMutation, useQuery } from "react-apollo";
+import { useLazyQuery, useMutation, useQuery } from "react-apollo";
 import {
     Button, Checkbox, Dimmer, Dropdown, Form, Grid, Header, Icon, Image, Label, List,
     Loader as LoaderSemantic, Segment, Table
@@ -26,6 +26,7 @@ interface ITemplatesQuery {
       id: string;
       data: {
         login: string;
+        url: string;
       };
     };
     repository: {
@@ -57,6 +58,7 @@ const TemplatesQuery = gql`
         id
         data {
           login
+          url
         }
       }
       repository {
@@ -130,11 +132,9 @@ const FilterToggle: FC<{
 }> = ({ name, setParentToggle }) => {
   const { atLeastOne, all } = filterToggleEnum;
 
-  const [checked, setChecked] = useRememberState(
-    `${name}Toggle`,
-    atLeastOne,
-    true
-  );
+  const [checked, setChecked] = useRememberState(`${name}Toggle`, atLeastOne, {
+    SSR: true,
+  });
 
   useEffect(() => {
     setParentToggle(checked);
@@ -165,37 +165,56 @@ const FilterMenu: FC<{
   const [filterNames, setFilterNames] = useRememberState<string[]>(
     "filterMenuNames",
     [],
-    true
+    { SSR: true }
   );
   const [filterLanguages, setFilterLanguages] = useRememberState<string[]>(
     "filterMenuLanguages",
     [],
-    true
+    { SSR: true }
   );
-  const [filterLanguagesToggle, setFilterLanguagesToggle] = useState(
-    filterToggleEnum.atLeastOne
+  const [filterLanguagesToggle, setFilterLanguagesToggle] = useRememberState(
+    "filterLanguagesToggle",
+    filterToggleEnum.atLeastOne,
+    {
+      SSR: true,
+    }
   );
   const [filterEnvironments, setFilterEnvironments] = useRememberState<
     string[]
-  >("filterMenuEnvironments", [], true);
-  const [filterEnvironmentsToggle, setFilterEnvironmentsToggle] = useState(
-    filterToggleEnum.atLeastOne
+  >("filterMenuEnvironments", [], { SSR: true });
+  const [
+    filterEnvironmentsToggle,
+    setFilterEnvironmentsToggle,
+  ] = useRememberState(
+    "filterMenuEnvironmentsToggle",
+    filterToggleEnum.atLeastOne,
+    {
+      SSR: true,
+    }
   );
   const [filterFrameworks, setFilterFrameworks] = useRememberState<string[]>(
     "filterMenuFrameworks",
     [],
-    true
+    { SSR: true }
   );
-  const [filterFrameworksToggle, setFilterFrameworksToggle] = useState(
-    filterToggleEnum.atLeastOne
+  const [filterFrameworksToggle, setFilterFrameworksToggle] = useRememberState(
+    "filterFrameworksToggle",
+    filterToggleEnum.atLeastOne,
+    {
+      SSR: true,
+    }
   );
   const [filterLibraries, setFilterLibraries] = useRememberState<string[]>(
     "filterMenuLibraries",
     [],
-    true
+    { SSR: true }
   );
-  const [filterLibrariesToggle, setFilterLibrariesToggle] = useState(
-    filterToggleEnum.atLeastOne
+  const [filterLibrariesToggle, setFilterLibrariesToggle] = useRememberState(
+    "filterLibrariesToggle",
+    filterToggleEnum.atLeastOne,
+    {
+      SSR: true,
+    }
   );
 
   useEffect(() => {
@@ -360,11 +379,11 @@ const TemplatesTable: FC<{
   const [sortedTemplates, setSortedTemplates] = useState(templates);
   const [direction, setDirection] = useRememberState<
     "ascending" | "descending" | null
-  >("templatesTableDirection", null, true);
+  >("templatesTableDirection", null, { SSR: true });
   const [column, setColumn] = useRememberState<columnName | null>(
     "templatesTableColumn",
     null,
-    true
+    { SSR: true }
   );
 
   const handleSort = (clickedColumn: columnName) => {
@@ -445,6 +464,48 @@ const TemplatesTable: FC<{
     </Table.HeaderCell>
   );
 
+  const [toggleUpvote, { loading: loadingToggleUpvote }] = useMutation<
+    { toggleUpvote: boolean },
+    { id: string }
+  >(gql`
+    mutation($id: String!) {
+      toggleUpvote(id: $id)
+    }
+  `);
+
+  const [
+    getUpvotedTemplates,
+    {
+      data: dataUpvotedTemplates,
+      refetch: refetchUpvotedTemplates,
+      loading: loadingUpvotedTemplates,
+    },
+  ] = useLazyQuery<{
+    current_user: {
+      upvotedTemplates: { id: string }[];
+    };
+  }>(
+    gql`
+      query {
+        current_user {
+          id
+          upvotedTemplates {
+            id
+          }
+        }
+      }
+    `,
+    {
+      notifyOnNetworkStatusChange: true,
+    }
+  );
+
+  useEffect(() => {
+    if (user) {
+      getUpvotedTemplates();
+    }
+  }, [user]);
+
   return (
     <Table selectable sortable>
       <Table.Header>
@@ -456,28 +517,25 @@ const TemplatesTable: FC<{
       </Table.Header>
       <Table.Body>
         {sortedTemplates.map(
-          (
-            {
-              id,
-              name,
-              owner,
-              upvotesCount,
-              repository: {
-                id: repositoryId,
-                url,
-                starCount,
-                owner: { id: repoOwnerId },
-              },
-              languages,
-              environments,
-              libraries,
-              frameworks,
+          ({
+            id,
+            name,
+            owner,
+            upvotesCount,
+            repository: {
+              id: repositoryId,
+              url,
+              starCount,
+              owner: { id: repoOwnerId },
             },
-            key
-          ) => (
+            languages,
+            environments,
+            libraries,
+            frameworks,
+          }) => (
             <Modal
               trigger={
-                <Table.Row key={key} className="cursorHover">
+                <Table.Row className="cursorHover">
                   <Table.Cell>{name}</Table.Cell>
                   <Table.Cell>
                     <FlexCenterStart>
@@ -488,7 +546,17 @@ const TemplatesTable: FC<{
                         </Label>
                       )}
 
-                      <Label basic>
+                      <Label
+                        basic
+                        color={
+                          dataUpvotedTemplates &&
+                          dataUpvotedTemplates.current_user.upvotedTemplates.find(
+                            value => value.id === id
+                          )
+                            ? "red"
+                            : undefined
+                        }
+                      >
                         <Icon name="arrow up" color="orange" />
                         {upvotesCount}
                       </Label>
@@ -556,16 +624,65 @@ const TemplatesTable: FC<{
               }
               headerBody={<h1>{name}</h1>}
               dimmer="blurring"
-              key={key}
+              key={id}
+              id={`${id}TemplateModal`}
             >
               {({ close }) => {
                 return (
                   <Grid centered>
                     <Grid.Row>
-                      <h1>Owner: {owner.data.login}</h1>
+                      <h1>
+                        Template owner:{" "}
+                        <a href={owner.data.url}>{owner.data.login}</a>
+                      </h1>
                     </Grid.Row>
                     <Grid.Row>
-                      <h2>Upvotes: {upvotesCount}</h2>
+                      <FlexCenterStart>
+                        {starCount !== -1 && (
+                          <a href={`${url}/stargazers`} target="_blank">
+                            <Button className="cursorHover" basic color="grey">
+                              <Icon name="star" color="yellow" />
+                              {starCount}
+                            </Button>
+                          </a>
+                        )}
+
+                        <Button
+                          className="cursorHover"
+                          basic
+                          loading={
+                            loadingToggleUpvote || loadingUpvotedTemplates
+                          }
+                          disabled={
+                            loadingToggleUpvote || loadingUpvotedTemplates
+                          }
+                          onClick={async () => {
+                            if (user) {
+                              await toggleUpvote({
+                                variables: {
+                                  id,
+                                },
+                              });
+
+                              refetch();
+                              refetchUpvotedTemplates();
+                            } else {
+                              window.location.href = "/api/login/github";
+                            }
+                          }}
+                          color={
+                            dataUpvotedTemplates &&
+                            dataUpvotedTemplates.current_user.upvotedTemplates.find(
+                              value => value.id === id
+                            )
+                              ? "red"
+                              : "grey"
+                          }
+                        >
+                          <Icon name="arrow up" color="orange" />
+                          {upvotesCount}
+                        </Button>
+                      </FlexCenterStart>
                     </Grid.Row>
                     <Grid.Row>
                       <h2>
