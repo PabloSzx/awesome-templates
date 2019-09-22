@@ -99,6 +99,7 @@ type Mutation {
   createTemplate(name: String!, repositoryId: String!, primaryLanguage: String, languages: [String!]!, frameworks: [String!]!, libraries: [String!]!, environments: [String!]!): Template!
   updateTemplate(templateId: String!, name: String!, repositoryId: String, primaryLanguage: String, languages: [String!]!, frameworks: [String!]!, libraries: [String!]!, environments: [String!]!): Template!
   removeTemplate(id: String!): String!
+  toggleUpvote(id: String!): Boolean!
   searchRepository(input: String!): [RepositoryGitHub!]
 }
 

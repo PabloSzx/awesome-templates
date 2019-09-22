@@ -1,8 +1,9 @@
-import { Field, Formik } from "formik";
+import { Formik } from "formik";
 import gql from "graphql-tag";
 import _ from "lodash";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "react-apollo";
+import { useUpdateEffect } from "react-use";
 import { Flex } from "rebass";
 import {
     Button, Checkbox, Divider, Dropdown, Form, Grid, Header, Input, Label
@@ -307,7 +308,7 @@ const RepositoryPublishModalContent: FC<{
     }
   `);
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (
       (!loadingCreateTemplate && calledCreateTemplate) ||
       (!loadingUpdatingTemplate && calledUpdateTemplate) ||
@@ -394,7 +395,7 @@ const RepositoryPublishModalContent: FC<{
         environments: [] as string[],
       });
     }
-  }, [toggleFormData]);
+  }, [toggleFormData, gitRepoData]);
 
   const loading =
     loadingCreateTemplate ||
@@ -578,7 +579,7 @@ const RepositoryPublishModalContent: FC<{
                                   )
                                 : []
                             }
-                            onChange={(e, { value }) => {
+                            onChange={(_e, { value }) => {
                               if (options) {
                                 setFieldValue(
                                   "frameworks",

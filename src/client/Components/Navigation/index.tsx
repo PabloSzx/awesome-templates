@@ -41,7 +41,9 @@ const PersonalToken: FunctionComponent<{
   type: "add" | "modify";
   refetch: () => void;
 }> = ({ type, refetch }) => {
-  const [token, setToken] = useRememberState("PersonalToken", "", true);
+  const [token, setToken] = useRememberState("PersonalToken", "", {
+    SSR: true,
+  });
   const [tokenModified, setTokenModified] = useState(true);
   const [
     saveToken,

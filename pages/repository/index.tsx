@@ -55,7 +55,9 @@ const SearchRepository: FC<{
   ) => Promise<ExecutionResult<ISearchRepoMutation>>;
   loading: boolean;
 }> = ({ searchRepository, loading }) => {
-  const [input, setInput] = useRememberState("searchRepositoryInput", "", true);
+  const [input, setInput] = useRememberState("searchRepositoryInput", "", {
+    SSR: true,
+  });
 
   return (
     <Form>
@@ -102,12 +104,12 @@ const RepositoriesTable: FC<{ data?: ISearchRepoMutation }> = ({ data }) => {
             return (
               <Modal
                 trigger={
-                  <Table.Row key={key} className="cursorHover">
+                  <Table.Row className="cursorHover">
                     <Table.Cell>{nameWithOwner}</Table.Cell>
                   </Table.Row>
                 }
                 dimmer="blurring"
-                key={key}
+                key={repo.id}
               >
                 <RepositoryPublishModalContent>
                   {{ ...repo, name: nameWithOwner }}
