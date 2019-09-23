@@ -14,7 +14,11 @@ export default class MyDocument extends Document<{ styleTags: JSX.Element[] }> {
           <link rel="stylesheet" type="text/css" href="/static/nprogress.css" />
           {this.props.styleTags}
           <meta charSet="utf-8" />
-          <link rel="shortcut icon" href="/static/favicon.ico" />
+          <link
+            rel="shortcut icon"
+            href="/static/favicon.ico"
+            type="image/x-icon"
+          />
         </Head>
         <body>
           <Main />
