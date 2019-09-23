@@ -1,3 +1,5 @@
+import fs from "fs";
+import https from "https";
 import next from "next";
 import notifier from "node-notifier";
 
@@ -12,14 +14,39 @@ nextApp.prepare().then(() => {
 
   const port = process.env.PORT || 3000;
 
-  server.listen({ port }, () => {
-    const message = `Server Listening on port ${port}!`;
-    console.log(message);
-    if (process.env.NODE_ENV !== "production") {
-      notifier.notify({
-        title: "🚀  Server ready",
-        message: `at http://localhost:${port}`,
+  if (process.env.NODE_ENV === "production") {
+    https
+      .createServer(
+        {
+          key: fs.readFileSync(
+            "/etc/letsencrypt/live/awesome-templates.dev/privkey.pem"
+          ),
+          cert: fs.readFileSync(
+            "/etc/letsencrypt/live/awesome-templates.dev/fullchain.pem"
+          ),
+        },
+        server
+      )
+      .listen({ port }, () => {
+        const message = `Server Listening on port ${port}!`;
+        console.log(message);
+        if (process.env.NODE_ENV !== "production") {
+          notifier.notify({
+            title: "🚀  Server ready",
+            message: `at http://localhost:${port}`,
+          });
+        }
       });
-    }
-  });
+  } else {
+    server.listen({ port }, () => {
+      const message = `Server Listening on port ${port}!`;
+      console.log(message);
+      if (process.env.NODE_ENV !== "production") {
+        notifier.notify({
+          title: "🚀  Server ready",
+          message: `at http://localhost:${port}`,
+        });
+      }
+    });
+  }
 });
