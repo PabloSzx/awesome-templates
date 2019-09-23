@@ -39,7 +39,7 @@ auth.use(
     resave: false,
     saveUninitialized: false,
     rolling: true,
-    cookie: { maxAge: 86400000, secure: false },
+    cookie: { maxAge: 1209600000, secure: false },
   })
 );
 
