@@ -1,0 +1,30 @@
+version: "3"
+services:
+  api:
+    build: api/
+    ports:
+      - "4000:4000"
+    restart: always
+    image: pabloszx/awesome-templates-api
+    network_mode: "host"
+    environment:
+      DB_URL: ${DB_URL}
+      COOKIE_KEY: ${COOKIE_KEY}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_APP_ID: ${GITHUB_APP_ID}
+      REDIS_URL: ${REDIS_URL}
+  client:
+    build: client/
+    ports:
+      - "3000:3000"
+    restart: always
+    image: pabloszx/awesome-templates-client
+    network_mode: "host"
+  watchtower:
+    restart: always
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json
+    command: --interval 60
