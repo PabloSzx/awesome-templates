@@ -1,0 +1,15 @@
+FROM node:12-alpine
+
+ENV PORT 4000
+
+COPY package.json yarn.lock ./
+
+RUN yarn --frozen-lockfile
+
+COPY . ./
+
+EXPOSE 4000
+
+ENV NODE_ENV=production
+
+CMD ["yarn", "start"]
