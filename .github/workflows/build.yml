@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [8.x, 10.x, 12.x]
+        node-version: [12.x]
 
     steps:
       - uses: actions/checkout@v1
@@ -16,9 +16,25 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - name: build
+      - name: check API Types
         run: |
           yarn --cwd api install --frozen-lockfile && yarn --cwd api tsc
-          yarn --cwd client install --frozen-lockfile && yarn --cwd client build
         env:
           CI: true
+
+      - name: Publish Docker Client
+        uses: elgohr/Publish-Docker-Github-Action@1.13
+        with:
+          name: pabloszx/awesome-templates-client
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          workdir: client
+          cache: true
+      - name: Publish Docker API
+        uses: elgohr/Publish-Docker-Github-Action@1.13
+        with:
+          name: pabloszx/awesome-templates-api
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          workdir: api
+          cache: true
