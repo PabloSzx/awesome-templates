@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "yarn start",
     "postinstall": "concurrently \"yarn --cwd api\" \"yarn --cwd client\"",
-    "start": "concurrently \"ts-node dev.ts\" \"yarn --cwd api dev\" \"client && yarn --cwd client dev\""
+    "start": "concurrently \"ts-node dev.ts\" \"yarn --cwd api dev\" \"yarn --cwd client dev\""
   },
   "dependencies": {
     "@types/node": "^12.7.5",
