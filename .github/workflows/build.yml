@@ -18,7 +18,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: build
         run: |
-          yarn --cwd api && yarn --cwd api tsc
-          yarn --cwd client && yarn --cwd client build
+          yarn --cwd api install --frozen-lockfile && yarn --cwd api tsc
+          yarn --cwd client install --frozen-lockfile && yarn --cwd client build
         env:
           CI: true
