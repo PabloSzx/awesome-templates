@@ -1,14 +1,15 @@
 {
   "name": "awesome-templates-dev",
   "version": "1.0.0",
-  "main": "dev.ts",
-  "repository": "https://github.com/PabloSzx/awesome-templates",
-  "author": "PabloSz <pablosaez1995@gmail.com>",
-  "license": "MIT",
   "private": false,
+  "repository": "https://github.com/PabloSzx/awesome-templates",
+  "license": "MIT",
+  "author": "PabloSz <pablosaez1995@gmail.com>",
+  "main": "dev.ts",
   "scripts": {
-    "start": "concurrently \"yarn && ts-node dev.ts\" \"yarn --cwd api && yarn --cwd api dev\" \"yarn --cwd client && yarn --cwd client dev\"",
-    "dev": "yarn start"
+    "dev": "yarn start",
+    "postinstall": "concurrently \"yarn --cwd api\" \"yarn --cwd client\"",
+    "start": "concurrently \"ts-node dev.ts\" \"yarn --cwd api dev\" \"client && yarn --cwd client dev\""
   },
   "dependencies": {
     "@types/node": "^12.7.5",
