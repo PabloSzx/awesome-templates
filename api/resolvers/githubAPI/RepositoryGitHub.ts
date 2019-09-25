@@ -1,27 +1,15 @@
 import gql from "graphql-tag";
 import _ from "lodash";
-import {
-  Arg,
-  Authorized,
-  Ctx,
-  FieldResolver,
-  Mutation,
-  Resolver,
-  Root,
-} from "type-graphql";
+import { Arg, Authorized, Ctx, FieldResolver, Mutation, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { GitHubAPI } from "../../utils";
 import {
-  GitHubLanguage,
-  GitHubRepository,
-  GitRepository,
-  Language,
-  RepositoryGitHub,
+    GitHubLanguage, GitHubRepository, GitRepository, Language, RepositoryGitHub
 } from "../../entities";
 import { IContext } from "../../interfaces";
+import { GitHubAPI } from "../../utils";
 
 @Resolver(() => RepositoryGitHub)
 export class RepositoryGitHubResolver {
@@ -35,13 +23,11 @@ export class RepositoryGitHubResolver {
   @Authorized(APILevel.ADVANCED)
   @Mutation(() => [RepositoryGitHub], { nullable: true })
   async searchRepository(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Arg("input") input: string
   ) {
     const {
-      data: {
-        search: { nodes },
-      },
+      search: { nodes },
     } = await GitHubAPI.query<
       {
         search: {
@@ -51,8 +37,8 @@ export class RepositoryGitHubResolver {
       {
         input: string;
       }
-    >({
-      query: gql`
+    >(
+      gql`
         query search($input: String!) {
           search(type: REPOSITORY, query: $input, first: 20) {
             nodes {
@@ -87,11 +73,11 @@ export class RepositoryGitHubResolver {
           }
         }
       `,
-      variables: {
+      authGitHub,
+      {
         input,
-      },
-      context,
-    });
+      }
+    );
 
     const repositories = _.compact(
       nodes.map(
@@ -129,14 +115,12 @@ export class RepositoryGitHubResolver {
 
   @FieldResolver()
   async starCount(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Root() { id, name, owner: { login: owner } }: GitHubRepository
   ): Promise<number> {
     const {
-      data: {
-        repository: {
-          stargazers: { totalCount: starCount },
-        },
+      repository: {
+        stargazers: { totalCount: starCount },
       },
     } = await GitHubAPI.query<
       {
@@ -151,8 +135,8 @@ export class RepositoryGitHubResolver {
         name: string;
         owner: string;
       }
-    >({
-      query: gql`
+    >(
+      gql`
         query repository($name: String!, $owner: String!) {
           repository(name: $name, owner: $owner) {
             id
@@ -162,12 +146,12 @@ export class RepositoryGitHubResolver {
           }
         }
       `,
-      variables: {
+      authGitHub,
+      {
         name,
         owner,
-      },
-      context,
-    });
+      }
+    );
 
     this.GitRepoRepository.createQueryBuilder()
       .update()
@@ -183,7 +167,7 @@ export class RepositoryGitHubResolver {
 
   @FieldResolver()
   async languages(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Root() { id, name, owner: { login: owner } }: GitHubRepository
   ) {
     const repoLanguages: GitHubLanguage[] = [];
@@ -193,9 +177,7 @@ export class RepositoryGitHubResolver {
 
     do {
       const {
-        data: {
-          repository: { languages },
-        },
+        repository: { languages },
       } = await GitHubAPI.query<
         {
           repository: {
@@ -215,8 +197,8 @@ export class RepositoryGitHubResolver {
           owner: string;
           after: string | undefined;
         }
-      >({
-        query: gql`
+      >(
+        gql`
           query repository($name: String!, $owner: String!, $after: String) {
             repository(name: $name, owner: $owner) {
               id
@@ -237,13 +219,13 @@ export class RepositoryGitHubResolver {
             }
           }
         `,
-        variables: {
+        authGitHub,
+        {
           name,
           owner,
           after,
-        },
-        context,
-      });
+        }
+      );
 
       if (languages) {
         repoLanguages.push(...languages.nodes);

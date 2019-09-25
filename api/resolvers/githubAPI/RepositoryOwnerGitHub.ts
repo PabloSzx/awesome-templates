@@ -4,15 +4,11 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { GitHubAPI } from "../../utils";
 import {
-  GitHubOrganization,
-  GitHubRepositoryOwner,
-  GitHubUser,
-  RepositoryOwner,
-  RepositoryOwnerGitHub,
+    GitHubOrganization, GitHubRepositoryOwner, GitHubUser, RepositoryOwner, RepositoryOwnerGitHub
 } from "../../entities";
 import { IContext } from "../../interfaces";
+import { GitHubAPI } from "../../utils";
 
 @Resolver(() => RepositoryOwnerGitHub)
 export class RepositoryOwnerGitHubResolver {
@@ -24,16 +20,14 @@ export class RepositoryOwnerGitHubResolver {
   @Authorized(APILevel.ADVANCED)
   @Query(() => RepositoryOwnerGitHub, { nullable: true })
   async repositoryOwner(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Arg("id") id: string
   ) {
     let repoOwner: GitHubRepositoryOwner | undefined;
     let user: GitHubUser | undefined;
     let organization: GitHubOrganization | undefined;
 
-    const {
-      data: { node },
-    } = await GitHubAPI.query<
+    const { node } = await GitHubAPI.query<
       {
         node:
           | { __typename: "User" } & GitHubUser
@@ -41,8 +35,8 @@ export class RepositoryOwnerGitHubResolver {
           | null;
       },
       { id: string }
-    >({
-      query: gql`
+    >(
+      gql`
         query($id: ID!) {
           node(id: $id)
           __typename
@@ -67,11 +61,11 @@ export class RepositoryOwnerGitHubResolver {
           }
         }
       `,
-      variables: {
+      authGitHub,
+      {
         id,
-      },
-      context,
-    });
+      }
+    );
 
     if (node) {
       const { id, avatarUrl, login, url, email, name } = node;

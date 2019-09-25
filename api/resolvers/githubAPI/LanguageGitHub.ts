@@ -6,9 +6,9 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { GitHubAPI } from "../../utils";
 import { GitHubLanguage, Language, LanguageGitHub } from "../../entities";
 import { IContext } from "../../interfaces";
+import { GitHubAPI } from "../../utils";
 
 @Resolver(() => LanguageGitHub)
 export class LanguageGitHubResolver {
@@ -20,13 +20,11 @@ export class LanguageGitHubResolver {
   @Authorized(APILevel.ADVANCED)
   @Query(() => [LanguageGitHub])
   async searchLanguages(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Arg("input") input: string
   ) {
     const {
-      data: {
-        search: { nodes },
-      },
+      search: { nodes },
     } = await GitHubAPI.query<
       {
         search: {
@@ -40,8 +38,8 @@ export class LanguageGitHubResolver {
       {
         input: string;
       }
-    >({
-      query: gql`
+    >(
+      gql`
         query search($input: String!) {
           search(type: REPOSITORY, query: $input, first: 20) {
             nodes {
@@ -58,11 +56,11 @@ export class LanguageGitHubResolver {
           }
         }
       `,
-      variables: {
+      authGitHub,
+      {
         input,
-      },
-      context,
-    });
+      }
+    );
     const languages = _.orderBy(
       _.uniqWith(
         _.flatMap(nodes, ({ languages: { nodes } }) => nodes),

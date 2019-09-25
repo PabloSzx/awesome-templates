@@ -1,30 +1,29 @@
 import "cross-fetch/polyfill";
 
-import ApolloClient from "apollo-boost";
-import { InMemoryCache, IntrospectionFragmentMatcher } from "apollo-cache-inmemory";
 import axios, { AxiosRequestConfig } from "axios";
+import { DocumentNode, print } from "graphql";
+import { GraphQLClient } from "graphql-request";
 import _ from "lodash";
 
-import introspectionQueryResultData from "./githubFragmentTypes.json";
-
-const fragmentMatcher = new IntrospectionFragmentMatcher({
-  introspectionQueryResultData,
-});
-
-const cache = new InMemoryCache({ fragmentMatcher });
-export const GitHubAPI = new ApolloClient({
-  uri: "https://api.github.com/graphql",
-  cache,
-});
-
-const url = "https://api.github.com";
+class GitHubAPIv4 {
+  client: GraphQLClient = new GraphQLClient("https://api.github.com/graphql");
+  query = async <DATA = any, VARIABLES extends Record<string, any> = any>(
+    tag: DocumentNode,
+    token: string,
+    variables?: VARIABLES
+  ) =>
+    await this.client
+      .setHeader("Authorization", `token ${token}`)
+      .request<DATA>(print(tag), variables);
+}
+export const GitHubAPI = new GitHubAPIv4();
 
 export function getGitHubAPIv3<T = any>(
   path: string,
   config?: AxiosRequestConfig
 ) {
   return axios.get<T>(
-    `${url}${path}`,
+    `https://api.github.com${path}`,
     _.merge(
       {
         headers: {

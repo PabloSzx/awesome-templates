@@ -50,15 +50,9 @@ export const buildContext = <OptionsType = any>({
         APILevel: APILevelEnum.BASIC,
       };
 
-      return {
-        headers: {
-          Authorization: `token ${
-            APILevel === APILevelEnum.ADVANCED
-              ? personalAccessToken
-              : accessToken
-          }`,
-        },
-      };
+      return APILevel === APILevelEnum.ADVANCED && personalAccessToken
+        ? personalAccessToken
+        : accessToken;
     },
   };
 };

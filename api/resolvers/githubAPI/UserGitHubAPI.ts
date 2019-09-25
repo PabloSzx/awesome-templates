@@ -1,29 +1,16 @@
 import gql from "graphql-tag";
 import _ from "lodash";
-import {
-  Arg,
-  Authorized,
-  Ctx,
-  FieldResolver,
-  Query,
-  Resolver,
-  Root,
-} from "type-graphql";
+import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { GitHubAPI } from "../../utils";
 import {
-  GitHubOrganization,
-  GitHubRepository,
-  GitHubUser,
-  Language,
-  RepositoryOwner,
-  UserGitHub,
-  UserGitHubAPI,
+    GitHubOrganization, GitHubRepository, GitHubUser, Language, RepositoryOwner, UserGitHub,
+    UserGitHubAPI
 } from "../../entities";
 import { IContext } from "../../interfaces";
+import { GitHubAPI } from "../../utils";
 
 @Resolver(() => UserGitHubAPI)
 export class UserGitHubAPIResolver {
@@ -38,13 +25,11 @@ export class UserGitHubAPIResolver {
 
   @Authorized(APILevel.MEDIUM)
   @Query(() => UserGitHubAPI)
-  async viewer(@Ctx() { authGitHub: context }: IContext) {
-    const {
-      data: { viewer },
-    } = await GitHubAPI.query<{
+  async viewer(@Ctx() { authGitHub }: IContext) {
+    const { viewer } = await GitHubAPI.query<{
       viewer: GitHubUser;
-    }>({
-      query: gql`
+    }>(
+      gql`
         query {
           viewer {
             id
@@ -57,8 +42,8 @@ export class UserGitHubAPIResolver {
           }
         }
       `,
-      context,
-    });
+      authGitHub
+    );
 
     this.UserGitHubRepository.save(viewer).catch(err => {
       console.error(err);
@@ -75,21 +60,16 @@ export class UserGitHubAPIResolver {
 
   @Authorized(APILevel.ADVANCED)
   @Query(() => UserGitHubAPI, { nullable: true })
-  async user(
-    @Ctx() { authGitHub: context }: IContext,
-    @Arg("login") login: string
-  ) {
-    const {
-      data: { user },
-    } = await GitHubAPI.query<
+  async user(@Ctx() { authGitHub }: IContext, @Arg("login") login: string) {
+    const { user } = await GitHubAPI.query<
       {
         user: GitHubUser | null;
       },
       {
         login: string;
       }
-    >({
-      query: gql`
+    >(
+      gql`
         query user($login: String!) {
           user(login: $login) {
             id
@@ -102,11 +82,11 @@ export class UserGitHubAPIResolver {
           }
         }
       `,
-      context,
-      variables: {
+      authGitHub,
+      {
         login,
-      },
-    });
+      }
+    );
 
     if (user) {
       this.UserGitHubRepository.save(user).catch(err => {
@@ -126,7 +106,7 @@ export class UserGitHubAPIResolver {
   @FieldResolver()
   async repositories(
     @Root() { id, login }: UserGitHub,
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
   ) {
@@ -138,10 +118,8 @@ export class UserGitHubAPIResolver {
 
     do {
       const {
-        data: {
-          user: {
-            repositories: { nodes, pageInfo },
-          },
+        user: {
+          repositories: { nodes, pageInfo },
         },
       } = await GitHubAPI.query<
         {
@@ -159,8 +137,8 @@ export class UserGitHubAPIResolver {
           after: string | undefined;
           login: string;
         }
-      >({
-        query: gql`
+      >(
+        gql`
           query repositories($after: String, $login: String!) {
             user(login: $login) {
               id
@@ -204,12 +182,12 @@ export class UserGitHubAPIResolver {
             }
           }
         `,
-        variables: {
+        authGitHub,
+        {
           login,
           after,
-        },
-        context,
-      });
+        }
+      );
 
       repositories.push(
         ..._.compact(
@@ -254,7 +232,7 @@ export class UserGitHubAPIResolver {
   @FieldResolver()
   async starredRepositories(
     @Root() { id, login }: UserGitHub,
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
   ) {
@@ -266,10 +244,8 @@ export class UserGitHubAPIResolver {
 
     do {
       const {
-        data: {
-          user: {
-            starredRepositories: { nodes, pageInfo },
-          },
+        user: {
+          starredRepositories: { nodes, pageInfo },
         },
       } = await GitHubAPI.query<
         {
@@ -287,8 +263,8 @@ export class UserGitHubAPIResolver {
           after: string | undefined;
           login: string;
         }
-      >({
-        query: gql`
+      >(
+        gql`
           query repositories($after: String, $login: String!) {
             user(login: $login) {
               id
@@ -331,12 +307,12 @@ export class UserGitHubAPIResolver {
             }
           }
         `,
-        variables: {
+        authGitHub,
+        {
           login,
           after,
-        },
-        context,
-      });
+        }
+      );
 
       starredRepositories.push(
         ..._.compact(
@@ -380,14 +356,12 @@ export class UserGitHubAPIResolver {
 
   @FieldResolver()
   async organizations(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Root() { id, login }: GitHubUser
   ) {
     const {
-      data: {
-        user: {
-          organizations: { nodes: organizations },
-        },
+      user: {
+        organizations: { nodes: organizations },
       },
     } = await GitHubAPI.query<
       {
@@ -400,8 +374,8 @@ export class UserGitHubAPIResolver {
       {
         login: string;
       }
-    >({
-      query: gql`
+    >(
+      gql`
         query($login: String!) {
           user(login: $login) {
             id
@@ -420,11 +394,11 @@ export class UserGitHubAPIResolver {
           }
         }
       `,
-      variables: {
+      authGitHub,
+      {
         login,
-      },
-      context,
-    });
+      }
+    );
 
     this.UserGitHubRepository.save({
       id,

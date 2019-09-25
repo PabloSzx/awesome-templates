@@ -1,28 +1,16 @@
 import gql from "graphql-tag";
 import _ from "lodash";
-import {
-  Arg,
-  Authorized,
-  Ctx,
-  FieldResolver,
-  Query,
-  Resolver,
-  Root,
-} from "type-graphql";
+import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { GitHubAPI } from "../../utils";
 import {
-  GitHubOrganization,
-  GitHubRepository,
-  GitHubUser,
-  Organization,
-  OrganizationGitHub,
-  RepositoryOwner,
+    GitHubOrganization, GitHubRepository, GitHubUser, Organization, OrganizationGitHub,
+    RepositoryOwner
 } from "../../entities";
 import { IContext } from "../../interfaces";
+import { GitHubAPI } from "../../utils";
 
 @Resolver(() => OrganizationGitHub)
 export class OrganizationGitHubResolver {
@@ -36,20 +24,18 @@ export class OrganizationGitHubResolver {
   @Authorized(APILevel.ADVANCED)
   @Query(() => OrganizationGitHub, { nullable: true })
   async organization(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Arg("login") login: string
   ) {
-    const {
-      data: { organization },
-    } = await GitHubAPI.query<
+    const { organization } = await GitHubAPI.query<
       {
         organization: GitHubOrganization | null;
       },
       {
         login: string;
       }
-    >({
-      query: gql`
+    >(
+      gql`
         query organization($login: String!) {
           organization(login: $login) {
             id
@@ -63,11 +49,11 @@ export class OrganizationGitHubResolver {
           }
         }
       `,
-      variables: {
+      authGitHub,
+      {
         login,
-      },
-      context,
-    });
+      }
+    );
 
     if (organization) {
       this.OrganizationRepository.save(organization).catch(err => {
@@ -86,7 +72,7 @@ export class OrganizationGitHubResolver {
 
   @FieldResolver()
   async members(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Root() { login, id }: GitHubOrganization
   ) {
     let after: string | undefined;
@@ -95,9 +81,7 @@ export class OrganizationGitHubResolver {
     let members: GitHubUser[] = [];
 
     do {
-      const {
-        data: { organization },
-      } = await GitHubAPI.query<
+      const { organization } = await GitHubAPI.query<
         {
           organization: {
             membersWithRole: {
@@ -113,8 +97,8 @@ export class OrganizationGitHubResolver {
           login: string;
           after: string | undefined;
         }
-      >({
-        query: gql`
+      >(
+        gql`
           query($login: String!, $after: String) {
             organization(login: $login) {
               id
@@ -136,12 +120,12 @@ export class OrganizationGitHubResolver {
             }
           }
         `,
-        variables: {
+        authGitHub,
+        {
           login,
           after,
-        },
-        context,
-      });
+        }
+      );
 
       members.push(...organization.membersWithRole.nodes);
       after = organization.membersWithRole.pageInfo.endCursor;
@@ -156,7 +140,7 @@ export class OrganizationGitHubResolver {
 
   @FieldResolver()
   async repositories(
-    @Ctx() { authGitHub: context }: IContext,
+    @Ctx() { authGitHub }: IContext,
     @Root() { login, id }: GitHubOrganization,
     @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
@@ -168,10 +152,8 @@ export class OrganizationGitHubResolver {
 
     do {
       const {
-        data: {
-          organization: {
-            repositories: { nodes, pageInfo },
-          },
+        organization: {
+          repositories: { nodes, pageInfo },
         },
       } = await GitHubAPI.query<
         {
@@ -189,8 +171,8 @@ export class OrganizationGitHubResolver {
           login: string;
           after: string | undefined;
         }
-      >({
-        query: gql`
+      >(
+        gql`
           query($login: String!, $after: String) {
             organization(login: $login) {
               id
@@ -235,12 +217,12 @@ export class OrganizationGitHubResolver {
             }
           }
         `,
-        variables: {
+        authGitHub,
+        {
           login,
           after,
-        },
-        context,
-      });
+        }
+      );
 
       repositories.push(
         ..._.compact(
