@@ -2,8 +2,6 @@ version: "3"
 services:
   api:
     build: api/
-    ports:
-      - "4000:4000"
     restart: always
     image: pabloszx/awesome-templates-api
     network_mode: "host"
@@ -16,8 +14,6 @@ services:
       REDIS_URL: ${REDIS_URL}
   client:
     build: client/
-    ports:
-      - "3000:3000"
     restart: always
     image: pabloszx/awesome-templates-client
     network_mode: "host"
