@@ -768,13 +768,17 @@ type filtersState = {
 
 const passAllOrAtLeastOne = (
   filter: [string[], filterToggleEnum],
-  listToFilter: { name: string }[]
+  listToFilter: { id?: string; name: string }[],
+  param: "id" | "name"
 ) => {
   if (filter[1] === filterToggleEnum.all) {
     if (
       !_.isEqual(
         _.sortBy(
-          _.intersection(listToFilter.map(({ name }) => name), filter[0])
+          _.intersection(
+            listToFilter.map(({ id, name }) => (param === "id" ? id : name)),
+            filter[0]
+          )
         ),
         _.sortBy(filter[0])
       )
@@ -783,7 +787,12 @@ const passAllOrAtLeastOne = (
     }
   } else {
     if (
-      _.isEmpty(_.intersection(listToFilter.map(({ name }) => name), filter[0]))
+      _.isEmpty(
+        _.intersection(
+          listToFilter.map(({ id, name }) => (param === "id" ? id : name)),
+          filter[0]
+        )
+      )
     ) {
       return false;
     }
@@ -814,19 +823,19 @@ const TemplatesDashboard: FC<{
             if (!_.includes(filters.names, name)) return false;
           }
           if (!_.isEmpty(filters.languages[0])) {
-            if (!passAllOrAtLeastOne(filters.languages, languages))
+            if (!passAllOrAtLeastOne(filters.languages, languages, "name"))
               return false;
           }
           if (!_.isEmpty(filters.environments[0])) {
-            if (!passAllOrAtLeastOne(filters.environments, environments))
+            if (!passAllOrAtLeastOne(filters.environments, environments, "id"))
               return false;
           }
           if (!_.isEmpty(filters.frameworks[0])) {
-            if (!passAllOrAtLeastOne(filters.frameworks, frameworks))
+            if (!passAllOrAtLeastOne(filters.frameworks, frameworks, "id"))
               return false;
           }
           if (!_.isEmpty(filters.libraries[0])) {
-            if (!passAllOrAtLeastOne(filters.libraries, libraries))
+            if (!passAllOrAtLeastOne(filters.libraries, libraries, "id"))
               return false;
           }
           return true;
