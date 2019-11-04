@@ -2,7 +2,7 @@ FROM node:12-alpine
 
 COPY package.json yarn.lock ./
 
-RUN yarn --frozen-lockfile
+RUN yarn
 
 COPY . ./
 
