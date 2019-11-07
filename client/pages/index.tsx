@@ -8,7 +8,7 @@ const Home = () => {
 
   return (
     <Grid centered padded>
-      <h1>Welcome to Awesome Templates {user && user.data.login}</h1>
+      <h1>Welcome to Awesome Templates {user?.data.login || ""}</h1>
     </Grid>
   );
 };

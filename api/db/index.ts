@@ -1,4 +1,3 @@
-import { values } from "lodash";
 import { Container } from "typedi";
 import { ConnectionOptions, createConnection, useContainer } from "typeorm";
 
@@ -6,7 +5,7 @@ import * as entities from "../entities/db";
 
 const dbConfig: ConnectionOptions = {
   type: "postgres",
-  entities: values(entities),
+  entities: Object.values(entities),
   ...(process.env.DB_URL
     ? {
         url: process.env.DB_URL,
