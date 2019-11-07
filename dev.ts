@@ -1,6 +1,7 @@
 import express from "express";
 import proxy from "http-proxy-middleware";
 import notifier from "node-notifier";
+import open from "open";
 import waitPort from "wait-port";
 
 (async () => {
@@ -21,5 +22,6 @@ import waitPort from "wait-port";
       title: "🚀  Proxy Server ready",
       message: `at http://localhost:8000`,
     });
+    open("http://localhost:8000");
   });
 })();
