@@ -7,8 +7,7 @@ app.set("trust proxy", true);
 const port = process.env.PORT || 4000;
 
 app.listen({ port }, () => {
-  const message = `Server Listening on port ${port}!`;
-  console.log(message);
+  console.log(`API Server Listening on port ${port}!`);
   if (process.env.NODE_ENV !== "production") {
     notifier.notify({
       title: "🚀  API Server ready",

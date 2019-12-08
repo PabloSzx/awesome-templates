@@ -5,9 +5,9 @@ import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { getGitHubAPIv3 } from "../../utils";
 import { User } from "../../entities";
 import { IContext } from "../../interfaces";
+import { getGitHubAPIv3 } from "../../utils";
 
 const { GITHUB_APP_ID } = requireEnv(["GITHUB_APP_ID"]);
 
@@ -82,7 +82,7 @@ export class AuthResolver {
 
           resolve(
             _.some(
-              data && data.installations,
+              data?.installations,
               ({ app_id }) => _.toInteger(app_id) === _.toInteger(GITHUB_APP_ID)
             )
           );
