@@ -1,12 +1,24 @@
 import gql from "graphql-tag";
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Mutation, Resolver, Root } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  FieldResolver,
+  Mutation,
+  Resolver,
+  Root,
+} from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
 import {
-    GitHubLanguage, GitHubRepository, GitRepository, Language, RepositoryGitHub
+  GitHubLanguage,
+  GitHubRepository,
+  GitRepository,
+  Language,
+  RepositoryGitHub,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
@@ -181,15 +193,13 @@ export class RepositoryGitHubResolver {
       } = await GitHubAPI.query<
         {
           repository: {
-            languages:
-              | ({
-                  pageInfo: {
-                    endCursor: string;
-                    hasNextPage: boolean;
-                  };
-                  nodes: Array<GitHubLanguage>;
-                })
-              | null;
+            languages: {
+              pageInfo: {
+                endCursor: string;
+                hasNextPage: boolean;
+              };
+              nodes: Array<GitHubLanguage>;
+            } | null;
           };
         },
         {
@@ -245,7 +255,11 @@ export class RepositoryGitHubResolver {
             .values(repoLanguages)
             .execute();
 
-          await this.GitRepoRepository.save({ id, languages: repoLanguages });
+          const repo = await this.GitRepoRepository.findOne(id);
+          if (repo) {
+            repo.languages = repoLanguages as Language[];
+            await this.GitRepoRepository.save(repo);
+          }
         } catch (err) {
           console.error(2, err);
         }
