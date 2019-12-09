@@ -2,7 +2,7 @@ import { Formik } from "formik";
 import gql from "graphql-tag";
 import _ from "lodash";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "react-apollo";
+import { useMutation, useQuery } from "@apollo/react-hooks";
 import { useUpdateEffect } from "react-use";
 import { Flex } from "rebass";
 import {

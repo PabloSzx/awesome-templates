@@ -2,7 +2,7 @@ import gql from "graphql-tag";
 import Link from "next/link";
 import { NextRouter, withRouter } from "next/router";
 import { FunctionComponent, useContext, useEffect, useState } from "react";
-import { useLazyQuery, useMutation } from "react-apollo";
+import { useLazyQuery, useMutation } from "@apollo/react-hooks";
 import { Box, Flex, Image } from "rebass";
 import {
   Button,

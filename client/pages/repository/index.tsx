@@ -1,10 +1,12 @@
 import gql from "graphql-tag";
 import { NextPage } from "next";
 import { FC } from "react";
-import { ExecutionResult, MutationFunctionOptions, useMutation } from "react-apollo";
 import { Flex } from "rebass";
 import { Button, Form, Grid, Icon, Input, Table } from "semantic-ui-react";
 import { useRememberState } from "use-remember-state";
+
+import { ExecutionResult, MutationFunctionOptions } from "@apollo/react-common";
+import { useMutation } from "@apollo/react-hooks";
 
 import RequireAuth from "../../src/Components/Auth/RequireAuth";
 import Modal from "../../src/Components/Modal";
@@ -46,11 +48,11 @@ const SearchRepository: FC<{
   searchRepository: (
     options?:
       | MutationFunctionOptions<
-        ISearchRepoMutation,
-        {
-          input: string;
-        }
-      >
+          ISearchRepoMutation,
+          {
+            input: string;
+          }
+        >
       | undefined
   ) => Promise<ExecutionResult<ISearchRepoMutation>>;
   loading: boolean;

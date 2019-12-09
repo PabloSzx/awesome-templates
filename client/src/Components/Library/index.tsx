@@ -1,7 +1,7 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "react-apollo";
+import { useMutation, useQuery } from "@apollo/react-hooks";
 import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
 
 import { AuthContext } from "../Auth/Context";

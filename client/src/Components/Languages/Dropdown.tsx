@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import { useQuery } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { Dropdown } from "semantic-ui-react";
 
 function LanguagesDropdown<T extends string | string[]>({

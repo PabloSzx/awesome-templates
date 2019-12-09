@@ -1,7 +1,7 @@
 import gql from "graphql-tag";
 import _ from "lodash";
 import { NextPage } from "next";
-import { useQuery } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { Card, Grid, Icon } from "semantic-ui-react";
 
 type TemplateQuery = {

@@ -1,7 +1,7 @@
 import gql from "graphql-tag";
 import { NextPage } from "next";
 import { FC, useEffect, useState } from "react";
-import { useQuery } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { Flex } from "rebass";
 import { Checkbox, Form, Grid, Icon, Input, Label, Table } from "semantic-ui-react";
 import { useRememberState } from "use-remember-state";

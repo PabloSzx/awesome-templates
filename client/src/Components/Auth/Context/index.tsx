@@ -1,6 +1,6 @@
 import gql from "graphql-tag";
 import { createContext, FunctionComponent, useEffect, useState } from "react";
-import { useQuery } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 
 type User = {
   id: string;

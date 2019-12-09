@@ -3,7 +3,7 @@ import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
 import { Dispatch, FC, SetStateAction, useContext, useEffect, useState } from "react";
-import { useLazyQuery, useMutation, useQuery } from "react-apollo";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/react-hooks";
 import {
     Button, Checkbox, Dimmer, Dropdown, Form, Grid, Header, Icon, Image, Label, List,
     Loader as LoaderSemantic, Segment, Table
