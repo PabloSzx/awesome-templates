@@ -1,13 +1,26 @@
 import gql from "graphql-tag";
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  FieldResolver,
+  Query,
+  Resolver,
+  Root,
+} from "type-graphql";
 import { Repository } from "typeorm";
 import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
 import {
-    GitHubOrganization, GitHubRepository, GitHubUser, Language, RepositoryOwner, UserGitHub,
-    UserGitHubAPI
+  GitHubOrganization,
+  GitHubRepository,
+  GitHubUser,
+  Language,
+  RepositoryOwner,
+  UserGitHub,
+  UserGitHubAPI,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
@@ -110,7 +123,7 @@ export class UserGitHubAPIResolver {
     @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
   ) {
-    let repositories: GitHubRepository[] = [];
+    const repositories: GitHubRepository[] = [];
 
     let after: string | undefined;
 
@@ -143,7 +156,7 @@ export class UserGitHubAPIResolver {
             user(login: $login) {
               id
               repositories(
-                first: 100
+                first: 50
                 privacy: PUBLIC
                 after: $after
                 orderBy: { direction: DESC, field: STARGAZERS }

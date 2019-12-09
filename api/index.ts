@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import notifier from "node-notifier";
 
 import app from "./app";

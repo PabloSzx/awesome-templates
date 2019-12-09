@@ -4,6 +4,7 @@ import { buildSchema, registerEnumType } from "type-graphql";
 import { Container as container } from "typedi";
 
 import { APILevel } from "./consts";
+import * as resolvers from "./resolvers";
 import { authChecker, buildContext } from "./utils";
 
 registerEnumType(APILevel, {
@@ -13,7 +14,7 @@ registerEnumType(APILevel, {
 export const apollo = async (app: Express) => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [__dirname + "/resolvers/**/*.ts"],
+      resolvers: [...Object.values(resolvers)],
       container,
       authChecker,
       emitSchemaFile: process.env.NODE_ENV !== "production",

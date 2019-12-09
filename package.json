@@ -11,12 +11,16 @@
     "client"
   ],
   "scripts": {
-    "dev": "yarn start",
+    "build": "concurrently \"tsc -P api\" \"yarn --cwd client build\"",
+    "build-api": "tsc -P api",
+    "dev": "concurrently \"ts-node dev.ts\" \"yarn --cwd api dev\" \"yarn --cwd client dev\"",
     "postinstall": "lerna bootstrap",
-    "start": "concurrently \"ts-node dev.ts\" \"yarn --cwd api dev\" \"yarn --cwd client dev\""
+    "start": "pm2 start ecosystem.yaml",
+    "stop": "pm2 delete ecosystem.yaml"
   },
   "dependencies": {
     "concurrently": "^5.0.0",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "http-proxy-middleware": "^0.20.0",
     "node-notifier": "^6.0.0",
@@ -28,6 +32,7 @@
   },
   "devDependencies": {
     "@types/concurrently": "^4.1.0",
+    "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.2",
     "@types/express-serve-static-core": "^4.16.11",
     "@types/http-proxy-middleware": "^0.19.3",

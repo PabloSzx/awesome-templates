@@ -1,0 +1,23 @@
+apps:
+  - name: awesome_templates_api
+    script: api/dist/index.js
+    exec_mode: cluster
+    instances: 1
+    out_file: logs/out_api.log
+    error_file: logs/error_api.log
+    combine_logs: true
+    time: true
+    env:
+      NODE_ENV: production
+  - name: awesome_templates_client
+    script: client/node_modules/.bin/next
+    cwd: client
+    args: start
+    exec_mode: cluster
+    instances: 1
+    out_file: logs/out_client.log
+    error_file: logs/error_client.log
+    combine_logs: true
+    time: true
+    env:
+      NODE_ENV: production

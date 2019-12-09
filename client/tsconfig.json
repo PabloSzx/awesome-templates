@@ -15,7 +15,8 @@
     "isolatedModules": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "strictPropertyInitialization": false
+    "strictPropertyInitialization": false,
+    "types": ["react"]
   },
   "exclude": ["node_modules", "old"],
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"]
