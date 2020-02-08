@@ -1,6 +1,0 @@
-{
-  "packages": ["api", "client"],
-  "npmClient": "yarn",
-  "useWorkspaces": true,
-  "version": "independent"
-}
