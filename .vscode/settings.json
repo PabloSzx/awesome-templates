@@ -1,5 +1,5 @@
 {
   "debug.node.autoAttach": "on",
   "debug.openDebug": "openOnDebugBreak",
-  "typescript.tsdk": "node_modules\\typescript\\lib"
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
