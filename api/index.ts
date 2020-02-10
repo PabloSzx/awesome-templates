@@ -1,9 +1,29 @@
+import "dotenv/config";
+
 import Fastify from "fastify";
+import FastifyCookie from "fastify-cookie";
 import GQL from "fastify-gql";
+import FastifyJWT from "fastify-jwt";
 import { readFile } from "fs";
 import { resolve } from "path";
 
+import { SECRET } from "./constants";
+import { context } from "./graphql/context";
+
 const app = Fastify();
+
+app.register(FastifyCookie, {
+  secret:
+    process.env.SECRET_COOKIE ??
+    (() => {
+      console.warn("Please use SECRET env variable");
+      return "SlqsmG0Px9ZqgUvmgCC0pNStWh";
+    })(),
+});
+
+app.register(FastifyJWT, {
+  secret: SECRET,
+});
 
 const schema = `
   type Query {
@@ -22,11 +42,13 @@ app.register(GQL, {
   resolvers,
   jit: 1,
   prefix: "/api",
+  graphiql: 123,
+  context,
 });
 
 app.get("/playground", function(_req, reply) {
   readFile(
-    resolve(__dirname, "../../static/playground.html"),
+    resolve(__dirname, "../static/playground.html"),
     {
       encoding: "utf8",
     },
@@ -40,5 +62,5 @@ app.get("/playground", function(_req, reply) {
 });
 
 app.listen(4000, () => {
-  console.log("API Listening!" + Date.now());
+  console.log("API Listening!");
 });

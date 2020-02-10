@@ -16,7 +16,9 @@ dependencies:
   dotenv: 8.2.0
   emotion-theming: 10.0.27_2c5d77e899508087ed51e7755add9fe3
   fastify: 2.12.0
+  fastify-cookie: 3.5.0
   fastify-gql: 3.0.3
+  fastify-jwt: 1.2.1
   framer-motion: 1.8.4_react-dom@16.12.0+react@16.12.0
   graphql: 14.6.0
   graphql-scalars: 1.0.6_graphql@14.6.0
@@ -1934,7 +1936,6 @@ packages:
   /@types/jsonwebtoken/8.3.7:
     dependencies:
       '@types/node': 13.7.0
-    dev: true
     resolution:
       integrity: sha512-B5SSifLkjB0ns7VXpOOtOUlynE78/hKcY8G8pOAhkLJZinwofIBYqz555nRj2W9iDWZqFhK5R+7NZDaRmKWAoQ==
   /@types/jss/9.5.8:
@@ -3622,6 +3623,12 @@ packages:
       safe-buffer: 5.1.2
     resolution:
       integrity: sha512-4FJkXzKXEDB1snCFZlLP4gpC3JILicCpGbzG9f9G7tGqGCzETQ2hWPrcinA9oU4wtf2biUaEH5065UnMeR33oA==
+  /cookie-signature/1.1.0:
+    dev: false
+    engines:
+      node: '>=6.6.0'
+    resolution:
+      integrity: sha512-Alvs19Vgq07eunykd3Xy2jF0/qSNv2u7KDbAek9H5liV1UMijbqFs5cycZvv5dVsvseT/U4H8/7/w8Koh35C4A==
   /cookie/0.4.0:
     dev: false
     engines:
@@ -4644,6 +4651,22 @@ packages:
     dev: false
     resolution:
       integrity: sha1-kSLUBtTJ2YvqZEpraFPVh0uHsCg=
+  /fastfall/1.5.1:
+    dependencies:
+      reusify: 1.0.4
+    dev: false
+    engines:
+      node: '>=0.10.0'
+    resolution:
+      integrity: sha1-P+4DMxpJ0dObPN96XpzWb0dee5Q=
+  /fastify-cookie/3.5.0:
+    dependencies:
+      cookie: 0.4.0
+      cookie-signature: 1.1.0
+      fastify-plugin: 1.6.0
+    dev: false
+    resolution:
+      integrity: sha512-IQueMUmJjQtP+sMO5XX0Ekk4us3vfWYNaZ7cA5Zx8YN5yG2fFyYcdTBaLZfXqTsxPDn1UQWPEEfsHDG1DCC06w==
   /fastify-gql/3.0.3:
     dependencies:
       fastify-plugin: 1.6.0
@@ -4659,6 +4682,18 @@ packages:
     dev: false
     resolution:
       integrity: sha512-/0QLhdOpQHUBC/bPbsbmir+VEXmFNHQF4Qb8pAeKC/ho8ekVFsDe7LKSNFGnpQnt8jNh60cq29pv3qRPhcxNew==
+  /fastify-jwt/1.2.1:
+    dependencies:
+      '@types/jsonwebtoken': 8.3.7
+      fastify-plugin: 1.6.0
+      http-errors: 1.7.3
+      jsonwebtoken: 8.5.1
+      steed: 1.1.3
+    dev: false
+    engines:
+      node: '>6'
+    resolution:
+      integrity: sha512-9vpab7Avu8XVtJe/lZXUVqiZecQAdHleN32hfLtn2x3JKfSvWm0CD0EW3OXNHN+vLv5U2UdItdwWm2lu5TztCQ==
   /fastify-plugin/1.6.0:
     dependencies:
       semver: 6.3.0
@@ -4716,6 +4751,13 @@ packages:
     dev: false
     resolution:
       integrity: sha512-jmxqQ3Z/nXoeyDmWAzF9kH1aGZSis6e/SbfPmJpUnyZ0ogr6iscHQaml4wsEepEWSdtmpy+eVXmCRIMpxaXqOA==
+  /fastseries/1.7.2:
+    dependencies:
+      reusify: 1.0.4
+      xtend: 4.0.2
+    dev: false
+    resolution:
+      integrity: sha1-0izhO5Qz3/M4jZHb1ri9qbIaD0s=
   /fb-watchman/2.0.1:
     dependencies:
       bser: 2.1.1
@@ -10143,6 +10185,16 @@ packages:
       node: '>=0.10.0'
     resolution:
       integrity: sha1-NbCYdbT/SfJqd35QmzCQoyJr8ks=
+  /steed/1.1.3:
+    dependencies:
+      fastfall: 1.5.1
+      fastparallel: 2.3.0
+      fastq: 1.6.0
+      fastseries: 1.7.2
+      reusify: 1.0.4
+    dev: false
+    resolution:
+      integrity: sha1-8VJd1a2xLrIb90dJU3Zo1iW5q8U=
   /stream-browserify/2.0.2:
     dependencies:
       inherits: 2.0.4
@@ -11536,7 +11588,9 @@ specifiers:
   dotenv: ^8.2.0
   emotion-theming: ^10.0.27
   fastify: ^2.12.0
+  fastify-cookie: ^3.5.0
   fastify-gql: ^3.0.3
+  fastify-jwt: ^1.2.1
   framer-motion: ^1.8.4
   graphql: ^14.6.0
   graphql-scalars: ^1.0.6
