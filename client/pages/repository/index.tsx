@@ -27,7 +27,7 @@ type ISearchRepoMutation = {
 };
 
 const SearchRepoMutation = gql`
-  mutation($input: String!) {
+  mutation($input: ObjectId!) {
     searchRepository(input: $input) {
       id
       nameWithOwner

@@ -149,7 +149,7 @@ export class RepositoryGitHubResolver {
 
       await GitRepositoryModel.findOneAndUpdate(
         {
-          github: id,
+          githubId: id,
         },
         {
           starCount,

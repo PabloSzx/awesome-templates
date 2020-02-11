@@ -69,7 +69,7 @@ const TemplatePage: NextPage<{ name: string; owner: string }> = ({
     }
   >(
     gql`
-      query($name: String!, $owner: String!) {
+      query($name: String!, $owner: ObjectId!) {
         template(name: $name, owner: $owner) {
           name
           upvotesCount

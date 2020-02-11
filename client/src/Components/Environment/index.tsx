@@ -36,7 +36,7 @@ const EnvironmentModal: FC<{
     }
   >(
     gql`
-      query($id: String!) {
+      query($id: ObjectId!) {
         environment(id: $id) {
           _id
           name
@@ -107,7 +107,7 @@ const EnvironmentModal: FC<{
     }
   >(gql`
     mutation(
-      $id: String!
+      $id: StriObjectIdng!
       $name: String!
       $url: String
       $logoUrl: String
@@ -141,7 +141,7 @@ const EnvironmentModal: FC<{
       id: string;
     }
   >(gql`
-    mutation($id: String!) {
+    mutation($id: ObjectId!) {
       removeEnvironment(id: $id)
     }
   `);

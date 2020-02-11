@@ -10,8 +10,8 @@ export class GitRepositoryResolver {
   }
 
   @Query(() => GitRepository, { nullable: true })
-  async gitRepo(@Arg("id") id: string) {
-    return await GitRepositoryModel.findById(id);
+  async gitRepo(@Arg("id") githubId: string) {
+    return await GitRepositoryModel.findOne({ githubId });
   }
 
   @FieldResolver()

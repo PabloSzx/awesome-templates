@@ -1,6 +1,7 @@
 import gql from "graphql-tag";
-import { useQuery } from "@apollo/react-hooks";
 import { Dropdown } from "semantic-ui-react";
+
+import { useQuery } from "@apollo/react-hooks";
 
 function LanguagesDropdown<T extends string | string[]>({
   onChange,
@@ -24,10 +25,11 @@ function LanguagesDropdown<T extends string | string[]>({
   loading?: boolean;
 }) {
   const { data: optionsLanguages, loading: loadingLanguages } = useQuery<{
-    languages: { name: string }[];
+    languages: { name: string; _id: string }[];
   }>(gql`
     query {
       languages {
+        _id
         name
       }
     }
@@ -45,14 +47,18 @@ function LanguagesDropdown<T extends string | string[]>({
       placeholder={placeholder}
       options={
         !loadingLanguages && optionsLanguages
-          ? optionsLanguages.languages.map(({ name: value }, key) => ({
-              key,
-              text: value,
-              value,
-            }))
+          ? optionsLanguages.languages.map(
+              ({ _id: value, name: text }, key) => ({
+                key,
+                text,
+                value,
+              })
+            )
           : []
       }
-      onChange={(_e, { value }) => onChange(value as T)}
+      onChange={(_e, { value }) => {
+        onChange(value as T);
+      }}
       value={value}
       disabled={loadingLanguages || disabled}
       loading={loadingLanguages || loading}

@@ -34,7 +34,7 @@ const LibraryModal: FC<{
     { id: string }
   >(
     gql`
-      query($id: String!) {
+      query($id: ObjectId!) {
         library(id: $id) {
           _id
           name
@@ -42,6 +42,7 @@ const LibraryModal: FC<{
           logoUrl
           description
           language {
+            _id
             name
           }
           creator {
@@ -114,12 +115,12 @@ const LibraryModal: FC<{
     }
   >(gql`
     mutation(
-      $id: String!
+      $id: ObjectId!
       $name: String!
       $url: String
       $logoUrl: String
       $description: String
-      $language: String
+      $language: ObjectId
     ) {
       updateLibrary(
         id: $id
@@ -148,7 +149,7 @@ const LibraryModal: FC<{
     removeLibrary,
     { loading: loadingRemoveLibrary, called: calledRemoveLibrary },
   ] = useMutation<{ removeLibrary: string }, { id: string }>(gql`
-    mutation($id: String!) {
+    mutation($id: ObjectId!) {
       removeLibrary(id: $id)
     }
   `);

@@ -59,7 +59,7 @@ interface ITemplatesQuery {
         _id: string;
       };
     };
-    languages: Array<{ name: string; color?: string }>;
+    languages: Array<{ name: string; color?: string; _id: string }>;
     libraries: Array<{ name: string; logoUrl?: string; _id: string }>;
     frameworks: Array<{ name: string; logoUrl?: string; _id: string }>;
     environments: Array<{ name: string; logoUrl?: string; _id: string }>;
@@ -94,6 +94,7 @@ const TemplatesQuery = gql`
         }
       }
       languages {
+        _id
         name
         color
       }
@@ -297,9 +298,9 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Languages"
-          options={languages.map(({ name: value }, key) => ({
+          options={languages.map(({ _id: value, name: text }, key) => ({
             key,
-            text: value,
+            text,
             value,
           }))}
           fluid
@@ -431,7 +432,7 @@ const TemplatesTable: FC<{
     }
   >(
     gql`
-      mutation($id: String!) {
+      mutation($id: ObjectId!) {
         removeTemplate(id: $id)
       }
     `
@@ -492,7 +493,7 @@ const TemplatesTable: FC<{
     { toggleUpvote: boolean },
     { id: string }
   >(gql`
-    mutation($id: String!) {
+    mutation($id: ObjectId!) {
       toggleUpvote(id: $id)
     }
   `);
@@ -793,15 +794,15 @@ type filtersState = {
 
 const passAllOrAtLeastOne = (
   filter: [string[], filterToggleEnum],
-  listToFilter: { id?: string; name: string }[],
-  param: "id" | "name"
+  listToFilter: { _id?: string; name: string }[],
+  param: "_id" | "name"
 ) => {
   if (filter[1] === filterToggleEnum.all) {
     if (
       !_.isEqual(
         _.sortBy(
           _.intersection(
-            listToFilter.map(({ id, name }) => (param === "id" ? id : name)),
+            listToFilter.map(({ _id, name }) => (param === "_id" ? _id : name)),
             filter[0]
           )
         ),
@@ -814,7 +815,7 @@ const passAllOrAtLeastOne = (
     if (
       _.isEmpty(
         _.intersection(
-          listToFilter.map(({ id, name }) => (param === "id" ? id : name)),
+          listToFilter.map(({ _id, name }) => (param === "_id" ? _id : name)),
           filter[0]
         )
       )
@@ -848,19 +849,19 @@ const TemplatesDashboard: FC<{
             if (!_.includes(filters.names, name)) return false;
           }
           if (!_.isEmpty(filters.languages[0])) {
-            if (!passAllOrAtLeastOne(filters.languages, languages, "name"))
+            if (!passAllOrAtLeastOne(filters.languages, languages, "_id"))
               return false;
           }
           if (!_.isEmpty(filters.environments[0])) {
-            if (!passAllOrAtLeastOne(filters.environments, environments, "id"))
+            if (!passAllOrAtLeastOne(filters.environments, environments, "_id"))
               return false;
           }
           if (!_.isEmpty(filters.frameworks[0])) {
-            if (!passAllOrAtLeastOne(filters.frameworks, frameworks, "id"))
+            if (!passAllOrAtLeastOne(filters.frameworks, frameworks, "_id"))
               return false;
           }
           if (!_.isEmpty(filters.libraries[0])) {
-            if (!passAllOrAtLeastOne(filters.libraries, libraries, "id"))
+            if (!passAllOrAtLeastOne(filters.libraries, libraries, "_id"))
               return false;
           }
           return true;

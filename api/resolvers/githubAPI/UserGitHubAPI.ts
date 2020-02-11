@@ -423,7 +423,7 @@ export class UserGitHubAPIResolver {
               }
             ),
           ]);
-          return GitRepositoryModel.findOneAndUpdate(
+          return await GitRepositoryModel.findOneAndUpdate(
             {
               githubId: repo.id,
             },

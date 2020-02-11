@@ -90,7 +90,7 @@ type Mutation {
   createEnvironment(description: String, logoUrl: String, name: String!, url: String): Environment!
   createFramework(description: String, languages: [ObjectId!]!, logoUrl: String, name: String!, url: String): Framework!
   createLibrary(description: String, language: ObjectId, logoUrl: String, name: String!, url: String): [Library!]!
-  createTemplate(environments: [ObjectId!]!, frameworks: [ObjectId!]!, languages: [ObjectId!]!, libraries: [ObjectId!]!, name: String!, primaryLanguage: ObjectId, repositoryId: ObjectId!): Template!
+  createTemplate(environments: [ObjectId!]!, frameworks: [ObjectId!]!, languages: [ObjectId!]!, libraries: [ObjectId!]!, name: String!, primaryLanguage: ObjectId, repositoryGitHubId: String!): Template!
   logout: Boolean!
   modifyPersonalAccessToken(token: String!): Boolean!
   removeEnvironment(id: String!): String!

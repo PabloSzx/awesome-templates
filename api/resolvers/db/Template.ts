@@ -78,7 +78,7 @@ export class TemplateResolver {
     @Args()
     {
       name,
-      repositoryId,
+      repositoryGitHubId,
       primaryLanguage,
       languages,
       frameworks,
@@ -101,7 +101,9 @@ export class TemplateResolver {
     await Promise.all([
       (async () => {
         newTemplate.repository =
-          (await GitRepositoryModel.findById(repositoryId)) || undefined;
+          (await GitRepositoryModel.findOne({
+            githubId: repositoryGitHubId,
+          })) || undefined;
       })(),
       (async () => {
         if (primaryLanguage)
@@ -266,7 +268,17 @@ export class TemplateResolver {
   }
 
   @FieldResolver()
+  async repository(@Root() { _id, repository, ...rest }: Template) {
+    const a = await TemplateModel.findById(_id).populate("repository");
+
+    console.log(275, { a, _id, repository, rest });
+
+    return a?.repository;
+  }
+
+  @FieldResolver()
   async upvotesCount(@Root() { _id }: Template) {
+    console.log(281, { _id });
     return (
       (await TemplateModel.findById(_id).populate("upvotes"))?.upvotes.length ??
       0

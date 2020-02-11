@@ -1,4 +1,4 @@
-import { MinLength } from "class-validator";
+import { IsBase64, MinLength } from "class-validator";
 import { ObjectId } from "mongodb";
 import { ArgsType, Field, ObjectType } from "type-graphql";
 
@@ -68,10 +68,10 @@ export class CreateTemplateInput {
   @Field()
   name: string;
 
-  @Field(() => ObjectIdScalar)
-  repositoryId: ObjectId;
+  @IsBase64()
+  @Field()
+  repositoryGitHubId: string;
 
-  @MinLength(1)
   @Field(() => ObjectIdScalar, { nullable: true })
   primaryLanguage?: ObjectId;
 

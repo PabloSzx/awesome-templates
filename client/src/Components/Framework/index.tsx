@@ -34,7 +34,7 @@ const FrameworkModal: FC<{
     { id: string }
   >(
     gql`
-      query($id: String!) {
+      query($id: ObjectId!) {
         framework(id: $id) {
           _id
           name
@@ -75,7 +75,7 @@ const FrameworkModal: FC<{
       $url: String
       $logoUrl: String
       $description: String
-      $languages: [String!]!
+      $languages: [ObjectId!]!
     ) {
       createFramework(
         name: $name
@@ -114,12 +114,12 @@ const FrameworkModal: FC<{
     }
   >(gql`
     mutation(
-      $id: String!
+      $id: ObjectId!
       $name: String!
       $url: String
       $logoUrl: String
       $description: String
-      $languages: [String!]!
+      $languages: [ObjectId!]!
     ) {
       updateFramework(
         id: $id
@@ -153,7 +153,7 @@ const FrameworkModal: FC<{
       id: string;
     }
   >(gql`
-    mutation($id: String!) {
+    mutation($id: ObjectId!) {
       removeFramework(id: $id)
     }
   `);

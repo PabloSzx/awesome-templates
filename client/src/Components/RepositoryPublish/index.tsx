@@ -125,14 +125,15 @@ const RepositoryPublishModalContent: FC<{
     loading: loadingOptions,
     called: calledOptions,
   } = useQuery<{
-    languages: { name: string }[];
-    libraries: { name: string; id: string }[];
-    frameworks: { name: string; id: string }[];
-    environments: { name: string; id: string }[];
+    languages: { name: string; _id: string }[];
+    libraries: { name: string; _id: string }[];
+    frameworks: { name: string; _id: string }[];
+    environments: { name: string; _id: string }[];
   }>(
     gql`
       query {
         languages {
+          _id
           name
         }
         libraries {
@@ -159,7 +160,7 @@ const RepositoryPublishModalContent: FC<{
   ] = useMutation<
     {},
     {
-      repositoryId: string;
+      repositoryGitHubId: string;
       name: string;
       primaryLanguage?: string;
       languages: string[];
@@ -170,24 +171,24 @@ const RepositoryPublishModalContent: FC<{
   >(
     gql`
       mutation(
-        $repositoryId: String!
+        $repositoryGitHubId: String!
         $name: String!
-        $primaryLanguage: String
-        $languages: [String!]!
-        $frameworks: [String!]!
-        $libraries: [String!]!
-        $environments: [String!]!
+        $primaryLanguage: ObjectId
+        $languages: [ObjectId!]!
+        $frameworks: [ObjectId!]!
+        $libraries: [ObjectId!]!
+        $environments: [ObjectId!]!
       ) {
         createTemplate(
           name: $name
-          repositoryId: $repositoryId
+          repositoryGitHubId: $repositoryGitHubId
           primaryLanguage: $primaryLanguage
           languages: $languages
           frameworks: $frameworks
           libraries: $libraries
           environments: $environments
         ) {
-          id
+          _id
           name
           upvotesCount
           owner {
@@ -244,14 +245,14 @@ const RepositoryPublishModalContent: FC<{
   >(
     gql`
       mutation(
-        $templateId: String!
-        $repositoryId: String
+        $templateId: ObjectId!
+        $repositoryId: ObjectId
         $name: String!
-        $primaryLanguage: String
-        $languages: [String!]!
-        $frameworks: [String!]!
-        $libraries: [String!]!
-        $environments: [String!]!
+        $primaryLanguage: ObjectId
+        $languages: [ObjectId!]!
+        $frameworks: [ObjectId!]!
+        $libraries: [ObjectId!]!
+        $environments: [ObjectId!]!
       ) {
         updateTemplate(
           templateId: $templateId
@@ -312,7 +313,7 @@ const RepositoryPublishModalContent: FC<{
       id: string;
     }
   >(gql`
-    mutation($id: String!) {
+    mutation($id: ObjectId!) {
       removeTemplate(id: $id)
     }
   `);
@@ -364,8 +365,14 @@ const RepositoryPublishModalContent: FC<{
 
   const [initialValues, setInitialValues] = useState({
     name,
-    languages: languages.map(({ name }) => name),
-    primaryLanguage: primaryLanguage ? primaryLanguage.name : undefined,
+    languages: _.intersectionBy(
+      options?.languages ?? [],
+      languages,
+      lang => lang.name
+    ).map(({ _id }) => _id),
+    primaryLanguage: primaryLanguage
+      ? options?.languages.find(lang => lang.name === primaryLanguage.name)?._id
+      : undefined,
     frameworks: [] as string[],
     libraries: [] as string[],
     environments: [] as string[],
@@ -388,8 +395,15 @@ const RepositoryPublishModalContent: FC<{
       } = gitRepoData.gitRepo.template;
       setInitialValues({
         name,
-        languages: languages.map(({ name }) => name),
-        primaryLanguage: primaryLanguage ? primaryLanguage.name : undefined,
+        languages: _.intersectionBy(
+          options?.languages ?? [],
+          languages,
+          lang => lang.name
+        ).map(({ _id }) => _id),
+        primaryLanguage: primaryLanguage
+          ? options?.languages.find(lang => lang.name === primaryLanguage.name)
+              ?._id
+          : undefined,
         frameworks: frameworks.map(({ id }) => id),
         libraries: libraries.map(({ id }) => id),
         environments: environments.map(({ id }) => id),
@@ -397,14 +411,21 @@ const RepositoryPublishModalContent: FC<{
     } else if (!toggleFormData) {
       setInitialValues({
         name,
-        languages: languages.map(({ name }) => name),
-        primaryLanguage: primaryLanguage ? primaryLanguage.name : undefined,
+        languages: _.intersectionBy(
+          options?.languages ?? [],
+          languages,
+          lang => lang.name
+        ).map(({ _id }) => _id),
+        primaryLanguage: primaryLanguage
+          ? options?.languages.find(lang => lang.name === primaryLanguage.name)
+              ?._id
+          : undefined,
         frameworks: [] as string[],
         libraries: [] as string[],
         environments: [] as string[],
       });
     }
-  }, [toggleFormData, gitRepoData]);
+  }, [toggleFormData, gitRepoData, options]);
 
   const loading =
     loadingCreateTemplate ||
@@ -457,7 +478,7 @@ const RepositoryPublishModalContent: FC<{
                   frameworks,
                   libraries,
                   environments,
-                  repositoryId: githubId,
+                  repositoryGitHubId: githubId,
                 },
               });
 
@@ -496,11 +517,19 @@ const RepositoryPublishModalContent: FC<{
                       disabled={loading}
                       loading={loading}
                       clearable
-                      options={values.languages.map((value, key) => ({
-                        key,
-                        text: value,
-                        value,
-                      }))}
+                      options={_.intersectionWith(
+                        options?.languages ?? [],
+                        values.languages,
+                        (langA, langB) => {
+                          return langA._id === langB;
+                        }
+                      ).map(({ name, _id }, key) => {
+                        return {
+                          key,
+                          text: name,
+                          value: _id,
+                        };
+                      })}
                       onChange={(_e, { value }) =>
                         setFieldValue("primaryLanguage", value)
                       }
@@ -520,16 +549,14 @@ const RepositoryPublishModalContent: FC<{
                       selection
                       options={
                         options
-                          ? options.languages.map(({ name: value }, key) => ({
-                              key,
-                              text: value,
-                              value,
-                            }))
-                          : languages.map(({ name: value }, key) => ({
-                              key,
-                              text: value,
-                              value,
-                            }))
+                          ? options.languages.map(
+                              ({ _id: value, name: text }, key) => ({
+                                key,
+                                text,
+                                value,
+                              })
+                            )
+                          : []
                       }
                       onChange={(_e, { value }) => {
                         setFieldValue("languages", value);
@@ -567,20 +594,25 @@ const RepositoryPublishModalContent: FC<{
                             }}
                             onLabelClick={(
                               _e,
-                              { value: id, content: name }
+                              { value: id, content: name, ...rest }
                             ) => {
-                              setData({ id, name } as {
-                                id: string;
-                                name: string;
+                              console.log(579, {
+                                id,
+                                name,
+                                rest,
                               });
-                              open();
+                              // setData({ id, name } as {
+                              //   id: string;
+                              //   name: string;
+                              // });
+                              // open();
                             }}
                             disabled={loading}
                             loading={loading}
                             options={
                               options
                                 ? options.frameworks.map(
-                                    ({ name: text, id: value }, key) => ({
+                                    ({ name: text, _id: value }, key) => ({
                                       key,
                                       text,
                                       value,
@@ -588,7 +620,7 @@ const RepositoryPublishModalContent: FC<{
                                   )
                                 : []
                             }
-                            onChange={(_e, { value }) => {
+                            onChange={(_e, { value, ...rest }) => {
                               if (options) {
                                 setFieldValue(
                                   "frameworks",
@@ -596,7 +628,7 @@ const RepositoryPublishModalContent: FC<{
                                     value as string[],
                                     options.frameworks,
                                     a => {
-                                      return _.get(a, "id", a);
+                                      return _.get(a, "_id", a);
                                     }
                                   )
                                 );
@@ -663,7 +695,7 @@ const RepositoryPublishModalContent: FC<{
                             options={
                               options
                                 ? options.libraries.map(
-                                    ({ name: text, id: value }, key) => ({
+                                    ({ name: text, _id: value }, key) => ({
                                       key,
                                       text,
                                       value,
@@ -679,7 +711,7 @@ const RepositoryPublishModalContent: FC<{
                                     value as string[],
                                     options.libraries,
                                     a => {
-                                      return _.get(a, "id", a);
+                                      return _.get(a, "_id", a);
                                     }
                                   )
                                 );
@@ -745,7 +777,7 @@ const RepositoryPublishModalContent: FC<{
                             options={
                               options
                                 ? options.environments.map(
-                                    ({ name: text, id: value }, key) => ({
+                                    ({ name: text, _id: value }, key) => ({
                                       key,
                                       text,
                                       value,
@@ -761,7 +793,7 @@ const RepositoryPublishModalContent: FC<{
                                     value as string[],
                                     options.environments,
                                     a => {
-                                      return _.get(a, "id", a);
+                                      return _.get(a, "_id", a);
                                     }
                                   )
                                 );
