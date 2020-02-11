@@ -13,7 +13,7 @@ registerEnumType(APILevel, {
 export const apollo = async (app: Express) => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
-      resolvers: [...Object.values(resolvers)],
+      resolvers: [...Object.values(resolvers)] as any,
       authChecker,
       emitSchemaFile: process.env.NODE_ENV !== "production",
     }),
