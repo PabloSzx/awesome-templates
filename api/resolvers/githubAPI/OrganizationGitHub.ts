@@ -271,7 +271,7 @@ export class OrganizationGitHubResolver {
               repo &&
               repo.createdAt &&
               repo.updatedAt &&
-              (isTemplate !== undefined ? repo.isTemplate === isTemplate : true)
+              (isTemplate != null ? repo.isTemplate === isTemplate : true)
             ) {
               return {
                 ...repo,

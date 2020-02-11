@@ -11,6 +11,7 @@ import {
 } from "type-graphql";
 
 import { APILevel } from "../../consts";
+import { LanguageUpsertDataLoader } from "../../dataloaders/Language";
 import {
   GitHubLanguage,
   GitHubRepository,
@@ -97,18 +98,7 @@ export class RepositoryGitHubResolver {
     await Promise.all(
       repositories.map(repo => {
         if (repo.primaryLanguage) {
-          return LanguageModel.findOneAndUpdate(
-            {
-              name: repo.primaryLanguage.name,
-            },
-            {
-              color: repo.primaryLanguage.color,
-            },
-            {
-              upsert: true,
-              new: true,
-            }
-          );
+          return LanguageUpsertDataLoader.load(repo.primaryLanguage);
         }
       })
     );
@@ -253,18 +243,7 @@ export class RepositoryGitHubResolver {
     if (repoLanguages.length > 0)
       await Promise.all(
         repoLanguages.map(repoLang => {
-          return LanguageModel.findOneAndUpdate(
-            {
-              name: repoLang.name,
-            },
-            {
-              color: repoLang.color,
-            },
-            {
-              upsert: true,
-              new: true,
-            }
-          );
+          return LanguageUpsertDataLoader.load(repoLang);
         })
       );
 

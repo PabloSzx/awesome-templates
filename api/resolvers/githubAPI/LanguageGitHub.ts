@@ -4,6 +4,7 @@ import _ from "lodash";
 import { Arg, Authorized, Ctx, Query, Resolver } from "type-graphql";
 
 import { APILevel } from "../../consts";
+import { LanguageUpsertDataLoader } from "../../dataloaders/Language";
 import { GitHubLanguage, LanguageGitHub, LanguageModel } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
@@ -74,16 +75,7 @@ export class LanguageGitHubResolver {
             return !!(lang.color && lang.name);
           })
           .map(({ name, color }) => {
-            return LanguageModel.findOneAndUpdate(
-              { name },
-              {
-                color,
-              },
-              {
-                upsert: true,
-                new: true,
-              }
-            );
+            return LanguageUpsertDataLoader.load({ name, color });
           })
       );
     }

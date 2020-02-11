@@ -11,6 +11,7 @@ import {
 } from "type-graphql";
 
 import { APILevel } from "../../consts";
+import { LanguageUpsertDataLoader } from "../../dataloaders/Language";
 import {
   GitHubOrganization,
   GitHubRepository,
@@ -239,6 +240,10 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
+    console.log(243, {
+      repositories: repositories.slice(0, 5),
+    });
+
     const repositoriesDocs = await Promise.all(
       repositories.map(
         async ({
@@ -248,18 +253,7 @@ export class UserGitHubAPIResolver {
         }) => {
           const [primaryLanguage, owner] = await Promise.all([
             primaryLanguageRepo
-              ? await LanguageModel.findOneAndUpdate(
-                  {
-                    name: primaryLanguageRepo.name,
-                  },
-                  {
-                    color: primaryLanguageRepo.color,
-                  },
-                  {
-                    upsert: true,
-                    new: true,
-                  }
-                )
+              ? await LanguageUpsertDataLoader.load(primaryLanguageRepo)
               : undefined,
             UserGitHubModel.findOneAndUpdate(
               {
@@ -272,7 +266,7 @@ export class UserGitHubAPIResolver {
               }
             ),
           ]);
-          return GitRepositoryModel.findOneAndUpdate(
+          return await GitRepositoryModel.findOneAndUpdate(
             {
               githubId: repo.id,
             },
@@ -299,7 +293,7 @@ export class UserGitHubAPIResolver {
     );
 
     return _.filter(repositories, repo =>
-      isTemplate !== undefined ? repo.isTemplate === isTemplate : true
+      isTemplate != null ? repo.isTemplate === isTemplate : true
     );
   }
 
@@ -416,18 +410,7 @@ export class UserGitHubAPIResolver {
         }) => {
           const [primaryLanguage, owner] = await Promise.all([
             primaryLanguageRepo
-              ? await LanguageModel.findOneAndUpdate(
-                  {
-                    name: primaryLanguageRepo.name,
-                  },
-                  {
-                    color: primaryLanguageRepo.color,
-                  },
-                  {
-                    upsert: true,
-                    new: true,
-                  }
-                )
+              ? await LanguageUpsertDataLoader.load(primaryLanguageRepo)
               : undefined,
             UserGitHubModel.findOneAndUpdate(
               {
@@ -467,7 +450,7 @@ export class UserGitHubAPIResolver {
     );
 
     return _.filter(starredRepositories, repo =>
-      isTemplate !== undefined ? repo.isTemplate === isTemplate : true
+      isTemplate != null ? repo.isTemplate === isTemplate : true
     );
   }
 

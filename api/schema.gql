@@ -4,9 +4,9 @@
 # -----------------------------------------------
 
 enum APILevel {
+  ADVANCED
   BASIC
   MEDIUM
-  ADVANCED
 }
 
 """
@@ -14,114 +14,95 @@ The javascript `Date` as string. Type represents date and time as the ISO Date s
 """
 scalar DateTime
 
-input EditImage {
-  _id: ObjectId!
-  validated: Boolean!
-}
-
 type Environment {
   _id: ObjectId!
-  name: String!
-  url: String
-  logoUrl: String
-  description: String
-  templates: [Template!]!
   creator: User
+  description: String
+  logoUrl: String
+  name: String!
+  templates: [Template!]!
+  url: String
 }
 
 type Framework {
   _id: ObjectId!
-  name: String!
-  url: String
-  logoUrl: String
+  creator: User!
   description: String
   languages: [Language!]!
+  logoUrl: String
+  name: String!
   templates: [Template!]!
-  creator: User!
+  url: String
 }
 
 type GitRepository {
   _id: ObjectId!
   createdAt: DateTime!
-  updatedAt: DateTime!
-  isLocked: Boolean!
+  description: String
+  forkCount: Float!
+  githubId: String!
   isArchived: Boolean!
   isDisabled: Boolean!
   isFork: Boolean!
+  isLocked: Boolean!
   isTemplate: Boolean!
-  forkCount: Float!
+  languages: [Language!]!
   name: String!
   nameWithOwner: String!
-  description: String
-  url: String!
-  primaryLanguage: Language
   owner: RepositoryOwner!
-  languages: [Language!]!
+  primaryLanguage: Language
   starCount: Float!
   stargazers: [UserGitHub!]!
   template: Template
-}
-
-type Image {
-  _id: ObjectId!
-  filename: String!
-  mimetype: String!
-  extension: String!
-  validated: Boolean!
-  uploader: User
-  size: Float
-  width: Float
-  height: Float
-  uploadedAt: DateTime!
   updatedAt: DateTime!
-  createdAt: DateTime!
+  url: String!
 }
 
 type Language {
   _id: ObjectId!
-  name: String!
   color: String
-  repositories: [GitRepository!]!
-  primaryRepositories: [GitRepository!]!
-  templates: [Template!]!
-  primaryTemplates: [Template!]!
   frameworks: [Framework!]!
   libraries: [Library!]!
+  name: String!
+  primaryRepositories: [GitRepository!]!
+  primaryTemplates: [Template!]!
+  repositories: [GitRepository!]!
+  templates: [Template!]!
 }
 
 type LanguageGitHub {
-  name: String!
   color: String
+  name: String!
 }
 
 type Library {
   _id: ObjectId!
-  name: String!
-  url: String
-  logoUrl: String
+  creator: User!
   description: String
   language: Language
+  logoUrl: String
+  name: String!
   templates: [Template!]!
-  creator: User!
+  url: String
 }
 
 type Mutation {
+  createEnvironment(description: String, logoUrl: String, name: String!, url: String): Environment!
+  createFramework(description: String, languages: [ObjectId!]!, logoUrl: String, name: String!, url: String): Framework!
+  createLibrary(description: String, language: ObjectId, logoUrl: String, name: String!, url: String): [Library!]!
+  createTemplate(environments: [ObjectId!]!, frameworks: [ObjectId!]!, languages: [ObjectId!]!, libraries: [ObjectId!]!, name: String!, primaryLanguage: ObjectId, repositoryId: ObjectId!): Template!
   logout: Boolean!
   modifyPersonalAccessToken(token: String!): Boolean!
-  createEnvironment(name: String!, url: String, logoUrl: String, description: String): Environment!
-  updateEnvironment(_id: ObjectId!, name: String!, url: String, logoUrl: String, description: String): Environment!
   removeEnvironment(id: String!): String!
-  createFramework(name: String!, url: String, logoUrl: String, description: String, languages: [ObjectId!]!): Framework!
-  updateFramework(_id: ObjectId!, name: String!, url: String, logoUrl: String, description: String, languages: [ObjectId!]!): Framework!
   removeFramework(id: String!): String!
-  createLibrary(name: String!, url: String, logoUrl: String, description: String, language: ObjectId): [Library!]!
-  updateLibrary(_id: ObjectId!, name: String!, url: String, logoUrl: String, description: String, language: ObjectId): Library!
   removeLibrary(id: String!): String!
-  createTemplate(name: String!, repositoryId: ObjectId!, primaryLanguage: ObjectId, languages: [ObjectId!]!, frameworks: [ObjectId!]!, libraries: [ObjectId!]!, environments: [ObjectId!]!): Template!
-  updateTemplate(_id: ObjectId!, name: String!, repositoryId: ObjectId, primaryLanguage: ObjectId, languages: [ObjectId!]!, frameworks: [ObjectId!]!, libraries: [ObjectId!]!, environments: [ObjectId!]!): Template!
   removeTemplate(id: String!): String!
-  toggleUpvote(id: ObjectId!): Boolean!
   searchRepository(input: String!): [RepositoryGitHub!]
+  toggleUpvote(id: ObjectId!): Boolean!
+  updateEnvironment(_id: ObjectId!, description: String, logoUrl: String, name: String!, url: String): Environment!
+  updateFramework(_id: ObjectId!, description: String, languages: [ObjectId!]!, logoUrl: String, name: String!, url: String): Framework!
+  updateLibrary(_id: ObjectId!, description: String, language: ObjectId, logoUrl: String, name: String!, url: String): Library!
+  updateTemplate(_id: ObjectId!, environments: [ObjectId!]!, frameworks: [ObjectId!]!, languages: [ObjectId!]!, libraries: [ObjectId!]!, name: String!, primaryLanguage: ObjectId, repositoryId: ObjectId): Template!
 }
 
 """Mongo object id scalar type"""
@@ -130,144 +111,141 @@ scalar ObjectId
 type Organization {
   _id: ObjectId!
   avatarUrl: String!
-  login: String!
-  url: String!
-  email: String
-  name: String
   description: String
-  websiteUrl: String
+  email: String
+  login: String!
   members: [UserGitHub!]!
+  name: String
   repositories: [GitRepository!]!
+  url: String!
+  websiteUrl: String
 }
 
 type OrganizationGitHub {
-  id: String!
   avatarUrl: String!
-  login: String!
-  url: String!
-  email: String
-  name: String
   description: String
-  websiteUrl: String
+  email: String
+  id: String!
+  login: String!
   members: [UserGitHubAPI!]!
+  name: String
   repositories(isTemplate: Boolean): [RepositoryGitHub!]!
+  url: String!
+  websiteUrl: String
 }
 
 type Query {
-  current_user: User
   checkAPILevel: APILevel!
-  environments: [Environment!]!
+  current_user: User
   environment(id: String!): Environment
-  frameworks: [Framework!]!
+  environments: [Environment!]!
   framework(id: String!): Framework
-  gitRepositories: [GitRepository!]!
+  frameworks: [Framework!]!
   gitRepo(id: String!): GitRepository
+  gitRepositories: [GitRepository!]!
   languages: [Language!]!
   libraries: [Library!]!
   library(id: String!): Library
+  organization(login: String!): OrganizationGitHub
   organizations: [Organization!]!
-  repositoryOwners: [RepositoryOwner!]!
+  repositoryOwner(id: String!): RepositoryOwnerGitHub
   repositoryOwnerDB(id: String!): RepositoryOwner
-  templates: [Template!]!
-  template(owner: String!, name: String!): Template
+  repositoryOwners: [RepositoryOwner!]!
+  searchLanguages(input: String!): [LanguageGitHub!]!
+  template(name: String!, owner: String!): Template
   templateById(id: String!): Template
+  templates: [Template!]!
+  user(login: String!): UserGitHubAPI
   users: [User!]!
   usersGitHubDB: [UserGitHub!]!
-  searchLanguages(input: String!): [LanguageGitHub!]!
-  organization(login: String!): OrganizationGitHub
-  repositoryOwner(id: String!): RepositoryOwnerGitHub
   viewer: UserGitHubAPI!
-  user(login: String!): UserGitHubAPI
-}
-
-input RemoveImage {
-  _id: ObjectId!
 }
 
 type RepositoryGitHub {
-  id: String!
   createdAt: DateTime!
-  updatedAt: DateTime!
-  isLocked: Boolean!
+  description: String!
+  forkCount: Float!
+  id: String!
   isArchived: Boolean!
   isDisabled: Boolean!
   isFork: Boolean!
+  isLocked: Boolean!
   isTemplate: Boolean!
-  forkCount: Float!
+  languages: [LanguageGitHub!]!
   name: String!
   nameWithOwner: String!
-  description: String!
-  url: String!
-  primaryLanguage: LanguageGitHub
   owner: RepositoryOwnerGitHub!
-  languages: [LanguageGitHub!]!
+  primaryLanguage: LanguageGitHub
   starCount: Float!
+  updatedAt: DateTime!
+  url: String!
 }
 
 type RepositoryOwner {
   _id: ObjectId!
   avatarUrl: String!
   login: String!
-  url: String!
-  user: UserGitHub
   organization: Organization
   repositories: [GitRepository!]!
+  url: String!
+  user: UserGitHub
 }
 
 type RepositoryOwnerGitHub {
-  id: String!
   avatarUrl: String!
+  id: String!
   login: String!
+  organization: OrganizationGitHub
   url: String!
   user: UserGitHubAPI
-  organization: OrganizationGitHub
 }
 
 type Template {
   _id: ObjectId!
-  name: String!
-  owner: User
-  upvotes: [User!]!
-  upvotesCount: Float!
-  repository: GitRepository
-  languages: [Language!]!
-  primaryLanguage: Language
-  libraries: [Library!]!
   environments: [Environment!]!
   frameworks: [Framework!]!
+  languages: [Language!]!
+  libraries: [Library!]!
+  name: String!
+  owner: User
+  primaryLanguage: Language
+  repository: GitRepository
+  upvotes: [User!]!
+  upvotesCount: Float!
 }
 
 type User {
   _id: ObjectId!
   admin: Boolean!
   APILevel: APILevel!
+  data: UserGitHub!
+  githubId: String!
   templates: [Template!]!
   upvotedTemplates: [Template!]!
-  data: UserGitHub!
 }
 
 type UserGitHub {
   _id: ObjectId!
   avatarUrl: String!
-  login: String!
-  url: String!
-  email: String!
-  name: String
   bio: String
+  email: String!
+  login: String!
+  name: String
+  organizations: [Organization!]!
   repositories: [GitRepository!]!
   starredRepositories: [GitRepository!]!
-  organizations: [Organization!]!
+  url: String!
 }
 
 type UserGitHubAPI {
-  id: String!
   avatarUrl: String!
-  login: String!
-  url: String!
-  email: String!
-  name: String
   bio: String
+  email: String!
+  id: String!
+  login: String!
+  name: String
+  organizations: [OrganizationGitHub!]!
   repositories(isTemplate: Boolean): [RepositoryGitHub!]!
   starredRepositories(isTemplate: Boolean): [RepositoryGitHub!]!
-  organizations: [OrganizationGitHub!]!
+  url: String!
 }

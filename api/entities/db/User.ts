@@ -18,6 +18,7 @@ export class User {
   @Field(() => ObjectIdScalar)
   readonly _id: ObjectId;
 
+  @Field()
   @Property({ unique: true, required: true })
   githubId: string;
 
