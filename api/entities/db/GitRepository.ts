@@ -1,98 +1,98 @@
-import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryColumn } from "typeorm";
+import { ObjectId } from "mongodb";
+import { Field, ObjectType } from "type-graphql";
 
-import { RepositoryGitHub } from "../githubAPI/RepositoryGitHub";
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { Language } from "./Language";
 import { RepositoryOwner } from "./RepositoryOwner";
 import { Template } from "./Template";
 import { UserGitHub } from "./UserGitHub";
 
-@Entity()
 @ObjectType()
-export class GitRepository implements RepositoryGitHub {
-  @Field(() => ID)
-  @PrimaryColumn()
-  id: string;
+export class GitRepository {
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
+
+  @Property({ unique: true, required: true })
+  githubId: string;
 
   @Field()
-  @Column()
+  @Property()
   createdAt: Date;
 
   @Field()
-  @Column()
+  @Property()
   updatedAt: Date;
 
   @Field()
-  @Column()
+  @Property()
   isLocked: boolean;
 
   @Field()
-  @Column()
+  @Property()
   isArchived: boolean;
 
   @Field()
-  @Column()
+  @Property()
   isDisabled: boolean;
 
   @Field()
-  @Column()
+  @Property()
   isFork: boolean;
 
   @Field()
-  @Column()
+  @Property()
   isTemplate: boolean;
 
   @Field()
-  @Column()
+  @Property()
   forkCount: number;
 
   @Field()
-  @Column()
+  @Property()
   name: string;
 
   @Field()
-  @Column()
+  @Property()
   nameWithOwner: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   description?: string;
 
   @Field()
-  @Column()
+  @Property()
   url: string;
 
   @Field(() => Language, { nullable: true })
-  @ManyToOne(() => Language, lang => lang.primaryRepositories, {
-    cascade: true,
-    eager: true,
-  })
-  primaryLanguage?: Language;
+  @Property({ ref: "Language", index: true })
+  primaryLanguage?: Ref<Language>;
 
   @Field(() => RepositoryOwner)
-  @ManyToOne(() => RepositoryOwner, repoOwner => repoOwner.repositories, {
-    cascade: ["insert", "update"],
-    nullable: true,
-    eager: true,
-  })
-  owner: RepositoryOwner;
+  @Property({ ref: "RepositoryOwner", index: true })
+  owner?: Ref<RepositoryOwner>;
 
   @Field(() => [Language])
-  @ManyToMany(() => Language, lang => lang.repositories, {
-    cascade: true,
-  })
-  @JoinTable()
-  languages: Language[];
+  @PropertyArray({ items: "Language", ref: "Language", default: [] })
+  languages: Ref<Language>[];
 
   @Field()
-  @Column({ default: -1 })
+  @Property({ default: -1 })
   starCount: number;
 
   @Field(() => [UserGitHub])
-  @ManyToMany(() => UserGitHub, user => user.starredRepositories)
-  stargazers: UserGitHub[];
+  @PropertyArray({ items: "Language", ref: "Language", default: [] })
+  stargazers: Ref<UserGitHub>[];
 
   @Field(() => Template, { nullable: true })
-  @OneToOne(() => Template, template => template.repository, { nullable: true })
-  template?: Template;
+  @Property({ ref: "RepositoryOwner", index: true })
+  template?: Ref<Template>;
 }
+
+export const GitRepositoryModel = getModelForClass(GitRepository);

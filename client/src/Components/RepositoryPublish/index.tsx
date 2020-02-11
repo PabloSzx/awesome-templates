@@ -2,12 +2,21 @@ import { Formik } from "formik";
 import gql from "graphql-tag";
 import _ from "lodash";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@apollo/react-hooks";
 import { useUpdateEffect } from "react-use";
 import { Flex } from "rebass";
 import {
-    Button, Checkbox, Divider, Dropdown, Form, Grid, Header, Input, Label
+  Button,
+  Checkbox,
+  Divider,
+  Dropdown,
+  Form,
+  Grid,
+  Header,
+  Input,
+  Label,
 } from "semantic-ui-react";
+
+import { useMutation, useQuery } from "@apollo/react-hooks";
 
 import { AuthContext } from "../Auth/Context";
 import EnvironmentModal from "../Environment";
@@ -19,17 +28,17 @@ import ConfirmModal from "../Modal/Confirm";
 const RepositoryPublishModalContent: FC<{
   children: {
     name: string;
-    id: string;
+    githubId: string;
     languages?: { name: string }[];
     primaryLanguage?: { name: string };
     owner: {
-      id: string;
+      githubId: string;
     };
   };
   disablePublish?: boolean;
 }> = ({
   disablePublish,
-  children: { name, id, languages = [], primaryLanguage, owner },
+  children: { name, githubId, languages = [], primaryLanguage, owner },
 }) => {
   const { user } = useContext(AuthContext);
 
@@ -75,7 +84,7 @@ const RepositoryPublishModalContent: FC<{
       query($id: String!) {
         gitRepo(id: $id) {
           template {
-            id
+            _id
             name
             languages {
               name
@@ -84,19 +93,19 @@ const RepositoryPublishModalContent: FC<{
               name
             }
             libraries {
-              id
+              _id
               name
             }
             frameworks {
-              id
+              _id
               name
             }
             environments {
-              id
+              _id
               name
             }
             owner {
-              id
+              _id
             }
           }
         }
@@ -104,7 +113,7 @@ const RepositoryPublishModalContent: FC<{
     `,
     {
       variables: {
-        id,
+        id: githubId,
       },
       notifyOnNetworkStatusChange: true,
     }
@@ -127,15 +136,15 @@ const RepositoryPublishModalContent: FC<{
           name
         }
         libraries {
-          id
+          _id
           name
         }
         frameworks {
-          id
+          _id
           name
         }
         environments {
-          id
+          _id
           name
         }
       }
@@ -182,13 +191,13 @@ const RepositoryPublishModalContent: FC<{
           name
           upvotesCount
           owner {
-            id
+            _id
             data {
               login
             }
           }
           repository {
-            id
+            _id
             url
             starCount
           }
@@ -197,17 +206,17 @@ const RepositoryPublishModalContent: FC<{
             color
           }
           libraries {
-            id
+            _id
             name
             logoUrl
           }
           frameworks {
-            id
+            _id
             name
             logoUrl
           }
           environments {
-            id
+            _id
             name
             logoUrl
           }
@@ -254,17 +263,17 @@ const RepositoryPublishModalContent: FC<{
           libraries: $libraries
           environments: $environments
         ) {
-          id
+          _id
           name
           upvotesCount
           owner {
-            id
+            _id
             data {
               login
             }
           }
           repository {
-            id
+            _id
             url
             starCount
           }
@@ -273,17 +282,17 @@ const RepositoryPublishModalContent: FC<{
             color
           }
           libraries {
-            id
+            _id
             name
             logoUrl
           }
           frameworks {
-            id
+            _id
             name
             logoUrl
           }
           environments {
-            id
+            _id
             name
             logoUrl
           }
@@ -337,8 +346,8 @@ const RepositoryPublishModalContent: FC<{
       gitRepoData.gitRepo &&
       gitRepoData.gitRepo.template &&
       (user.admin ||
-        owner.id === user.id ||
-        gitRepoData.gitRepo.template.owner.id === user.id)
+        owner.githubId === user._id ||
+        gitRepoData.gitRepo.template.owner.id === user._id)
     ) {
       setUpdate(true);
       setToggleFormData(true);
@@ -448,7 +457,7 @@ const RepositoryPublishModalContent: FC<{
                   frameworks,
                   libraries,
                   environments,
-                  repositoryId: id,
+                  repositoryId: githubId,
                 },
               });
 
@@ -686,7 +695,7 @@ const RepositoryPublishModalContent: FC<{
                           return (
                             <LibraryModal
                               name={data.name}
-                              id={data.id}
+                              _id={data.id}
                               close={close}
                               refetch={() => {
                                 refetchGetGitRepoData();
@@ -767,7 +776,7 @@ const RepositoryPublishModalContent: FC<{
                         if (data) {
                           return (
                             <EnvironmentModal
-                              id={data.id}
+                              _id={data.id}
                               name={data.name}
                               close={close}
                               refetch={() => {
@@ -796,8 +805,8 @@ const RepositoryPublishModalContent: FC<{
                   gitRepoData.gitRepo &&
                   gitRepoData.gitRepo.template &&
                   (user.admin ||
-                    gitRepoData.gitRepo.template.owner.id === user.id ||
-                    owner.id === user.id) ? (
+                    gitRepoData.gitRepo.template.owner.id === user._id ||
+                    owner.githubId === user._id) ? (
                     <ConfirmModal
                       onConfirm={async () => {
                         if (

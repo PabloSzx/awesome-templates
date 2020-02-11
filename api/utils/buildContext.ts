@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 
+import { DocumentType } from "@typegoose/typegoose";
+
 import { APILevel as APILevelEnum } from "../consts";
 import { User } from "../entities";
 
@@ -23,7 +25,7 @@ export const buildContext = <OptionsType = any>({
   res: Response;
 }) => {
   return {
-    login: (user: User, options?: OptionsType) =>
+    login: (user: DocumentType<User>, options?: OptionsType) =>
       promisifiedLogin(req, user, options),
     logout: () => {
       req.logout();
@@ -36,15 +38,15 @@ export const buildContext = <OptionsType = any>({
     },
     isAuthenticated: () => req.isAuthenticated(),
     isUnauthenticated: () => req.isUnauthenticated(),
-    get user(): User {
-      return req.user as User;
+    get user(): DocumentType<User> {
+      return req.user as DocumentType<User>;
     },
     get authGitHub() {
       const {
         accessToken,
         personalAccessToken,
         APILevel,
-      } = (req.user as User) || {
+      } = (req.user as DocumentType<User>) || {
         accessToken: "",
         personalAccessToken: "",
         APILevel: APILevelEnum.BASIC,

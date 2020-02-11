@@ -1,42 +1,49 @@
-import { IsUrl, IsUUID, Length } from "class-validator";
-import { ArgsType, Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { IsUrl, Length } from "class-validator";
+import { ObjectId } from "mongodb";
+import { ArgsType, Field, ObjectType } from "type-graphql";
 
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { Template } from "./Template";
 import { User } from "./User";
 
-@Entity()
 @ObjectType()
 export class Environment {
-  @Field(() => ID)
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
 
   @Field()
-  @Column({ unique: true })
+  @Property({ unique: true })
   name: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   url?: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   logoUrl?: string;
 
   @Field({ nullable: true })
-  @Column({ type: "text", nullable: true })
+  @Property({ nullable: true })
   description?: string;
 
   @Field(() => [Template])
-  @ManyToMany(() => Template, template => template.environments)
-  templates: Template[];
+  @PropertyArray({ items: "Template", ref: "Template", default: [] })
+  templates: Ref<Template>[];
 
-  @Field(() => User)
-  @ManyToOne(() => User, { nullable: false })
-  @JoinColumn({ name: "creator" })
-  creator: User;
+  @Field(() => User, { nullable: true })
+  @Property({ ref: "User", index: true })
+  creator?: Ref<User>;
 }
+
+export const EnvironmentModel = getModelForClass(Environment);
 
 @ArgsType()
 export class CreateEnvironmentInput {
@@ -68,9 +75,8 @@ export class CreateEnvironmentInput {
 
 @ArgsType()
 export class UpdateEnvironmentInput implements Partial<CreateEnvironmentInput> {
-  @IsUUID()
-  @Field()
-  id: string;
+  @Field(() => ObjectIdScalar)
+  _id: ObjectId;
 
   @Length(2, 30)
   @Field()

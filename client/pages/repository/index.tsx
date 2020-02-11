@@ -114,7 +114,12 @@ const RepositoriesTable: FC<{ data?: ISearchRepoMutation }> = ({ data }) => {
                 key={repo.id}
               >
                 <RepositoryPublishModalContent>
-                  {{ ...repo, name: nameWithOwner }}
+                  {{
+                    ...repo,
+                    githubId: repo.id,
+                    name: nameWithOwner,
+                    owner: { githubId: repo.owner.id },
+                  }}
                 </RepositoryPublishModalContent>
               </Modal>
             );

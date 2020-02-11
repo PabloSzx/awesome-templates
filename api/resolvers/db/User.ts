@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import {
   Arg,
   Authorized,
@@ -8,70 +9,71 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
+
+import { isDocument } from "@typegoose/typegoose";
 
 import { ADMIN } from "../../consts";
-import { Template, User } from "../../entities";
+import { TemplateModel, User, UserModel } from "../../entities";
 import { IContext } from "../../interfaces";
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 
 @Resolver(() => User)
 export class UserResolver {
-  constructor(
-    @InjectRepository(User) private readonly UserRepository: Repository<User>,
-    @InjectRepository(Template)
-    private readonly TemplateRepository: Repository<Template>
-  ) {}
-
   @Authorized([ADMIN])
   @Query(() => [User])
   async users() {
-    return await this.UserRepository.find();
+    return await UserModel.find();
   }
 
   @FieldResolver()
-  async templates(@Root() { id }: User) {
-    return (await this.UserRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["templates"],
-      loadEagerRelations: false,
-    })).templates;
+  async templates(@Root() { _id }: User) {
+    return await TemplateModel.find({
+      owner: _id,
+    });
   }
 
   @FieldResolver()
-  async upvotedTemplates(@Root() { id }: User) {
-    return (await this.UserRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["upvotedTemplates"],
-      loadEagerRelations: false,
-    })).upvotedTemplates;
+  async upvotedTemplates(@Root() { _id }: User) {
+    return (
+      (await UserModel.findById(_id).populate("upvotedTemplates"))
+        ?.upvotedTemplates ?? []
+    );
   }
 
   @Authorized()
   @Mutation(() => Boolean)
-  async toggleUpvote(@Arg("id") templateId: string, @Ctx() { user }: IContext) {
-    const userUpvotes = await this.UserRepository.findOneOrFail(user.id, {
-      select: ["id"],
-      relations: ["upvotedTemplates"],
-      loadEagerRelations: false,
-    });
+  async toggleUpvote(
+    @Arg("id", () => ObjectIdScalar) templateId: ObjectId,
+    @Ctx() { user }: IContext
+  ) {
+    const userUpvotes = await UserModel.findById(user._id).populate(
+      "upvotedTemplates"
+    );
 
-    let added: boolean;
+    if (!userUpvotes) {
+      throw new Error("Error user not found");
+    }
+    let added = false;
 
-    if (userUpvotes.upvotedTemplates.find(({ id }) => templateId === id)) {
+    if (
+      userUpvotes.upvotedTemplates.find(template =>
+        templateId.equals(isDocument(template) ? template._id : template)
+      )
+    ) {
       userUpvotes.upvotedTemplates = userUpvotes.upvotedTemplates.filter(
-        ({ id }) => templateId !== id
+        template =>
+          !templateId.equals(isDocument(template) ? template._id : template)
       );
       added = false;
     } else {
-      const template = await this.TemplateRepository.findOneOrFail(templateId, {
-        select: ["id"],
-      });
-      userUpvotes.upvotedTemplates.push(template);
-      added = true;
+      const template = await TemplateModel.findById(templateId);
+      if (template) {
+        userUpvotes.upvotedTemplates.push(template);
+        added = true;
+      }
     }
 
-    await this.UserRepository.save(userUpvotes);
+    await userUpvotes.save();
     return added;
   }
 }

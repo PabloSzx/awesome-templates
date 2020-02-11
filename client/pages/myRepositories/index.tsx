@@ -1,10 +1,19 @@
 import gql from "graphql-tag";
 import { NextPage } from "next";
 import { FC, useEffect, useState } from "react";
-import { useQuery } from "@apollo/react-hooks";
 import { Flex } from "rebass";
-import { Checkbox, Form, Grid, Icon, Input, Label, Table } from "semantic-ui-react";
+import {
+  Checkbox,
+  Form,
+  Grid,
+  Icon,
+  Input,
+  Label,
+  Table,
+} from "semantic-ui-react";
 import { useRememberState } from "use-remember-state";
+
+import { useQuery } from "@apollo/react-hooks";
 
 import RequireAuth from "../../src/Components/Auth/RequireAuth";
 import Loader from "../../src/Components/Loader";
@@ -34,6 +43,7 @@ const Repositories: FC = () => {
   }>(gql`
     query {
       viewer {
+        id
         repositories(isTemplate: null) {
           isTemplate
           id
@@ -56,11 +66,10 @@ const Repositories: FC = () => {
 
   const [filteredData, setFilteredData] = useState([] as RepoQueryType[]);
 
-  const [onlyTemplates, setOnlyTemplates] = useRememberState(
-    "onlyTemplatesMyRepositories",
-    false,
-    { SSR: true }
-  );
+  const [
+    onlyTemplates,
+    setOnlyTemplates,
+  ] = useRememberState("onlyTemplatesMyRepositories", false, { SSR: true });
   const [input, setInput] = useRememberState("filterMyRepositories", "", {
     SSR: true,
   });
@@ -74,11 +83,11 @@ const Repositories: FC = () => {
             (onlyTemplates ? isTemplate : true) &&
             (input
               ? name.toLowerCase().includes(loweredInput) ||
-              (primaryLanguage &&
-                primaryLanguage.name.toLowerCase().includes(loweredInput)) ||
-              languages.some(({ name }) =>
-                name.toLowerCase().includes(loweredInput)
-              )
+                (primaryLanguage &&
+                  primaryLanguage.name.toLowerCase().includes(loweredInput)) ||
+                languages.some(({ name }) =>
+                  name.toLowerCase().includes(loweredInput)
+                )
               : true)
         )
       );
@@ -137,7 +146,7 @@ const Repositories: FC = () => {
           </Table.Header>
           <Table.Body>
             {filteredData.map((repo, key) => {
-              const { starCount, name, url, id } = repo;
+              const { starCount, name, url, id: _id } = repo;
               return (
                 <Modal
                   trigger={
@@ -145,17 +154,21 @@ const Repositories: FC = () => {
                       <Table.Cell>{name}</Table.Cell>
                       <Table.Cell>
                         <Icon name="star" />
-                        {starCount}
+                        {starCount !== -1 ? starCount : "?"}
                       </Table.Cell>
                     </Table.Row>
                   }
                   headerBody={<>{name}</>}
                   dimmer="blurring"
                   key={key}
-                  id={`${id}MyRepoModal`}
+                  id={`${_id}MyRepoModal`}
                 >
                   <RepositoryPublishModalContent>
-                    {repo}
+                    {{
+                      ...repo,
+                      githubId: repo.id,
+                      owner: { githubId: repo.owner.id },
+                    }}
                   </RepositoryPublishModalContent>
                 </Modal>
               );

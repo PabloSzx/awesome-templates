@@ -1,6 +1,7 @@
 export * from "./Environment";
 export * from "./Framework";
 export * from "./GitRepository";
+export * from "./Image";
 export * from "./Language";
 export * from "./Library";
 export * from "./Organization";

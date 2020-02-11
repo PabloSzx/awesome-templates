@@ -1,44 +1,56 @@
+import { ObjectId } from "mongodb";
 import { Field, ObjectType } from "type-graphql";
-import { Column, Entity, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
 
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { LanguageGitHub } from "../githubAPI/LanguageGitHub";
 import { Framework } from "./Framework";
 import { GitRepository } from "./GitRepository";
 import { Library } from "./Library";
 import { Template } from "./Template";
 
-@Entity()
 @ObjectType()
 export class Language implements LanguageGitHub {
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
+
   @Field()
-  @PrimaryColumn()
+  @Property({ index: true, unique: true })
   name: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   color?: string;
 
   @Field(() => [GitRepository])
-  @ManyToMany(() => GitRepository, repo => repo.languages)
-  repositories: GitRepository[];
+  @PropertyArray({ items: "GitRepository", ref: "GitRepository", default: [] })
+  repositories: Ref<GitRepository>[];
 
   @Field(() => [GitRepository])
-  @OneToMany(() => GitRepository, repo => repo.primaryLanguage)
-  primaryRepositories: GitRepository[];
+  @PropertyArray({ items: "GitRepository", ref: "GitRepository", default: [] })
+  primaryRepositories: Ref<GitRepository>[];
 
   @Field(() => [Template])
-  @ManyToMany(() => Template, template => template.languages)
-  templates: Template[];
+  @PropertyArray({ items: "Template", ref: "Template", default: [] })
+  templates: Ref<Template>[];
 
   @Field(() => [Template])
-  @OneToMany(() => Template, template => template.primaryLanguage)
-  primaryTemplates: Template[];
+  @PropertyArray({ items: "Template", ref: "Template", default: [] })
+  primaryTemplates: Ref<Template>[];
 
   @Field(() => [Framework])
-  @ManyToMany(() => Framework, framework => framework.languages)
-  frameworks: Framework[];
+  @PropertyArray({ items: "Framework", ref: "Framework", default: [] })
+  frameworks: Ref<Framework>[];
 
   @Field(() => [Library])
-  @OneToMany(() => Library, lib => lib.language)
-  libraries: Library[];
+  @PropertyArray({ items: "Library", ref: "Library", default: [] })
+  libraries: Ref<Library>[];
 }
+
+export const LanguageModel = getModelForClass(Language);

@@ -1,14 +1,15 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@apollo/react-hooks";
 import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
+
+import { useMutation, useQuery } from "@apollo/react-hooks";
 
 import { AuthContext } from "../Auth/Context";
 import ConfirmModal from "../Modal/Confirm";
 
 type IEnvironmentData = {
-  id: string;
+  _id: string;
   name: string;
   url?: string;
   logoUrl?: string;
@@ -19,11 +20,11 @@ type IEnvironmentData = {
 };
 
 const EnvironmentModal: FC<{
-  id?: string;
+  _id?: string;
   name: string;
   close: () => void;
   refetch: () => void;
-}> = ({ id, name, close, refetch }) => {
+}> = ({ _id, name, close, refetch }) => {
   const { user } = useContext(AuthContext);
 
   const { data, loading: loadingEnvironmentData } = useQuery<
@@ -37,7 +38,7 @@ const EnvironmentModal: FC<{
     gql`
       query($id: String!) {
         environment(id: $id) {
-          id
+          _id
           name
           url
           logoUrl
@@ -49,9 +50,9 @@ const EnvironmentModal: FC<{
       }
     `,
     {
-      skip: !id,
+      skip: !_id,
       variables: {
-        id: id as string,
+        id: _id as string,
       },
     }
   );
@@ -80,7 +81,7 @@ const EnvironmentModal: FC<{
         logoUrl: $logoUrl
         description: $description
       ) {
-        id
+        _id
         name
         url
         logoUrl
@@ -119,13 +120,13 @@ const EnvironmentModal: FC<{
         logoUrl: $logoUrl
         description: $description
       ) {
-        id
+        _id
         name
         url
         logoUrl
         description
         creator {
-          id
+          _id
         }
       }
     }
@@ -168,7 +169,7 @@ const EnvironmentModal: FC<{
     loadingRemoveEnvironment,
   ]);
 
-  const [update, setUpdate] = useState(!!id);
+  const [update, setUpdate] = useState(!!_id);
 
   const [initialValues, setInitialValues] = useState({
     name,
@@ -196,10 +197,10 @@ const EnvironmentModal: FC<{
         initialValues={initialValues}
         enableReinitialize
         onSubmit={async ({ name, url, logoUrl, description }) => {
-          if (id && update) {
+          if (_id && update) {
             await updateEnvironment({
               variables: {
-                id,
+                id: _id,
                 name,
                 url: url || undefined,
                 logoUrl: logoUrl || undefined,
@@ -278,15 +279,15 @@ const EnvironmentModal: FC<{
               </Form.Button>
             </Form.Field>
             {user &&
-              id &&
+              _id &&
               data &&
               data.environment &&
-              (user.admin || data.environment.creator.id === user.id) && (
+              (user.admin || data.environment.creator.id === user._id) && (
                 <ConfirmModal
                   onConfirm={async () => {
                     await removeEnvironment({
                       variables: {
-                        id,
+                        id: _id,
                       },
                     });
                     close();

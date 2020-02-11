@@ -1,25 +1,21 @@
 import _ from "lodash";
 import requireEnv from "require-env-variable";
 import { Arg, Authorized, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { User } from "../../entities";
+import { User, UserModel } from "../../entities";
 import { IContext } from "../../interfaces";
 import { getGitHubAPIv3 } from "../../utils";
 
-const { GITHUB_APP_ID } = requireEnv(["GITHUB_APP_ID"]);
+const { GITHUB_APP_ID } = requireEnv("GITHUB_APP_ID");
 
 @Resolver()
 export class AuthResolver {
-  constructor(
-    @InjectRepository(User) private readonly UserRepository: Repository<User>
-  ) {}
-
   @Query(() => User, { nullable: true })
   async current_user(@Ctx() { isAuthenticated, user }: IContext) {
     if (isAuthenticated()) {
+      await user.populate("data").execPopulate();
+
       return user;
     }
   }
@@ -53,13 +49,13 @@ export class AuthResolver {
           /(?=.*read:org.*)(?=.*read:user.*)/
         )
       ) {
-        await this.UserRepository.update(user.id, {
+        await UserModel.findByIdAndUpdate(user._id, {
           personalAccessToken: token,
         });
         return true;
       }
     } catch (err) {}
-    await this.UserRepository.update(user.id, {
+    await UserModel.findByIdAndUpdate(user._id, {
       personalAccessToken: "",
     });
     return false;
@@ -120,8 +116,8 @@ export class AuthResolver {
 
     if (validPersonalToken) {
       user.APILevel = APILevel.ADVANCED;
-      this.UserRepository.save({
-        id: user.id,
+
+      UserModel.findByIdAndUpdate(user._id, {
         APILevel: APILevel.ADVANCED,
       }).catch(err => {
         console.error(err);
@@ -131,8 +127,7 @@ export class AuthResolver {
 
     if (appInstalled) {
       user.APILevel = APILevel.MEDIUM;
-      this.UserRepository.save({
-        id: user.id,
+      UserModel.findByIdAndUpdate(user._id, {
         APILevel: APILevel.MEDIUM,
       }).catch(err => {
         console.error(err);
@@ -141,7 +136,7 @@ export class AuthResolver {
     }
 
     user.APILevel = APILevel.BASIC;
-    this.UserRepository.save({ id: user.id, APILevel: APILevel.BASIC }).catch(
+    UserModel.findByIdAndUpdate(user._id, { APILevel: APILevel.BASIC }).catch(
       err => {
         console.error(err);
       }

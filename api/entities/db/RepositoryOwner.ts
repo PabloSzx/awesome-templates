@@ -1,41 +1,49 @@
-import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryColumn } from "typeorm";
+import { ObjectId } from "mongodb";
+import { Field, ObjectType } from "type-graphql";
 
-import { RepositoryOwnerGitHub } from "../githubAPI/RepositoryOwnerGitHub";
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { GitRepository } from "./GitRepository";
 import { Organization } from "./Organization";
 import { UserGitHub } from "./UserGitHub";
 
-@Entity()
 @ObjectType()
-export class RepositoryOwner implements RepositoryOwnerGitHub {
-  @Field(() => ID)
-  @PrimaryColumn()
-  id: string;
+export class RepositoryOwner {
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
+
+  @Property({ unique: true, required: true })
+  githubId: string;
 
   @Field()
-  @Column()
+  @Property()
   avatarUrl: string;
 
   @Field()
-  @Column()
+  @Property()
   login: string;
 
   @Field()
-  @Column()
+  @Property()
   url: string;
 
   @Field(() => UserGitHub, { nullable: true })
-  @OneToOne(() => UserGitHub, { cascade: true, eager: true })
-  @JoinColumn({ name: "user" })
-  user?: UserGitHub;
+  @Property({ ref: "UserGitHub", index: true })
+  user?: Ref<UserGitHub>;
 
   @Field(() => Organization, { nullable: true })
-  @OneToOne(() => Organization, { cascade: true, eager: true })
-  @JoinColumn({ name: "organization" })
-  organization?: Organization;
+  @Property({ ref: "Organization", index: true })
+  organization?: Ref<Organization>;
 
   @Field(() => [GitRepository])
-  @OneToMany(() => GitRepository, repo => repo.owner)
-  repositories: GitRepository[];
+  @PropertyArray({ items: "GitRepository", ref: "GitRepository", default: [] })
+  repositories: Ref<GitRepository>[];
 }
+
+export const RepositoryOwnerModel = getModelForClass(RepositoryOwner);

@@ -1,15 +1,16 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@apollo/react-hooks";
 import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
+
+import { useMutation, useQuery } from "@apollo/react-hooks";
 
 import { AuthContext } from "../Auth/Context";
 import LanguagesDropdown from "../Languages/Dropdown";
 import ConfirmModal from "../Modal/Confirm";
 
 type ILibraryData = {
-  id: string;
+  _id: string;
   name: string;
   url?: string;
   logoUrl?: string;
@@ -22,11 +23,11 @@ type ILibraryData = {
   };
 };
 const LibraryModal: FC<{
-  id?: string;
+  _id?: string;
   name: string;
   close: () => void;
   refetch: () => void;
-}> = ({ id, name, close, refetch }) => {
+}> = ({ _id, name, close, refetch }) => {
   const { user } = useContext(AuthContext);
   const { data, loading: loadingLibraryData } = useQuery<
     { library: ILibraryData | null },
@@ -35,7 +36,7 @@ const LibraryModal: FC<{
     gql`
       query($id: String!) {
         library(id: $id) {
-          id
+          _id
           name
           url
           logoUrl
@@ -44,15 +45,15 @@ const LibraryModal: FC<{
             name
           }
           creator {
-            id
+            _id
           }
         }
       }
     `,
     {
-      skip: !id,
+      skip: !_id,
       variables: {
-        id: id as string,
+        id: _id as string,
       },
     }
   );
@@ -83,7 +84,7 @@ const LibraryModal: FC<{
         description: $description
         language: $language
       ) {
-        id
+        _id
         name
         url
         logoUrl
@@ -92,7 +93,7 @@ const LibraryModal: FC<{
           name
         }
         creator {
-          id
+          _id
         }
       }
     }
@@ -128,7 +129,7 @@ const LibraryModal: FC<{
         description: $description
         language: $language
       ) {
-        id
+        _id
         name
         url
         logoUrl
@@ -137,7 +138,7 @@ const LibraryModal: FC<{
           name
         }
         creator {
-          id
+          _id
         }
       }
     }
@@ -175,7 +176,7 @@ const LibraryModal: FC<{
     loadingRemoveLibrary,
   ]);
 
-  const [update, setUpdate] = useState(!!id);
+  const [update, setUpdate] = useState(!!_id);
 
   const [initialValues, setInitialValues] = useState({
     name,
@@ -205,10 +206,10 @@ const LibraryModal: FC<{
         initialValues={initialValues}
         enableReinitialize
         onSubmit={async ({ name, url, logoUrl, description, language }) => {
-          if (id && update && data && data.library) {
+          if (_id && update && data && data.library) {
             await updateLibrary({
               variables: {
-                id,
+                id: _id,
                 name,
                 url: url || undefined,
                 logoUrl: logoUrl || undefined,
@@ -302,16 +303,16 @@ const LibraryModal: FC<{
               </Form.Button>
             </Form.Field>
             {user &&
-              id &&
+              _id &&
               data &&
               data.library &&
-              (user.admin || data.library.creator.id === user.id) && (
+              (user.admin || data.library.creator.id === user._id) && (
                 <Form.Field>
                   <ConfirmModal
                     onConfirm={async () => {
                       await removeLibrary({
                         variables: {
-                          id,
+                          id: _id,
                         },
                       });
                       close();

@@ -6,10 +6,8 @@ import passport from "passport";
 import redis from "redis";
 import requireEnv from "require-env-variable";
 
-import { WRONG_INFO, DOMAIN } from "../consts";
-
-import { connection } from "../db";
-import { User } from "../entities";
+import { DOMAIN, WRONG_INFO } from "../consts";
+import { User, UserGitHubModel, UserModel } from "../entities";
 
 const {
   GITHUB_CLIENT_ID,
@@ -17,13 +15,13 @@ const {
   COOKIE_KEY,
   REDIS_URL,
   NODE_ENV,
-} = requireEnv([
+} = requireEnv(
   "GITHUB_CLIENT_ID",
   "GITHUB_CLIENT_SECRET",
   "COOKIE_KEY",
   "REDIS_URL",
-  "NODE_ENV",
-]);
+  "NODE_ENV"
+);
 export const auth = Router();
 
 const RedisStore = connectRedis(ExpressSession);
@@ -47,15 +45,13 @@ auth.use(passport.initialize());
 auth.use(passport.session());
 
 passport.serializeUser<User, string>((user, cb) => {
-  if (user) cb(null, user.id);
+  if (user) cb(null, user._id.toHexString());
   else cb(WRONG_INFO);
 });
 
 passport.deserializeUser<User | null, string>(async (id, done) => {
   try {
-    const UserRepository = (await connection).getRepository(User);
-
-    const user = await UserRepository.findOne(id);
+    const user = await UserModel.findById(id);
 
     if (user) {
       done(null, user);
@@ -103,7 +99,7 @@ auth.use("/api/login/github", async (req, res) => {
         login,
         name,
         bio,
-        node_id: id,
+        node_id: githubId,
         ...restData
       },
     } = await axios.get<{
@@ -124,10 +120,8 @@ auth.use("/api/login/github", async (req, res) => {
 
     console.log("restData", restData);
 
-    const UserRepository = (await connection).getRepository(User);
-
-    const data = {
-      id,
+    const userGithubData = {
+      githubId,
       avatarUrl,
       login,
       url,
@@ -135,13 +129,32 @@ auth.use("/api/login/github", async (req, res) => {
       email,
       bio,
     };
-    let user: User = UserRepository.create({
-      id,
-      accessToken,
+    const data = await UserGitHubModel.findOneAndUpdate(
+      {
+        githubId: userGithubData.githubId,
+      },
+      userGithubData,
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+    console.log({
       data,
     });
 
-    user = await UserRepository.save(user);
+    let user = await UserModel.findOneAndUpdate(
+      { githubId },
+      {
+        accessToken,
+        data,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    ).populate("data");
 
     req.login(user, err => {
       if (err) {

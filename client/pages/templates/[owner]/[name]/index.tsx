@@ -1,8 +1,9 @@
 import gql from "graphql-tag";
 import _ from "lodash";
 import { NextPage } from "next";
-import { useQuery } from "@apollo/react-hooks";
 import { Card, Grid, Icon } from "semantic-ui-react";
+
+import { useQuery } from "@apollo/react-hooks";
 
 type TemplateQuery = {
   template: {
@@ -79,6 +80,7 @@ const TemplatePage: NextPage<{ name: string; owner: string }> = ({
             }
           }
           owner {
+            _id
             data {
               login
               url

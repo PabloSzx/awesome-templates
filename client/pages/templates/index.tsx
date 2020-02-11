@@ -2,14 +2,34 @@ import { gql } from "apollo-boost";
 import _ from "lodash";
 import { NextPage } from "next";
 import Link from "next/link";
-import { Dispatch, FC, SetStateAction, useContext, useEffect, useState } from "react";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/react-hooks";
 import {
-    Button, Checkbox, Dimmer, Dropdown, Form, Grid, Header, Icon, Image, Label, List,
-    Loader as LoaderSemantic, Segment, Table
+  Dispatch,
+  FC,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import {
+  Button,
+  Checkbox,
+  Dimmer,
+  Dropdown,
+  Form,
+  Grid,
+  Header,
+  Icon,
+  Image,
+  Label,
+  List,
+  Loader as LoaderSemantic,
+  Segment,
+  Table,
 } from "semantic-ui-react";
 import styled from "styled-components";
 import { useRememberState } from "use-remember-state";
+
+import { useLazyQuery, useMutation, useQuery } from "@apollo/react-hooks";
 
 import { AuthContext } from "../../src/Components/Auth/Context";
 import Loader from "../../src/Components/Loader";
@@ -19,54 +39,58 @@ import RepositoryPublishModalContent from "../../src/Components/RepositoryPublis
 
 interface ITemplatesQuery {
   templates: Array<{
-    id: string;
+    _id: string;
     name: string;
     upvotesCount: number;
     owner: {
-      id: string;
+      _id: string;
+      githubId: string;
       data: {
         login: string;
         url: string;
       };
     };
     repository: {
-      id: string;
+      _id: string;
+      githubId: string;
       starCount: number;
       url: string;
       owner: {
-        id: string;
+        _id: string;
       };
     };
     languages: Array<{ name: string; color?: string }>;
-    libraries: Array<{ name: string; logoUrl?: string; id: string }>;
-    frameworks: Array<{ name: string; logoUrl?: string; id: string }>;
-    environments: Array<{ name: string; logoUrl?: string; id: string }>;
+    libraries: Array<{ name: string; logoUrl?: string; _id: string }>;
+    frameworks: Array<{ name: string; logoUrl?: string; _id: string }>;
+    environments: Array<{ name: string; logoUrl?: string; _id: string }>;
   }>;
-  languages: Array<{ name: string; id: string }>;
-  libraries: Array<{ name: string; id: string }>;
-  frameworks: Array<{ name: string; id: string }>;
-  environments: Array<{ name: string; id: string }>;
+  languages: Array<{ name: string; _id: string }>;
+  libraries: Array<{ name: string; _id: string }>;
+  frameworks: Array<{ name: string; _id: string }>;
+  environments: Array<{ name: string; _id: string }>;
 }
 
 const TemplatesQuery = gql`
   query {
     templates {
-      id
+      _id
       name
       upvotesCount
       owner {
-        id
+        _id
+        githubId
         data {
           login
           url
         }
       }
       repository {
-        id
+        _id
+        githubId
         url
         starCount
         owner {
-          id
+          _id
         }
       }
       languages {
@@ -74,17 +98,17 @@ const TemplatesQuery = gql`
         color
       }
       libraries {
-        id
+        _id
         name
         logoUrl
       }
       frameworks {
-        id
+        _id
         name
         logoUrl
       }
       environments {
-        id
+        _id
         name
         logoUrl
       }
@@ -93,15 +117,15 @@ const TemplatesQuery = gql`
       name
     }
     libraries {
-      id
+      _id
       name
     }
     frameworks {
-      id
+      _id
       name
     }
     environments {
-      id
+      _id
       name
     }
   }
@@ -297,7 +321,7 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Environment"
-          options={environments.map(({ name: text, id: value }, key) => ({
+          options={environments.map(({ name: text, _id: value }, key) => ({
             key,
             text,
             value,
@@ -321,7 +345,7 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Frameworks"
-          options={frameworks.map(({ name: text, id: value }, key) => ({
+          options={frameworks.map(({ name: text, _id: value }, key) => ({
             key,
             text,
             value,
@@ -346,7 +370,7 @@ const FilterMenu: FC<{
           selection
           search
           text="Select Libraries"
-          options={libraries.map(({ name: text, id: value }, key) => ({
+          options={libraries.map(({ name: text, _id: value }, key) => ({
             key,
             text,
             value,
@@ -482,15 +506,15 @@ const TemplatesTable: FC<{
     },
   ] = useLazyQuery<{
     current_user: {
-      upvotedTemplates: { id: string }[];
+      upvotedTemplates: { _id: string }[];
     };
   }>(
     gql`
       query {
         current_user {
-          id
+          _id
           upvotedTemplates {
-            id
+            _id
           }
         }
       }
@@ -518,15 +542,16 @@ const TemplatesTable: FC<{
       <Table.Body>
         {sortedTemplates.map(
           ({
-            id,
+            _id,
             name,
             owner,
             upvotesCount,
             repository: {
-              id: repositoryId,
+              _id: repositoryId,
+              githubId: repositoryGithubId,
               url,
               starCount,
-              owner: { id: repoOwnerId },
+              owner: { _id: repoOwnerId },
             },
             languages,
             environments,
@@ -551,7 +576,7 @@ const TemplatesTable: FC<{
                         color={
                           dataUpvotedTemplates &&
                           dataUpvotedTemplates.current_user.upvotedTemplates.find(
-                            value => value.id === id
+                            value => value._id === _id
                           )
                             ? "red"
                             : undefined
@@ -624,8 +649,8 @@ const TemplatesTable: FC<{
               }
               headerBody={<h1>{name}</h1>}
               dimmer="blurring"
-              key={id}
-              id={`${id}TemplateModal`}
+              key={_id}
+              id={`${_id}TemplateModal`}
             >
               {({ close }) => {
                 return (
@@ -660,7 +685,7 @@ const TemplatesTable: FC<{
                             if (user) {
                               await toggleUpvote({
                                 variables: {
-                                  id,
+                                  id: _id,
                                 },
                               });
 
@@ -673,7 +698,7 @@ const TemplatesTable: FC<{
                           color={
                             dataUpvotedTemplates &&
                             dataUpvotedTemplates.current_user.upvotedTemplates.find(
-                              value => value.id === id
+                              value => value._id === _id
                             )
                               ? "red"
                               : "grey"
@@ -699,15 +724,15 @@ const TemplatesTable: FC<{
                     </Grid.Row>
                     {user &&
                       (user.admin ||
-                        owner.id === user.id ||
-                        repoOwnerId === user.id) && (
+                        owner._id === user._id ||
+                        repoOwnerId === user._id) && (
                         <>
                           <Grid.Row>
                             <ConfirmModal
                               onConfirm={async () => {
                                 await removeTemplate({
                                   variables: {
-                                    id,
+                                    id: _id,
                                   },
                                 });
 
@@ -738,9 +763,9 @@ const TemplatesTable: FC<{
                             >
                               <RepositoryPublishModalContent disablePublish>
                                 {{
-                                  id: repositoryId,
+                                  githubId: repositoryGithubId,
                                   name,
-                                  owner,
+                                  owner: { githubId: owner.githubId },
                                 }}
                               </RepositoryPublishModalContent>
                             </Modal>

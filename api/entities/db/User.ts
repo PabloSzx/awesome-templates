@@ -1,55 +1,51 @@
-import { Field, ID, ObjectType } from "type-graphql";
+import { ObjectId } from "mongodb";
+import { Field, ObjectType } from "type-graphql";
+
 import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  OneToMany,
-  OneToOne,
-  PrimaryColumn,
-} from "typeorm";
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
 
 import { APILevel } from "../../consts";
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { Template } from "./Template";
 import { UserGitHub } from "./UserGitHub";
 
-@Entity()
 @ObjectType()
 export class User {
-  @Field(() => ID)
-  @PrimaryColumn()
-  id: string;
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
+
+  @Property({ unique: true, required: true })
+  githubId: string;
 
   @Field()
-  @Column({ default: false })
+  @Property({ default: false })
   admin: boolean;
 
-  @Column()
+  @Property()
   accessToken: string;
 
   @Field(() => APILevel)
-  @Column({ type: "enum", enum: APILevel, default: APILevel.BASIC })
+  @Property({ enum: APILevel, default: APILevel.BASIC })
   APILevel: APILevel;
 
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   personalAccessToken?: string;
 
+  // template => owner
   @Field(() => [Template])
-  @OneToMany(() => Template, template => template.owner)
   templates: Template[];
 
   @Field(() => [Template])
-  @ManyToMany(() => Template, template => template.upvotes, {})
-  @JoinTable()
-  upvotedTemplates: Template[];
+  @PropertyArray({ items: "Template", ref: "Template", default: [] })
+  upvotedTemplates: Ref<Template>[];
 
   @Field(() => UserGitHub)
-  @OneToOne(() => UserGitHub, {
-    cascade: true,
-    nullable: false,
-    eager: true,
-  })
-  @JoinColumn({ name: "data" })
-  data: UserGitHub;
+  @Property({ ref: "UserGitHub", index: true })
+  data: Ref<UserGitHub>;
 }
+
+export const UserModel = getModelForClass(User);

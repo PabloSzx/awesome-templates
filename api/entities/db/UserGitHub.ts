@@ -1,57 +1,60 @@
-import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
+import { ObjectId } from "mongodb";
+import { Field, ObjectType } from "type-graphql";
 
-import { UserGitHubAPI } from "../githubAPI/UserGitHubAPI";
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { GitRepository } from "./GitRepository";
 import { Organization } from "./Organization";
 
-@Entity()
 @ObjectType()
-export class UserGitHub implements UserGitHubAPI {
-  @Field(() => ID)
-  @PrimaryColumn()
-  id: string;
+export class UserGitHub {
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
+
+  @Property({ unique: true, required: true })
+  githubId: string;
 
   @Field()
-  @Column()
+  @Property()
   avatarUrl: string;
 
   @Field()
-  @Column()
+  @Property()
   login: string;
 
   @Field()
-  @Column()
+  @Property()
   url: string;
 
   @Field()
-  @Column()
+  @Property()
   email: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   name?: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   bio?: string;
 
   @Field(() => [GitRepository])
-  @OneToMany(() => GitRepository, repo => repo.owner, {
-    cascade: ["insert", "update"],
-  })
-  repositories: GitRepository[];
+  @PropertyArray({ items: "GitRepository", ref: "GitRepository", default: [] })
+  repositories: Ref<GitRepository>[];
 
   @Field(() => [GitRepository])
-  @ManyToMany(() => GitRepository, repo => repo.stargazers, {
-    cascade: true,
-  })
-  @JoinTable()
-  starredRepositories: GitRepository[];
+  @PropertyArray({ items: "GitRepository", ref: "GitRepository", default: [] })
+  starredRepositories: Ref<GitRepository>[];
 
   @Field(() => [Organization])
-  @ManyToMany(() => Organization, org => org.members, {
-    cascade: true,
-  })
-  organizations: Organization[];
+  @PropertyArray({ items: "Organization", ref: "Organization", default: [] })
+  organizations: Ref<Organization>[];
 }
+
+export const UserGitHubModel = getModelForClass(UserGitHub);

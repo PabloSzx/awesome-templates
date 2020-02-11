@@ -9,33 +9,25 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
 import {
   GitHubOrganization,
   GitHubRepository,
   GitHubUser,
-  Language,
-  RepositoryOwner,
+  GitRepositoryModel,
+  LanguageModel,
+  OrganizationModel,
+  RepositoryOwnerModel,
   UserGitHub,
   UserGitHubAPI,
+  UserGitHubModel,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
 
 @Resolver(() => UserGitHubAPI)
 export class UserGitHubAPIResolver {
-  constructor(
-    @InjectRepository(UserGitHub)
-    private readonly UserGitHubRepository: Repository<UserGitHub>,
-    @InjectRepository(RepositoryOwner)
-    private readonly RepositoryOwnerRepository: Repository<RepositoryOwner>,
-    @InjectRepository(Language)
-    private readonly LanguageRepository: Repository<Language>
-  ) {}
-
   @Authorized(APILevel.MEDIUM)
   @Query(() => UserGitHubAPI)
   async viewer(@Ctx() { authGitHub }: IContext) {
@@ -58,15 +50,27 @@ export class UserGitHubAPIResolver {
       authGitHub
     );
 
-    this.UserGitHubRepository.save(viewer).catch(err => {
-      console.error(err);
-    });
-    this.RepositoryOwnerRepository.save({
-      ...viewer,
-      user: viewer,
-    }).catch(err => {
-      console.error(err);
-    });
+    const userGithubDoc = await UserGitHubModel.findOneAndUpdate(
+      {
+        githubId: viewer.id,
+      },
+      viewer,
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+    await RepositoryOwnerModel.findOneAndUpdate(
+      {
+        githubId: viewer.id,
+      },
+      { ...viewer, user: userGithubDoc },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
 
     return viewer;
   }
@@ -102,23 +106,34 @@ export class UserGitHubAPIResolver {
     );
 
     if (user) {
-      this.UserGitHubRepository.save(user).catch(err => {
-        console.error(err);
-      });
-      this.RepositoryOwnerRepository.save({
-        ...user,
+      const userDoc = await UserGitHubModel.findOneAndUpdate(
+        {
+          githubId: user.id,
+        },
         user,
-      }).catch(err => {
-        console.error(err);
-      });
-    }
+        {
+          upsert: true,
+          new: true,
+        }
+      );
 
+      await RepositoryOwnerModel.findOneAndUpdate(
+        {
+          githubId: user.id,
+        },
+        { user: userDoc },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+    }
     return user;
   }
 
   @FieldResolver()
   async repositories(
-    @Root() { id, login }: UserGitHub,
+    @Root() { id, login }: GitHubUser,
     @Ctx() { authGitHub }: IContext,
     @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
@@ -128,6 +143,8 @@ export class UserGitHubAPIResolver {
     let after: string | undefined;
 
     let hasNextPage: boolean;
+
+    console.log(147);
 
     do {
       const {
@@ -160,6 +177,7 @@ export class UserGitHubAPIResolver {
                 privacy: PUBLIC
                 after: $after
                 orderBy: { direction: DESC, field: STARGAZERS }
+                affiliations: [OWNER]
               ) {
                 pageInfo {
                   hasNextPage
@@ -221,21 +239,64 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    (async () => {
-      await this.LanguageRepository.createQueryBuilder()
-        .insert()
-        .orIgnore()
-        .values(
-          _.uniqWith(
-            _.compact(_.map(repositories, v => v.primaryLanguage)),
-            _.isEqual
-          )
-        )
-        .execute();
-      this.UserGitHubRepository.save({ id, repositories }).catch(err => {
-        console.error(3, err);
-      });
-    })();
+    const repositoriesDocs = await Promise.all(
+      repositories.map(
+        async ({
+          primaryLanguage: primaryLanguageRepo,
+          owner: ownerRepo,
+          ...repo
+        }) => {
+          const [primaryLanguage, owner] = await Promise.all([
+            primaryLanguageRepo
+              ? await LanguageModel.findOneAndUpdate(
+                  {
+                    name: primaryLanguageRepo.name,
+                  },
+                  {
+                    color: primaryLanguageRepo.color,
+                  },
+                  {
+                    upsert: true,
+                    new: true,
+                  }
+                )
+              : undefined,
+            UserGitHubModel.findOneAndUpdate(
+              {
+                githubId: ownerRepo.id,
+              },
+              ownerRepo,
+              {
+                upsert: true,
+                new: true,
+              }
+            ),
+          ]);
+          return GitRepositoryModel.findOneAndUpdate(
+            {
+              githubId: repo.id,
+            },
+            { ...repo, primaryLanguage, owner },
+            {
+              upsert: true,
+              new: true,
+            }
+          );
+        }
+      )
+    );
+
+    await UserGitHubModel.findOneAndUpdate(
+      {
+        githubId: id,
+      },
+      {
+        repositories: repositoriesDocs,
+      },
+      {
+        new: true,
+      }
+    );
 
     return _.filter(repositories, repo =>
       isTemplate !== undefined ? repo.isTemplate === isTemplate : true
@@ -244,7 +305,7 @@ export class UserGitHubAPIResolver {
 
   @FieldResolver()
   async starredRepositories(
-    @Root() { id, login }: UserGitHub,
+    @Root() { id, login }: GitHubUser,
     @Ctx() { authGitHub }: IContext,
     @Arg("isTemplate", { defaultValue: undefined, nullable: true })
     isTemplate: boolean
@@ -346,21 +407,64 @@ export class UserGitHubAPIResolver {
       after = pageInfo.endCursor;
     } while (hasNextPage);
 
-    (async () => {
-      await this.LanguageRepository.createQueryBuilder()
-        .insert()
-        .orIgnore()
-        .values(
-          _.uniqWith(
-            _.compact(_.map(starredRepositories, v => v.primaryLanguage)),
-            _.isEqual
-          )
-        )
-        .execute();
-      this.UserGitHubRepository.save({ id, starredRepositories }).catch(err => {
-        console.error(4, err);
-      });
-    })();
+    const starredRepositoriesDocs = await Promise.all(
+      starredRepositories.map(
+        async ({
+          primaryLanguage: primaryLanguageRepo,
+          owner: ownerRepo,
+          ...repo
+        }) => {
+          const [primaryLanguage, owner] = await Promise.all([
+            primaryLanguageRepo
+              ? await LanguageModel.findOneAndUpdate(
+                  {
+                    name: primaryLanguageRepo.name,
+                  },
+                  {
+                    color: primaryLanguageRepo.color,
+                  },
+                  {
+                    upsert: true,
+                    new: true,
+                  }
+                )
+              : undefined,
+            UserGitHubModel.findOneAndUpdate(
+              {
+                githubId: ownerRepo.id,
+              },
+              ownerRepo,
+              {
+                upsert: true,
+                new: true,
+              }
+            ),
+          ]);
+          return GitRepositoryModel.findOneAndUpdate(
+            {
+              githubId: repo.id,
+            },
+            { ...repo, primaryLanguage, owner },
+            {
+              upsert: true,
+              new: true,
+            }
+          );
+        }
+      )
+    );
+
+    await UserGitHubModel.findOneAndUpdate(
+      {
+        githubId: id,
+      },
+      {
+        starredRepositories: starredRepositoriesDocs,
+      },
+      {
+        new: true,
+      }
+    );
 
     return _.filter(starredRepositories, repo =>
       isTemplate !== undefined ? repo.isTemplate === isTemplate : true
@@ -370,7 +474,7 @@ export class UserGitHubAPIResolver {
   @FieldResolver()
   async organizations(
     @Ctx() { authGitHub }: IContext,
-    @Root() { id, login }: GitHubUser
+    @Root() { githubId, login }: UserGitHub
   ) {
     const {
       user: {
@@ -413,12 +517,29 @@ export class UserGitHubAPIResolver {
       }
     );
 
-    this.UserGitHubRepository.save({
-      id,
-      organizations,
-    }).catch(err => {
-      console.error(err);
-    });
+    const organizationsDocs = await Promise.all(
+      organizations.map(org => {
+        return OrganizationModel.findOneAndUpdate(
+          {
+            githubId: org.id,
+          },
+          org,
+          {
+            upsert: true,
+            new: true,
+          }
+        );
+      })
+    );
+
+    await UserGitHubModel.findOneAndUpdate(
+      {
+        githubId,
+      },
+      {
+        organizations: organizationsDocs,
+      }
+    );
 
     return organizations;
   }

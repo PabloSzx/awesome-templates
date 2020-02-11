@@ -10,86 +10,74 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
+
+import { isDocument } from "@typegoose/typegoose";
 
 import { NOT_AUTHORIZED } from "../../consts";
 import {
   CreateLibraryInput,
-  Language,
   Library,
+  LibraryModel,
   UpdateLibraryInput,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 
 @Resolver(() => Library)
 export class LibraryResolver {
-  constructor(
-    @InjectRepository(Library)
-    private readonly LibraryRepository: Repository<Library>,
-    @InjectRepository(Language)
-    private readonly LanguageRepository: Repository<Language>
-  ) {}
-
   @Query(() => [Library])
   async libraries() {
-    return await this.LibraryRepository.find();
+    return await LibraryModel.find();
   }
 
   @Query(() => Library, { nullable: true })
   async library(@Arg("id") id: string) {
-    return await this.LibraryRepository.findOne(id);
+    return await LibraryModel.findById(id);
   }
 
   @Authorized()
   @Mutation(() => [Library])
   async createLibrary(
     @Args()
-    { name, url, logoUrl, description, language }: CreateLibraryInput,
+    { ...newLibraryData }: CreateLibraryInput,
     @Ctx() { user: creator }: IContext
   ) {
-    const newLibrary = this.LibraryRepository.create({
-      name,
-      url,
-      logoUrl,
-      description,
-      creator,
-      language: await this.LanguageRepository.findOneOrFail(language),
-    });
+    const newLibrary = await LibraryModel.findOneAndUpdate(
+      {
+        name: newLibraryData.name,
+      },
+      {
+        ...newLibraryData,
+        creator,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
 
-    await this.LibraryRepository.save(newLibrary);
-
-    return await this.LibraryRepository.find();
+    return newLibrary;
   }
 
   @Authorized()
   @Mutation(() => Library)
   async updateLibrary(
     @Args()
-    { id, name, url, logoUrl, description, language }: UpdateLibraryInput,
+    { _id, ...updateLibraryData }: UpdateLibraryInput,
     @Ctx() { user }: IContext
   ) {
-    const partialLibrary: Partial<Library> = {
-      name,
-      url,
-      logoUrl,
-      description,
-    };
-
     let [library] = await Promise.all([
-      this.LibraryRepository.findOneOrFail(id, { relations: ["creator"] }),
-      (async () => {
-        if (language) {
-          partialLibrary.language = await this.LanguageRepository.findOneOrFail(
-            language
-          );
-        }
-      })(),
+      LibraryModel.findById(_id).populate("creator"),
     ]);
-    if (user.admin || library.creator.id === user.id) {
-      _.assign(library, _.omitBy(partialLibrary, _.isUndefined));
+    if (
+      library &&
+      (user.admin ||
+        (library.creator &&
+          isDocument(library.creator) &&
+          library.creator.id === user.id))
+    ) {
+      _.assign(library, _.omitBy(updateLibraryData, _.isUndefined));
 
-      return await this.LibraryRepository.save(library);
+      return await library.save();
     }
     throw new Error(NOT_AUTHORIZED);
   }
@@ -97,34 +85,30 @@ export class LibraryResolver {
   @Authorized()
   @Mutation(() => String)
   async removeLibrary(@Arg("id") id: string, @Ctx() { user }: IContext) {
-    const library = await this.LibraryRepository.findOneOrFail(id, {
-      select: ["id", "creator"],
-      relations: ["creator"],
-      loadEagerRelations: false,
-    });
+    const library = await LibraryModel.findById(id);
 
-    if (user.admin || library.creator.id === user.id) {
-      await this.LibraryRepository.remove(library);
+    if (
+      library &&
+      (user.admin ||
+        (library.creator &&
+          isDocument(library.creator) &&
+          library.creator.id === user.id))
+    ) {
+      await LibraryModel.findByIdAndRemove(id);
       return id;
     }
     throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()
-  async templates(@Root() { id }: Library) {
-    return (await this.LibraryRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["templates"],
-      loadEagerRelations: false,
-    })).templates;
+  async templates(@Root() { _id }: Library) {
+    return (
+      (await LibraryModel.findById(_id).populate("templates"))?.templates ?? []
+    );
   }
 
   @FieldResolver()
-  async creator(@Root() { id }: Library) {
-    return (await this.LibraryRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["creator"],
-      loadEagerRelations: false,
-    })).creator;
+  async creator(@Root() { _id }: Library) {
+    return (await LibraryModel.findById(_id).populate("creator"))?.creator;
   }
 }

@@ -1,67 +1,50 @@
 import { FieldResolver, Query, Resolver, Root } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
 
-import { Language } from "../../entities";
+import { Language, LanguageModel } from "../../entities";
 
 @Resolver(() => Language)
 export class LanguageResolver {
-  constructor(
-    @InjectRepository(Language)
-    private readonly LanguageRepository: Repository<Language>
-  ) {}
-
   @Query(() => [Language])
   async languages() {
-    return await this.LanguageRepository.find();
+    return await LanguageModel.find();
   }
 
   @FieldResolver()
-  async repositories(@Root() { name }: Language) {
-    return (await this.LanguageRepository.findOneOrFail(name, {
-      select: ["name"],
-      relations: ["repositories"],
-      loadEagerRelations: false,
-    })).repositories;
+  async repositories(@Root() { _id }: Language) {
+    return (
+      (await LanguageModel.findById(_id).populate("repositories"))
+        ?.repositories ?? []
+    );
   }
   @FieldResolver()
-  async primaryRepositories(@Root() { name }: Language) {
-    return (await this.LanguageRepository.findOneOrFail(name, {
-      select: ["name"],
-      relations: ["primaryRepositories"],
-      loadEagerRelations: false,
-    })).primaryRepositories;
+  async primaryRepositories(@Root() { _id }: Language) {
+    return (
+      (await LanguageModel.findById(_id).populate("primaryRepositories"))
+        ?.primaryRepositories ?? []
+    );
   }
   @FieldResolver()
-  async templates(@Root() { name }: Language) {
-    return (await this.LanguageRepository.findOneOrFail(name, {
-      select: ["name"],
-      relations: ["templates"],
-      loadEagerRelations: false,
-    })).templates;
+  async templates(@Root() { _id }: Language) {
+    return (
+      (await LanguageModel.findById(_id).populate("templates"))?.templates ?? []
+    );
   }
   @FieldResolver()
-  async primaryTemplates(@Root() { name }: Language) {
-    return (await this.LanguageRepository.findOneOrFail(name, {
-      select: ["name"],
-      relations: ["primaryTemplates"],
-      loadEagerRelations: false,
-    })).primaryTemplates;
+  async primaryTemplates(@Root() { _id }: Language) {
+    return (
+      (await LanguageModel.findById(_id).populate("primaryTemplates"))
+        ?.primaryTemplates ?? []
+    );
   }
   @FieldResolver()
-  async frameworks(@Root() { name }: Language) {
-    return (await this.LanguageRepository.findOneOrFail(name, {
-      select: ["name"],
-      relations: ["frameworks"],
-      loadEagerRelations: false,
-    })).frameworks;
+  async frameworks(@Root() { _id }: Language) {
+    return (
+      (await LanguageModel.findById(_id).populate("frameworks"))?.frameworks ??
+      []
+    );
   }
   @FieldResolver()
-  async libraries(@Root() { name }: Language) {
-    return (await this.LanguageRepository.findOneOrFail(name, {
-      select: ["name"],
-      relations: ["libraries"],
-      loadEagerRelations: false,
-    })).libraries;
+  async libraries(@Root() { _id }: Language) {
+    return (await LanguageModel.findById(_id))?.libraries ?? [];
   }
 }

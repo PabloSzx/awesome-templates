@@ -1,22 +1,21 @@
 import gql from "graphql-tag";
 import { Arg, Authorized, Ctx, Query, Resolver } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
 import {
-    GitHubOrganization, GitHubRepositoryOwner, GitHubUser, RepositoryOwner, RepositoryOwnerGitHub
+  GitHubOrganization,
+  GitHubRepositoryOwner,
+  GitHubUser,
+  OrganizationModel,
+  RepositoryOwnerGitHub,
+  RepositoryOwnerModel,
+  UserGitHubModel,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
 
 @Resolver(() => RepositoryOwnerGitHub)
 export class RepositoryOwnerGitHubResolver {
-  constructor(
-    @InjectRepository(RepositoryOwner)
-    private readonly RepoOwnerRepository: Repository<RepositoryOwner>
-  ) {}
-
   @Authorized(APILevel.ADVANCED)
   @Query(() => RepositoryOwnerGitHub, { nullable: true })
   async repositoryOwner(
@@ -30,8 +29,8 @@ export class RepositoryOwnerGitHubResolver {
     const { node } = await GitHubAPI.query<
       {
         node:
-          | { __typename: "User" } & GitHubUser
-          | { __typename: "Organization" } & GitHubOrganization
+          | ({ __typename: "User" } & GitHubUser)
+          | ({ __typename: "Organization" } & GitHubOrganization)
           | null;
       },
       { id: string }
@@ -104,13 +103,44 @@ export class RepositoryOwnerGitHubResolver {
     }
 
     if (repoOwner) {
-      this.RepoOwnerRepository.save({
-        ...repoOwner,
-        user,
-        organization,
-      }).catch(err => {
-        console.error(err);
-      });
+      const [userDoc, orgDoc] = await Promise.all([
+        user &&
+          UserGitHubModel.findOneAndUpdate(
+            {
+              githubId: user.id,
+            },
+            user,
+            {
+              upsert: true,
+              new: true,
+            }
+          ),
+        organization &&
+          OrganizationModel.findOneAndUpdate(
+            {
+              githubId: organization.id,
+            },
+            organization,
+            {
+              upsert: true,
+              new: true,
+            }
+          ),
+      ]);
+      await RepositoryOwnerModel.findOneAndUpdate(
+        {
+          id,
+        },
+        {
+          user: userDoc,
+          organization: orgDoc,
+        },
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+
       return {
         ...repoOwner,
         user,

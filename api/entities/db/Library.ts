@@ -1,51 +1,54 @@
-import { IsUrl, IsUUID, Length, MinLength } from "class-validator";
-import { ArgsType, Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { IsUrl, Length, MinLength } from "class-validator";
+import { ObjectId } from "mongodb";
+import { ArgsType, Field, ObjectType } from "type-graphql";
 
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { Language } from "./Language";
 import { Template } from "./Template";
 import { User } from "./User";
 
-@Entity()
 @ObjectType()
 export class Library {
-  @Field(() => ID)
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
 
   @Field()
-  @Column({ unique: true })
+  @Property()
   name: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   url?: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   logoUrl?: string;
 
   @Field({ nullable: true })
-  @Column({ type: "text", nullable: true })
+  @Property({ nullable: true })
   description?: string;
 
   @Field(() => Language, { nullable: true })
-  @ManyToOne(() => Language, lang => lang.libraries, {
-    cascade: true,
-    eager: true,
-    nullable: true,
-  })
-  language?: Language;
+  @Property({ ref: "Language", index: true })
+  language?: Ref<Language>;
 
   @Field(() => [Template])
-  @ManyToMany(() => Template, template => template.libraries)
-  templates: Template[];
+  @PropertyArray({ items: "Template", ref: "Template", default: [] })
+  templates: Ref<Template>[];
 
   @Field(() => User)
-  @ManyToOne(() => User, { nullable: false })
-  @JoinColumn({ name: "creator" })
-  creator: User;
+  @Property({ ref: "User", index: true })
+  creator: Ref<User>;
 }
+
+export const LibraryModel = getModelForClass(Library);
 
 @ArgsType()
 export class CreateLibraryInput {
@@ -75,15 +78,14 @@ export class CreateLibraryInput {
   description?: string;
 
   @MinLength(1)
-  @Field({ nullable: true })
-  language?: string;
+  @Field(() => ObjectIdScalar, { nullable: true })
+  language?: ObjectId;
 }
 
 @ArgsType()
 export class UpdateLibraryInput implements Partial<CreateLibraryInput> {
-  @IsUUID()
-  @Field()
-  id: string;
+  @Field(() => ObjectIdScalar)
+  _id: string;
 
   @Length(2, 60)
   @Field()
@@ -111,6 +113,6 @@ export class UpdateLibraryInput implements Partial<CreateLibraryInput> {
   description?: string;
 
   @MinLength(1)
-  @Field({ nullable: true })
-  language?: string;
+  @Field(() => ObjectIdScalar, { nullable: true })
+  language?: ObjectId;
 }

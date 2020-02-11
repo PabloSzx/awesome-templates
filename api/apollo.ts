@@ -1,7 +1,6 @@
 import { ApolloServer } from "apollo-server-express";
 import { Express } from "express";
 import { buildSchema, registerEnumType } from "type-graphql";
-import { Container as container } from "typedi";
 
 import { APILevel } from "./consts";
 import * as resolvers from "./resolvers";
@@ -15,7 +14,6 @@ export const apollo = async (app: Express) => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers: [...Object.values(resolvers)],
-      container,
       authChecker,
       emitSchemaFile: process.env.NODE_ENV !== "production",
     }),

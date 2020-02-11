@@ -1,51 +1,60 @@
-import { Field, ID, ObjectType } from "type-graphql";
-import { Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryColumn } from "typeorm";
+import { ObjectId } from "mongodb";
+import { Field, ObjectType } from "type-graphql";
 
-import { OrganizationGitHub } from "../githubAPI/OrganizationGitHub";
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { GitRepository } from "./GitRepository";
 import { UserGitHub } from "./UserGitHub";
 
-@Entity()
 @ObjectType()
-export class Organization implements OrganizationGitHub {
-  @Field(() => ID)
-  @PrimaryColumn()
-  id: string;
+export class Organization {
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
+
+  @Property({ unique: true, required: true })
+  githubId: string;
 
   @Field()
-  @Column()
+  @Property()
   avatarUrl: string;
 
   @Field()
-  @Column()
+  @Property()
   login: string;
 
   @Field()
-  @Column()
+  @Property()
   url: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   email?: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   name?: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   description?: string;
 
   @Field({ nullable: true })
-  @Column({ nullable: true })
+  @Property({ nullable: true })
   websiteUrl?: string;
 
   @Field(() => [UserGitHub])
-  @ManyToMany(() => UserGitHub, member => member.organizations)
-  @JoinTable()
-  members: UserGitHub[];
+  @PropertyArray({ items: "UserGitHub", ref: "UserGitHub", default: [] })
+  members: Ref<UserGitHub>[];
 
   @Field(() => GitRepository)
-  @OneToMany(() => GitRepository, repo => repo.owner)
-  repositories: GitRepository[];
+  @PropertyArray({ items: "GitRepository", ref: "GitRepository", default: [] })
+  repositories: Ref<GitRepository>[];
 }
+
+export const OrganizationModel = getModelForClass(Organization);

@@ -2,21 +2,14 @@ import gql from "graphql-tag";
 import levenshtein from "js-levenshtein";
 import _ from "lodash";
 import { Arg, Authorized, Ctx, Query, Resolver } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
 
 import { APILevel } from "../../consts";
-import { GitHubLanguage, Language, LanguageGitHub } from "../../entities";
+import { GitHubLanguage, LanguageGitHub, LanguageModel } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
 
 @Resolver(() => LanguageGitHub)
 export class LanguageGitHubResolver {
-  constructor(
-    @InjectRepository(Language)
-    private readonly LanguageRepository: Repository<Language>
-  ) {}
-
   @Authorized(APILevel.ADVANCED)
   @Query(() => [LanguageGitHub])
   async searchLanguages(
@@ -74,10 +67,26 @@ export class LanguageGitHubResolver {
       ],
       ["desc", "asc"]
     );
-    if (!_.isEmpty(languages))
-      this.LanguageRepository.save(languages).catch(err => {
-        console.error(err);
-      });
+    if (!_.isEmpty(languages)) {
+      await Promise.all(
+        languages
+          .filter(lang => {
+            return !!(lang.color && lang.name);
+          })
+          .map(({ name, color }) => {
+            return LanguageModel.findOneAndUpdate(
+              { name },
+              {
+                color,
+              },
+              {
+                upsert: true,
+                new: true,
+              }
+            );
+          })
+      );
+    }
 
     return languages;
   }

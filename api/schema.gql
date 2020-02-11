@@ -14,18 +14,23 @@ The javascript `Date` as string. Type represents date and time as the ISO Date s
 """
 scalar DateTime
 
+input EditImage {
+  _id: ObjectId!
+  validated: Boolean!
+}
+
 type Environment {
-  id: ID!
+  _id: ObjectId!
   name: String!
   url: String
   logoUrl: String
   description: String
   templates: [Template!]!
-  creator: User!
+  creator: User
 }
 
 type Framework {
-  id: ID!
+  _id: ObjectId!
   name: String!
   url: String
   logoUrl: String
@@ -36,7 +41,7 @@ type Framework {
 }
 
 type GitRepository {
-  id: ID!
+  _id: ObjectId!
   createdAt: DateTime!
   updatedAt: DateTime!
   isLocked: Boolean!
@@ -57,7 +62,23 @@ type GitRepository {
   template: Template
 }
 
+type Image {
+  _id: ObjectId!
+  filename: String!
+  mimetype: String!
+  extension: String!
+  validated: Boolean!
+  uploader: User
+  size: Float
+  width: Float
+  height: Float
+  uploadedAt: DateTime!
+  updatedAt: DateTime!
+  createdAt: DateTime!
+}
+
 type Language {
+  _id: ObjectId!
   name: String!
   color: String
   repositories: [GitRepository!]!
@@ -74,7 +95,7 @@ type LanguageGitHub {
 }
 
 type Library {
-  id: ID!
+  _id: ObjectId!
   name: String!
   url: String
   logoUrl: String
@@ -88,23 +109,26 @@ type Mutation {
   logout: Boolean!
   modifyPersonalAccessToken(token: String!): Boolean!
   createEnvironment(name: String!, url: String, logoUrl: String, description: String): Environment!
-  updateEnvironment(id: String!, name: String!, url: String, logoUrl: String, description: String): Environment!
+  updateEnvironment(_id: ObjectId!, name: String!, url: String, logoUrl: String, description: String): Environment!
   removeEnvironment(id: String!): String!
-  createFramework(name: String!, url: String, logoUrl: String, description: String, languages: [String!]!): Framework!
-  updateFramework(id: String!, name: String!, url: String, logoUrl: String, description: String, languages: [String!]!): Framework!
+  createFramework(name: String!, url: String, logoUrl: String, description: String, languages: [ObjectId!]!): Framework!
+  updateFramework(_id: ObjectId!, name: String!, url: String, logoUrl: String, description: String, languages: [ObjectId!]!): Framework!
   removeFramework(id: String!): String!
-  createLibrary(name: String!, url: String, logoUrl: String, description: String, language: String): [Library!]!
-  updateLibrary(id: String!, name: String!, url: String, logoUrl: String, description: String, language: String): Library!
+  createLibrary(name: String!, url: String, logoUrl: String, description: String, language: ObjectId): [Library!]!
+  updateLibrary(_id: ObjectId!, name: String!, url: String, logoUrl: String, description: String, language: ObjectId): Library!
   removeLibrary(id: String!): String!
-  createTemplate(name: String!, repositoryId: String!, primaryLanguage: String, languages: [String!]!, frameworks: [String!]!, libraries: [String!]!, environments: [String!]!): Template!
-  updateTemplate(templateId: String!, name: String!, repositoryId: String, primaryLanguage: String, languages: [String!]!, frameworks: [String!]!, libraries: [String!]!, environments: [String!]!): Template!
+  createTemplate(name: String!, repositoryId: ObjectId!, primaryLanguage: ObjectId, languages: [ObjectId!]!, frameworks: [ObjectId!]!, libraries: [ObjectId!]!, environments: [ObjectId!]!): Template!
+  updateTemplate(_id: ObjectId!, name: String!, repositoryId: ObjectId, primaryLanguage: ObjectId, languages: [ObjectId!]!, frameworks: [ObjectId!]!, libraries: [ObjectId!]!, environments: [ObjectId!]!): Template!
   removeTemplate(id: String!): String!
-  toggleUpvote(id: String!): Boolean!
+  toggleUpvote(id: ObjectId!): Boolean!
   searchRepository(input: String!): [RepositoryGitHub!]
 }
 
+"""Mongo object id scalar type"""
+scalar ObjectId
+
 type Organization {
-  id: ID!
+  _id: ObjectId!
   avatarUrl: String!
   login: String!
   url: String!
@@ -156,6 +180,10 @@ type Query {
   user(login: String!): UserGitHubAPI
 }
 
+input RemoveImage {
+  _id: ObjectId!
+}
+
 type RepositoryGitHub {
   id: String!
   createdAt: DateTime!
@@ -177,7 +205,7 @@ type RepositoryGitHub {
 }
 
 type RepositoryOwner {
-  id: ID!
+  _id: ObjectId!
   avatarUrl: String!
   login: String!
   url: String!
@@ -196,12 +224,12 @@ type RepositoryOwnerGitHub {
 }
 
 type Template {
-  id: ID!
+  _id: ObjectId!
   name: String!
-  owner: User!
+  owner: User
   upvotes: [User!]!
   upvotesCount: Float!
-  repository: GitRepository!
+  repository: GitRepository
   languages: [Language!]!
   primaryLanguage: Language
   libraries: [Library!]!
@@ -210,7 +238,7 @@ type Template {
 }
 
 type User {
-  id: ID!
+  _id: ObjectId!
   admin: Boolean!
   APILevel: APILevel!
   templates: [Template!]!
@@ -219,7 +247,7 @@ type User {
 }
 
 type UserGitHub {
-  id: ID!
+  _id: ObjectId!
   avatarUrl: String!
   login: String!
   url: String!

@@ -10,32 +10,28 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
+
+import { isDocument } from "@typegoose/typegoose";
 
 import { NOT_AUTHORIZED } from "../../consts";
 import {
   CreateEnvironmentInput,
   Environment,
+  EnvironmentModel,
   UpdateEnvironmentInput,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 
 @Resolver(() => Environment)
 export class EnvironmentResolver {
-  constructor(
-    @InjectRepository(Environment)
-    private readonly EnvironmentRepository: Repository<Environment>
-  ) {}
-
   @Query(() => [Environment])
   async environments() {
-    return await this.EnvironmentRepository.find();
+    return await EnvironmentModel.find();
   }
 
   @Query(() => Environment, { nullable: true })
   async environment(@Arg("id") id: string) {
-    return await this.EnvironmentRepository.findOne(id);
+    return await EnvironmentModel.findById(id);
   }
 
   @Authorized()
@@ -45,42 +41,42 @@ export class EnvironmentResolver {
     { name, url, logoUrl, description }: CreateEnvironmentInput,
     @Ctx() { user: creator }: IContext
   ) {
-    const newEnvironment = this.EnvironmentRepository.create({
-      name,
-      url,
-      logoUrl,
-      description,
-      creator,
-    });
+    const newEnvironment = await EnvironmentModel.findOneAndUpdate(
+      { name },
+      {
+        url,
+        logoUrl,
+        description,
+        creator,
+      },
+      { upsert: true, new: true }
+    );
 
-    return await this.EnvironmentRepository.save(newEnvironment);
+    return newEnvironment;
   }
 
   @Authorized()
   @Mutation(() => Environment)
   async updateEnvironment(
     @Args()
-    { id, name, url, logoUrl, description }: UpdateEnvironmentInput,
+    { _id, ...rest }: UpdateEnvironmentInput,
     @Ctx() { user }: IContext
   ) {
-    const partialEnvirontment: Partial<Environment> = {
-      name,
-      url,
-      logoUrl,
-      description,
-    };
-
     const [environment] = await Promise.all([
-      this.EnvironmentRepository.findOneOrFail(id, {
-        relations: ["creator"],
-      }),
+      EnvironmentModel.findById(_id).populate("creator"),
       ,
     ]);
 
-    if (user.admin || environment.creator.id === user.id) {
-      _.assign(environment, _.omitBy(partialEnvirontment, _.isUndefined));
+    if (
+      environment &&
+      (user.admin ||
+        (environment.creator &&
+          isDocument(environment?.creator) &&
+          environment.creator.id) === user.id)
+    ) {
+      _.assign(environment, _.omitBy(rest, _.isUndefined));
 
-      return await this.EnvironmentRepository.save(environment);
+      return await environment.save();
     }
 
     throw new Error(NOT_AUTHORIZED);
@@ -89,33 +85,27 @@ export class EnvironmentResolver {
   @Authorized()
   @Mutation(() => String)
   async removeEnvironment(@Arg("id") id: string, @Ctx() { user }: IContext) {
-    const env = await this.EnvironmentRepository.findOneOrFail(id, {
-      select: ["id", "creator"],
-      relations: ["creator"],
-      loadEagerRelations: false,
-    });
-    if (user.admin || env.creator.id === user.id) {
-      await this.EnvironmentRepository.remove(env);
+    const env = await EnvironmentModel.findById(id).populate("creator");
+    if (
+      user.admin ||
+      (env?.creator && isDocument(env.creator) && env.creator.id === user.id)
+    ) {
+      await EnvironmentModel.findByIdAndRemove(id);
       return id;
     }
     throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()
-  async templates(@Root() { id }: Environment) {
-    return (await this.EnvironmentRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["templates"],
-      loadEagerRelations: false,
-    })).templates;
+  async templates(@Root() { _id }: Environment) {
+    return (
+      (await EnvironmentModel.findById(_id).populate("templates"))?.templates ??
+      []
+    );
   }
 
   @FieldResolver()
-  async creator(@Root() { id }: Environment) {
-    return (await this.EnvironmentRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["creator"],
-      loadEagerRelations: false,
-    })).creator;
+  async creator(@Root() { _id }: Environment) {
+    return (await EnvironmentModel.findById(_id).populate("creator"))?.creator;
   }
 }

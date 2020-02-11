@@ -1,9 +1,15 @@
-import { IsBase64, IsUUID, MinLength } from "class-validator";
-import { ArgsType, Field, ID, ObjectType } from "type-graphql";
-import {
-    Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn
-} from "typeorm";
+import { MinLength } from "class-validator";
+import { ObjectId } from "mongodb";
+import { ArgsType, Field, ObjectType } from "type-graphql";
 
+import {
+  arrayProp as PropertyArray,
+  getModelForClass,
+  prop as Property,
+  Ref,
+} from "@typegoose/typegoose";
+
+import { ObjectIdScalar } from "../../utils/ObjectIdScalar";
 import { Environment } from "./Environment";
 import { Framework } from "./Framework";
 import { GitRepository } from "./GitRepository";
@@ -11,65 +17,49 @@ import { Language } from "./Language";
 import { Library } from "./Library";
 import { User } from "./User";
 
-@Entity()
 @ObjectType()
 export class Template {
-  @Field(() => ID)
-  @PrimaryGeneratedColumn("uuid")
-  id: string;
+  @Field(() => ObjectIdScalar)
+  readonly _id: ObjectId;
 
   @Field()
-  @Column()
+  @Property()
   name: string;
 
-  @Field(() => User)
-  @ManyToOne(() => User, user => user.templates, {
-    nullable: false,
-    eager: true,
-  })
-  owner: User;
+  @Field(() => User, { nullable: true })
+  @Property({ ref: "User", index: true })
+  owner?: Ref<User>;
 
   @Field(() => User)
-  @ManyToMany(() => User, user => user.upvotedTemplates)
-  upvotes: User[];
+  @PropertyArray({ items: "User", ref: "User", default: [] })
+  upvotes: Ref<User>[];
 
   @Field()
   upvotesCount: number;
 
-  @Field(() => GitRepository)
-  @OneToOne(() => GitRepository, repo => repo.template, {
-    nullable: false,
-    eager: true,
-  })
-  @JoinColumn({ name: "repository" })
-  repository: GitRepository;
+  @Field(() => GitRepository, { nullable: true })
+  @Property({ ref: "GitRepository", index: true })
+  repository?: Ref<GitRepository>;
 
   @Field(() => [Language])
-  @ManyToMany(() => Language, lang => lang.templates)
-  @JoinTable()
-  languages: Language[];
+  @PropertyArray({ items: "Language", ref: "Language", default: [] })
+  languages: Ref<Language>[];
 
   @Field(() => Language, { nullable: true })
-  @ManyToOne(() => Language, lang => lang.primaryTemplates, {
-    eager: true,
-  })
-  @JoinTable()
-  primaryLanguage?: Language;
+  @Property({ ref: "Language", index: true })
+  primaryLanguage?: Ref<Language>;
 
   @Field(() => [Library])
-  @ManyToMany(() => Library, lib => lib.templates)
-  @JoinTable()
-  libraries: Library[];
+  @PropertyArray({ items: "Library", ref: "Library", default: [] })
+  libraries: Ref<Library>[];
 
   @Field(() => [Environment])
-  @ManyToMany(() => Environment, env => env.templates)
-  @JoinTable()
-  environments: Environment[];
+  @PropertyArray({ items: "Environments", ref: "Environments", default: [] })
+  environments: Ref<Environment>[];
 
   @Field(() => Framework)
-  @ManyToMany(() => Framework, framework => framework.templates)
-  @JoinTable()
-  frameworks: Framework[];
+  @PropertyArray({ items: "Frameworks", ref: "Frameworks", default: [] })
+  frameworks: Ref<Framework>[];
 }
 
 @ArgsType()
@@ -78,78 +68,52 @@ export class CreateTemplateInput {
   @Field()
   name: string;
 
-  @IsBase64()
-  @Field()
-  repositoryId: string;
+  @Field(() => ObjectIdScalar)
+  repositoryId: ObjectId;
 
   @MinLength(1)
-  @Field({ nullable: true })
-  primaryLanguage?: string;
+  @Field(() => ObjectIdScalar, { nullable: true })
+  primaryLanguage?: ObjectId;
 
-  @MinLength(1, {
-    each: true,
-  })
-  @Field(() => [String])
-  languages: string[];
+  @Field(() => [ObjectIdScalar])
+  languages: ObjectId[];
 
-  @MinLength(2, {
-    each: true,
-  })
-  @Field(() => [String])
-  frameworks: string[];
+  @Field(() => [ObjectIdScalar])
+  frameworks: ObjectId[];
 
-  @MinLength(2, {
-    each: true,
-  })
-  @Field(() => [String])
-  libraries: string[];
+  @Field(() => [ObjectIdScalar])
+  libraries: ObjectId[];
 
-  @MinLength(2, {
-    each: true,
-  })
-  @Field(() => [String])
-  environments: string[];
+  @Field(() => [ObjectIdScalar])
+  environments: ObjectId[];
 }
+
+export const TemplateModel = getModelForClass(Template);
 
 @ArgsType()
 export class UpdateTemplateInput implements Partial<CreateTemplateInput> {
-  @IsUUID()
-  @Field()
-  templateId: string;
+  @Field(() => ObjectIdScalar)
+  _id: string;
 
   @MinLength(3)
   @Field()
   name: string;
 
-  @IsBase64()
-  @Field({ nullable: true })
-  repositoryId?: string;
+  @Field(() => ObjectIdScalar, { nullable: true })
+  repositoryId?: ObjectId;
 
-  @MinLength(1)
-  @Field({ nullable: true })
-  primaryLanguage?: string;
+  @Field(() => ObjectIdScalar, { nullable: true })
+  primaryLanguage?: ObjectId;
 
-  @MinLength(1, {
-    each: true,
-  })
-  @Field(() => [String])
-  languages: string[];
+  @Field(() => [ObjectIdScalar])
+  languages: ObjectId[];
 
-  @MinLength(2, {
-    each: true,
-  })
-  @Field(() => [String])
-  frameworks: string[];
+  @Field(() => [ObjectIdScalar])
+  frameworks: ObjectId[];
 
-  @MinLength(2, {
-    each: true,
-  })
-  @Field(() => [String])
-  libraries: string[];
+  @Field(() => [ObjectIdScalar])
+  libraries: ObjectId[];
 
-  @MinLength(2, {
-    each: true,
-  })
-  @Field(() => [String])
-  environments: string[];
+  @Field(() => [ObjectIdScalar])
+  environments: ObjectId[];
 }

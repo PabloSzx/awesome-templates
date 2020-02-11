@@ -1,9 +1,10 @@
 import gql from "graphql-tag";
 import { createContext, FunctionComponent, useEffect, useState } from "react";
+
 import { useQuery } from "@apollo/react-hooks";
 
 type User = {
-  id: string;
+  _id: string;
   admin: boolean;
   data: {
     avatarUrl: string;
@@ -34,7 +35,7 @@ export const Auth: FunctionComponent = ({ children }) => {
     gql`
       query {
         current_user {
-          id
+          _id
           admin
           data {
             avatarUrl

@@ -1,26 +1,31 @@
 import gql from "graphql-tag";
 import _ from "lodash";
-import { Arg, Authorized, Ctx, FieldResolver, Query, Resolver, Root } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  FieldResolver,
+  Query,
+  Resolver,
+  Root,
+} from "type-graphql";
 
 import { APILevel } from "../../consts";
 import {
-    GitHubOrganization, GitHubRepository, GitHubUser, Organization, OrganizationGitHub,
-    RepositoryOwner
+  GitHubOrganization,
+  GitHubRepository,
+  GitHubUser,
+  GitRepositoryModel,
+  OrganizationGitHub,
+  OrganizationModel,
+  RepositoryOwnerModel,
+  UserGitHubModel,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 import { GitHubAPI } from "../../utils";
 
 @Resolver(() => OrganizationGitHub)
 export class OrganizationGitHubResolver {
-  constructor(
-    @InjectRepository(Organization)
-    private readonly OrganizationRepository: Repository<Organization>,
-    @InjectRepository(RepositoryOwner)
-    private readonly RepositoryOwnerRepository: Repository<RepositoryOwner>
-  ) {}
-
   @Authorized(APILevel.ADVANCED)
   @Query(() => OrganizationGitHub, { nullable: true })
   async organization(
@@ -56,15 +61,26 @@ export class OrganizationGitHubResolver {
     );
 
     if (organization) {
-      this.OrganizationRepository.save(organization).catch(err => {
-        console.error(err);
-      });
-      this.RepositoryOwnerRepository.save({
-        ...organization,
+      const newOrg = await OrganizationModel.findOneAndUpdate(
+        {
+          githubId: organization.id,
+        },
         organization,
-      }).catch(err => {
-        console.error(err);
-      });
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+
+      await RepositoryOwnerModel.findOneAndUpdate(
+        {
+          githubId: organization.id,
+        },
+        {
+          organization: newOrg._id,
+          ...organization,
+        }
+      );
     }
 
     return organization;
@@ -131,9 +147,33 @@ export class OrganizationGitHubResolver {
       after = organization.membersWithRole.pageInfo.endCursor;
       hasNextPage = organization.membersWithRole.pageInfo.hasNextPage;
     } while (hasNextPage);
-    this.OrganizationRepository.save({ id, members }).catch(err => {
-      console.error(err);
-    });
+
+    const membersDocs = await Promise.all(
+      members.map(member => {
+        return UserGitHubModel.findOneAndUpdate(
+          {
+            githubId: member.id,
+          },
+          member,
+          {
+            upsert: true,
+            new: true,
+          }
+        );
+      })
+    );
+
+    await OrganizationModel.findOneAndUpdate(
+      {
+        githubId: id,
+      },
+      {
+        members: membersDocs,
+      },
+      {
+        new: true,
+      }
+    );
 
     return members;
   }
@@ -248,9 +288,32 @@ export class OrganizationGitHubResolver {
       hasNextPage = pageInfo.hasNextPage;
     } while (hasNextPage);
 
-    this.OrganizationRepository.save({ id, repositories }).catch(err => {
-      console.error(err);
-    });
+    const repositoriesDocs = await Promise.all(
+      repositories.map(repo => {
+        return GitRepositoryModel.findOneAndUpdate(
+          {
+            githubId: repo.id,
+          },
+          repo,
+          {
+            upsert: true,
+            new: true,
+          }
+        );
+      })
+    );
+
+    await OrganizationModel.findOneAndUpdate(
+      {
+        githubId: id,
+      },
+      {
+        repositories: repositoriesDocs,
+      },
+      {
+        new: true,
+      }
+    );
 
     return repositories;
   }

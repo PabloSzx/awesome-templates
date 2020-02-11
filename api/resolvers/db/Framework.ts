@@ -10,35 +10,28 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
+
+import { isDocument } from "@typegoose/typegoose";
 
 import { NOT_AUTHORIZED } from "../../consts";
 import {
   CreateFrameworkInput,
   Framework,
-  Language,
+  FrameworkModel,
   UpdateFrameworkInput,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 
 @Resolver(() => Framework)
 export class FrameworkResolver {
-  constructor(
-    @InjectRepository(Framework)
-    private readonly FrameworkRepository: Repository<Framework>,
-    @InjectRepository(Language)
-    private readonly LanguageRepository: Repository<Language>
-  ) {}
-
   @Query(() => [Framework])
   async frameworks() {
-    return await this.FrameworkRepository.find();
+    return await FrameworkModel.find();
   }
 
   @Query(() => Framework, { nullable: true })
   async framework(@Arg("id") id: string) {
-    return await this.FrameworkRepository.findOne(id);
+    return await FrameworkModel.findById(id);
   }
 
   @Authorized()
@@ -48,47 +41,45 @@ export class FrameworkResolver {
     { name, url, logoUrl, description, languages }: CreateFrameworkInput,
     @Ctx() { user: creator }: IContext
   ) {
-    const newFramework = this.FrameworkRepository.create({
-      name,
-      url,
-      logoUrl,
-      description,
-      creator,
-      languages: await this.LanguageRepository.findByIds(languages),
-    });
+    const newFramework = await FrameworkModel.findOneAndUpdate(
+      { name },
+      {
+        url,
+        logoUrl,
+        description,
+        creator,
+        languages,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
 
-    return await this.FrameworkRepository.save(newFramework);
+    return newFramework;
   }
 
   @Authorized()
   @Mutation(() => Framework)
   async updateFramework(
     @Args()
-    { id, name, url, logoUrl, description, languages }: UpdateFrameworkInput,
+    { _id, ...rest }: UpdateFrameworkInput,
     @Ctx() { user }: IContext
   ) {
-    const partialFramework: Partial<Framework> = {
-      name,
-      url,
-      logoUrl,
-      description,
-    };
-
     const [framework] = await Promise.all([
-      this.FrameworkRepository.findOneOrFail(id, {
-        relations: ["creator"],
-      }),
-      (async () => {
-        partialFramework.languages = await this.LanguageRepository.findByIds(
-          languages
-        );
-      })(),
+      FrameworkModel.findById(_id).populate("creator"),
     ]);
 
-    if (user.admin || framework.creator.id === user.id) {
-      _.assign(framework, _.omitBy(partialFramework, _.isUndefined));
+    if (
+      framework &&
+      (user.admin ||
+        (framework.creator &&
+          isDocument(framework.creator) &&
+          framework.creator.id === user.id))
+    ) {
+      _.assign(framework, _.omitBy(rest, _.isUndefined));
 
-      return await this.FrameworkRepository.save(framework);
+      return await framework.save();
     }
 
     throw new Error(NOT_AUTHORIZED);
@@ -97,42 +88,36 @@ export class FrameworkResolver {
   @Authorized()
   @Mutation(() => String)
   async removeFramework(@Arg("id") id: string, @Ctx() { user }: IContext) {
-    const framework = await this.FrameworkRepository.findOneOrFail(id, {
-      select: ["id", "creator"],
-      relations: ["creator"],
-      loadEagerRelations: false,
-    });
-    if (user.admin || framework.creator.id === user.id) {
-      await this.FrameworkRepository.remove(framework);
+    const framework = await FrameworkModel.findById(id).populate("creator");
+    if (
+      framework &&
+      (user.admin ||
+        (isDocument(framework.creator) && framework.creator.id === user.id))
+    ) {
+      await FrameworkModel.findByIdAndRemove(id);
       return id;
     }
     throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()
-  async languages(@Root() { id }: Framework) {
-    return (await this.FrameworkRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["languages"],
-      loadEagerRelations: false,
-    })).languages;
+  async languages(@Root() { _id }: Framework) {
+    return (
+      (await FrameworkModel.findById(_id).populate("languages"))?.languages ??
+      []
+    );
   }
 
   @FieldResolver()
-  async creator(@Root() { id }: Framework) {
-    return (await this.FrameworkRepository.findOneOrFail(id, {
-      select: ["id", "creator"],
-      relations: ["creator"],
-      loadEagerRelations: false,
-    })).creator;
+  async creator(@Root() { _id }: Framework) {
+    return (await FrameworkModel.findById(_id).populate("creator"))?.creator;
   }
 
   @FieldResolver()
-  async templates(@Root() { id }: Framework) {
-    return (await this.FrameworkRepository.findOneOrFail(id, {
-      select: ["id", "creator"],
-      relations: ["templates"],
-      loadEagerRelations: false,
-    })).templates;
+  async templates(@Root() { _id }: Framework) {
+    return (
+      (await FrameworkModel.findById(_id).populate("templates"))?.templates ??
+      []
+    );
   }
 }

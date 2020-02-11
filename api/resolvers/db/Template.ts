@@ -10,65 +10,66 @@ import {
   Resolver,
   Root,
 } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
+
+import { isDocument } from "@typegoose/typegoose";
 
 import { NOT_AUTHORIZED } from "../../consts";
 import {
   CreateTemplateInput,
-  Environment,
-  Framework,
-  GitRepository,
-  Language,
-  Library,
+  EnvironmentModel,
+  FrameworkModel,
+  GitRepositoryModel,
+  LanguageModel,
+  LibraryModel,
   Template,
+  TemplateModel,
   UpdateTemplateInput,
+  UserModel,
 } from "../../entities";
 import { IContext } from "../../interfaces";
 
 @Resolver(() => Template)
 export class TemplateResolver {
-  constructor(
-    @InjectRepository(Template)
-    private readonly TemplateRepository: Repository<Template>,
-    @InjectRepository(GitRepository)
-    private readonly GitRepoRepository: Repository<GitRepository>,
-    @InjectRepository(Language)
-    private readonly LanguageRepository: Repository<Language>,
-    @InjectRepository(Framework)
-    private readonly FrameworkRepository: Repository<Framework>,
-    @InjectRepository(Library)
-    private readonly LibraryRepository: Repository<Library>,
-    @InjectRepository(Environment)
-    private readonly EnvironmentRepository: Repository<Environment>
-  ) {}
-
   @Query(() => [Template])
   async templates() {
-    return await this.TemplateRepository.find();
+    return await TemplateModel.find();
   }
 
   @Query(() => Template, { nullable: true })
-  async template(@Arg("name") name: string, @Arg("owner") owner: string) {
-    const templates = await this.TemplateRepository.find({
-      where: `"Template"."name" ILIKE '${name}'`,
+  async template(@Arg("name") name: string, @Arg("owner") ownerName: string) {
+    const templates = await TemplateModel.find({
+      name: {
+        $regex: new RegExp(name),
+        $options: "i",
+      },
+    }).populate("owner.data");
+
+    ownerName = _.toLower(ownerName);
+
+    return _.find(templates, ({ owner }) => {
+      if (ownerName) {
+        if (
+          owner &&
+          isDocument(owner) &&
+          owner.data &&
+          isDocument(owner.data) &&
+          owner.data?.login
+        ) {
+          return owner.data.login.includes(ownerName);
+        }
+
+        console.error(owner);
+
+        throw new Error("53 owner Population error");
+      }
+
+      return true;
     });
-
-    owner = _.toLower(owner);
-
-    return _.find(
-      templates,
-      ({
-        owner: {
-          data: { login },
-        },
-      }) => _.toLower(login) === owner
-    );
   }
 
   @Query(() => Template, { nullable: true })
   async templateById(@Arg("id") id: string) {
-    return await this.TemplateRepository.findOne(id);
+    return await TemplateModel.findById(id);
   }
 
   @Authorized()
@@ -86,49 +87,58 @@ export class TemplateResolver {
     }: CreateTemplateInput,
     @Ctx() { user: owner }: IContext
   ) {
-    const newTemplate = this.TemplateRepository.create({
-      name,
-      owner,
-    });
+    const newTemplate = await TemplateModel.findOneAndUpdate(
+      { name },
+      {
+        owner,
+      },
+      {
+        upsert: true,
+        new: true,
+      }
+    );
 
     await Promise.all([
       (async () => {
-        newTemplate.repository = await this.GitRepoRepository.findOneOrFail(
-          repositoryId,
-          {
-            relations: !languages ? ["languages"] : undefined,
-          }
-        );
+        newTemplate.repository =
+          (await GitRepositoryModel.findById(repositoryId)) || undefined;
       })(),
       (async () => {
         if (primaryLanguage)
-          newTemplate.primaryLanguage = await this.LanguageRepository.findOneOrFail(
-            primaryLanguage
-          );
+          newTemplate.primaryLanguage =
+            (await LanguageModel.findById(primaryLanguage)) || undefined;
       })(),
       (async () => {
-        newTemplate.languages = await this.LanguageRepository.findByIds(
-          languages
-        );
+        newTemplate.languages = await LanguageModel.find({
+          _id: {
+            $in: languages,
+          },
+        });
       })(),
       (async () => {
-        newTemplate.frameworks = await this.FrameworkRepository.findByIds(
-          frameworks
-        );
+        newTemplate.frameworks = await FrameworkModel.find({
+          _id: {
+            $in: frameworks,
+          },
+        });
       })(),
       (async () => {
-        newTemplate.libraries = await this.LibraryRepository.findByIds(
-          libraries
-        );
+        newTemplate.libraries = await LibraryModel.find({
+          $id: {
+            $in: libraries,
+          },
+        });
       })(),
       (async () => {
-        newTemplate.environments = await this.EnvironmentRepository.findByIds(
-          environments
-        );
+        newTemplate.environments = await EnvironmentModel.find({
+          $id: {
+            $in: environments,
+          },
+        });
       })(),
     ]);
 
-    return await this.TemplateRepository.save(newTemplate);
+    return await newTemplate.save();
   }
 
   @Authorized()
@@ -136,7 +146,7 @@ export class TemplateResolver {
   async updateTemplate(
     @Args()
     {
-      templateId,
+      _id: templateId,
       name,
       repositoryId,
       primaryLanguage,
@@ -151,123 +161,143 @@ export class TemplateResolver {
       name,
     };
     let [template] = await Promise.all([
-      this.TemplateRepository.findOneOrFail(templateId),
+      TemplateModel.findById(templateId)
+        .populate("owner")
+        .populate("repository.owner"),
       (async () => {
         if (repositoryId)
-          partialTemplate.repository = await this.GitRepoRepository.findOneOrFail(
-            repositoryId
-          );
+          partialTemplate.repository =
+            (await GitRepositoryModel.findById(repositoryId)) || undefined;
       })(),
       (async () => {
         if (primaryLanguage) {
-          partialTemplate.primaryLanguage = await this.LanguageRepository.findOneOrFail(
-            primaryLanguage
-          );
+          partialTemplate.primaryLanguage =
+            (await LanguageModel.findById(primaryLanguage)) || undefined;
         }
       })(),
       (async () => {
-        partialTemplate.languages = await this.LanguageRepository.findByIds(
-          languages
-        );
+        partialTemplate.languages = await LanguageModel.find({
+          _id: {
+            $in: languages,
+          },
+        });
       })(),
       (async () => {
-        partialTemplate.frameworks = await this.FrameworkRepository.findByIds(
-          frameworks
-        );
+        partialTemplate.frameworks = await FrameworkModel.find({
+          _id: {
+            $in: frameworks,
+          },
+        });
       })(),
       (async () => {
-        partialTemplate.libraries = await this.LibraryRepository.findByIds(
-          libraries
-        );
+        partialTemplate.libraries = await LibraryModel.find({
+          _id: {
+            $in: libraries,
+          },
+        });
       })(),
       (async () => {
-        partialTemplate.environments = await this.EnvironmentRepository.findByIds(
-          environments
-        );
+        partialTemplate.environments = await EnvironmentModel.find({
+          _id: {
+            $in: environments,
+          },
+        });
       })(),
     ]);
 
     if (
-      user.admin ||
-      template.owner.id === user.id ||
-      template.repository.owner.id === user.id
+      template &&
+      (user.admin ||
+        (template.owner &&
+          isDocument(template.owner) &&
+          template.owner.id === user.id) ||
+        (template.repository &&
+          isDocument(template.repository) &&
+          template.repository.owner &&
+          isDocument(template.repository.owner) &&
+          template.repository.owner.id === user.id))
     ) {
       _.assign(template, _.omitBy(partialTemplate, _.isUndefined));
 
-      return await this.TemplateRepository.save(template);
+      return await template.save();
     }
     throw new Error(NOT_AUTHORIZED);
+  }
+
+  @FieldResolver()
+  async owner(@Root() { owner }: Template) {
+    if (owner) {
+      return UserModel.findById(owner);
+    }
+
+    return null;
   }
 
   @Authorized()
   @Mutation(() => String)
   async removeTemplate(@Arg("id") id: string, @Ctx() { user }: IContext) {
-    const template = await this.TemplateRepository.findOneOrFail(id, {
-      relations: ["owner", "repository"],
-    });
+    const template = await TemplateModel.findById(id)
+      .populate("owner")
+      .populate("repository.owner");
 
     if (
-      user.admin ||
-      template.owner.id === user.id ||
-      template.repository.owner.id === user.id
+      template &&
+      (user.admin ||
+        (template.owner &&
+          isDocument(template.owner) &&
+          template.owner.id === user.id) ||
+        (template.repository &&
+          isDocument(template.repository) &&
+          template.repository.owner &&
+          isDocument(template.repository.owner) &&
+          template.repository.owner.id === user.id))
     ) {
-      await this.TemplateRepository.remove(template);
+      await TemplateModel.findByIdAndRemove(id);
       return id;
     }
     throw new Error(NOT_AUTHORIZED);
   }
 
   @FieldResolver()
-  async upvotes(@Root() { id }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["upvotes"],
-      loadEagerRelations: false,
-    })).upvotes;
+  async upvotes(@Root() { _id }: Template) {
+    return (
+      (await TemplateModel.findById(_id).populate("upvotes"))?.upvotes ?? []
+    );
   }
 
   @FieldResolver()
-  async upvotesCount(@Root() { id }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["upvotes"],
-      loadEagerRelations: false,
-    })).upvotes.length;
+  async upvotesCount(@Root() { _id }: Template) {
+    return (
+      (await TemplateModel.findById(_id).populate("upvotes"))?.upvotes.length ??
+      0
+    );
   }
 
   @FieldResolver()
-  async languages(@Root() { id }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["languages"],
-      loadEagerRelations: false,
-    })).languages;
+  async languages(@Root() { _id }: Template) {
+    return (
+      (await TemplateModel.findById(_id).populate("languages"))?.languages ?? []
+    );
   }
 
   @FieldResolver()
-  async libraries(@Root() { id }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["libraries"],
-      loadEagerRelations: false,
-    })).libraries;
+  async libraries(@Root() { _id }: Template) {
+    return (await TemplateModel.findById(_id))?.libraries ?? [];
   }
 
   @FieldResolver()
-  async frameworks(@Root() { id }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["frameworks"],
-      loadEagerRelations: false,
-    })).frameworks;
+  async frameworks(@Root() { _id }: Template) {
+    return (
+      (await TemplateModel.findById(_id).populate("frameworks"))?.frameworks ??
+      []
+    );
   }
 
   @FieldResolver()
-  async environments(@Root() { id }: Template) {
-    return (await this.TemplateRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["environments"],
-      loadEagerRelations: false,
-    })).environments;
+  async environments(@Root() { _id }: Template) {
+    return (
+      (await TemplateModel.findById(_id).populate("environments"))
+        ?.environments ?? []
+    );
   }
 }

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import "./db";
 
 import notifier from "node-notifier";
 

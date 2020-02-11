@@ -1,15 +1,16 @@
 import { Formik } from "formik";
 import gql from "graphql-tag";
 import { FC, useContext, useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@apollo/react-hooks";
 import { Button, Form, Input, Label, TextArea } from "semantic-ui-react";
+
+import { useMutation, useQuery } from "@apollo/react-hooks";
 
 import { AuthContext } from "../Auth/Context";
 import LanguagesDropdown from "../Languages/Dropdown";
 import ConfirmModal from "../Modal/Confirm";
 
 type IFrameworkData = {
-  id: string;
+  _id: string;
   name: string;
   url?: string;
   logoUrl?: string;
@@ -18,7 +19,7 @@ type IFrameworkData = {
     name: string;
   }[];
   creator: {
-    id: string;
+    _id: string;
   };
 };
 const FrameworkModal: FC<{
@@ -35,7 +36,7 @@ const FrameworkModal: FC<{
     gql`
       query($id: String!) {
         framework(id: $id) {
-          id
+          _id
           name
           url
           logoUrl
@@ -44,7 +45,7 @@ const FrameworkModal: FC<{
             name
           }
           creator {
-            id
+            _id
           }
         }
       }
@@ -83,7 +84,7 @@ const FrameworkModal: FC<{
         description: $description
         languages: $languages
       ) {
-        id
+        _id
         name
         url
         logoUrl
@@ -92,7 +93,7 @@ const FrameworkModal: FC<{
           name
         }
         creator {
-          id
+          _id
         }
       }
     }
@@ -128,7 +129,7 @@ const FrameworkModal: FC<{
         description: $description
         languages: $languages
       ) {
-        id
+        _id
         name
         url
         logoUrl
@@ -137,7 +138,7 @@ const FrameworkModal: FC<{
           name
         }
         creator {
-          id
+          _id
         }
       }
     }
@@ -310,7 +311,7 @@ const FrameworkModal: FC<{
               id &&
               data &&
               data.framework &&
-              (user.admin || data.framework.creator.id === user.id) && (
+              (user.admin || data.framework.creator._id === user._id) && (
                 <ConfirmModal
                   onConfirm={async () => {
                     await removeFramework({

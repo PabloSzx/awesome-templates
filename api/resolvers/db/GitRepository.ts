@@ -1,50 +1,38 @@
 import { Arg, FieldResolver, Query, Resolver, Root } from "type-graphql";
-import { Repository } from "typeorm";
-import { InjectRepository } from "typeorm-typedi-extensions";
 
-import { GitRepository } from "../../entities";
+import { GitRepository, GitRepositoryModel } from "../../entities";
 
 @Resolver(() => GitRepository)
 export class GitRepositoryResolver {
-  constructor(
-    @InjectRepository(GitRepository)
-    private readonly GitRepoRepository: Repository<GitRepository>
-  ) {}
-
   @Query(() => [GitRepository])
   async gitRepositories() {
-    return await this.GitRepoRepository.find();
+    return await GitRepositoryModel.find();
   }
 
   @Query(() => GitRepository, { nullable: true })
   async gitRepo(@Arg("id") id: string) {
-    return await this.GitRepoRepository.findOne(id);
+    return await GitRepositoryModel.findById(id);
   }
 
   @FieldResolver()
-  async languages(@Root() { id }: GitRepository) {
-    return (await this.GitRepoRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["languages"],
-      loadEagerRelations: false,
-    })).languages;
+  async languages(@Root() { _id }: GitRepository) {
+    return (
+      (await GitRepositoryModel.findById(_id).populate("languages"))
+        ?.languages ?? []
+    );
   }
 
   @FieldResolver()
-  async stargazers(@Root() { id }: GitRepository) {
-    return (await this.GitRepoRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["stargazers"],
-      loadEagerRelations: false,
-    })).stargazers;
+  async stargazers(@Root() { _id }: GitRepository) {
+    return (
+      (await GitRepositoryModel.findById(_id).populate("stargazers"))
+        ?.stargazers ?? []
+    );
   }
 
   @FieldResolver()
-  async template(@Root() { id }: GitRepository) {
-    return (await this.GitRepoRepository.findOneOrFail(id, {
-      select: ["id"],
-      relations: ["template"],
-      loadEagerRelations: false,
-    })).template;
+  async template(@Root() { _id }: GitRepository) {
+    return (await GitRepositoryModel.findById(_id).populate("template"))
+      ?.template;
   }
 }
